@@ -34,5 +34,4 @@ envoy_cc_library(
         "//source/extensions/filters/network:well_known_names",
         "//source/common/common:minimal_logger_lib",
     ],
-    ],
 )
