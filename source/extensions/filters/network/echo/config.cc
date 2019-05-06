@@ -17,6 +17,8 @@ public:
   // NamedNetworkFilterConfigFactory
   Network::FilterFactoryCb createFilterFactory(const Json::Object&,
                                                Server::Configuration::FactoryContext&) override {
+    ENVOY_LOG(trace, "echo create filter factory ");
+
     return [](Network::FilterManager& filter_manager) -> void {
       filter_manager.addReadFilter(std::make_shared<EchoFilter>());
     };
@@ -25,6 +27,8 @@ public:
   Network::FilterFactoryCb
   createFilterFactoryFromProto(const Protobuf::Message&,
                                Server::Configuration::FactoryContext&) override {
+    ENVOY_LOG(trace, "echo create filter factory from proto");
+
     return [](Network::FilterManager& filter_manager) -> void {
       filter_manager.addReadFilter(std::make_shared<EchoFilter>());
     };
