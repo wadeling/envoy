@@ -4,6 +4,8 @@
 #include "extensions/filters/network/echo2/echo2.h"
 #include "extensions/filters/network/well_known_names.h"
 
+#include "common/common/logger.h"
+
 namespace Envoy {
 namespace Extensions {
 namespace NetworkFilters {
