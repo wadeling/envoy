@@ -10,7 +10,7 @@ namespace Extensions {
 namespace NetworkFilters {
 namespace Echo2 {
 
-Network::FilterStatus EchoFilter::onData(Buffer::Instance& data, bool end_stream) {
+Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_stream) {
   ENVOY_CONN_LOG(trace, "echo2: got {} bytes", read_callbacks_->connection(), data.length());
   read_callbacks_->connection().write(data, end_stream);
   ASSERT(0 == data.length());
