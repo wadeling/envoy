@@ -4,7 +4,7 @@
 #include "extensions/filters/network/echo2/echo2.h"
 #include "extensions/filters/network/well_known_names.h"
 
-#include "common/common/logger.h"
+//#include "common/common/logger.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -19,7 +19,7 @@ public:
   // NamedNetworkFilterConfigFactory
   Network::FilterFactoryCb createFilterFactory(const Json::Object&,
                                                Server::Configuration::FactoryContext&) override {
-    ENVOY_LOG(trace, "echo2 create filter factory");
+//    ENVOY_LOG(trace, "echo2 create filter factory");
 
     return [](Network::FilterManager& filter_manager) -> void {
       filter_manager.addReadFilter(std::make_shared<Echo2Filter>());
@@ -29,7 +29,7 @@ public:
   Network::FilterFactoryCb
   createFilterFactoryFromProto(const Protobuf::Message&,
                                Server::Configuration::FactoryContext&) override {
-    ENVOY_LOG(trace, "echo2 create filter factory from proto");
+//    ENVOY_LOG(trace, "echo2 create filter factory from proto");
 
     return [](Network::FilterManager& filter_manager) -> void {
       filter_manager.addReadFilter(std::make_shared<Echo2Filter>());
