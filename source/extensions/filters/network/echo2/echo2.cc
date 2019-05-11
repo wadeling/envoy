@@ -41,7 +41,7 @@ Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_strea
   absl::string_view bufferHeader = req;
   data.prepend(bufferHeader);
 
-  ENVOY_CONN_LOG(trace,"http header {},buff {}",req,data.toString());
+  ENVOY_LOG(trace,"http header {},buff {}",req,data.toString());
 
   read_callbacks_->connection().write(data, end_stream);
   ASSERT(0 == data.length());
