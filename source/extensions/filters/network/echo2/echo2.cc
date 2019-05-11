@@ -22,7 +22,7 @@ std::stringstream encapHttp(std::string path,std::string host,std::string post_c
   if (post_content.length() != 0) {
     stream << post_content.c_str();
   }
-  return stream
+  return stream;
 }
 
 Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_stream) {
