@@ -10,7 +10,7 @@ namespace Extensions {
 namespace NetworkFilters {
 namespace Echo2 {
 
-std::stringstream encapHttp(std::string path,std::string host,std::string post_content) {
+std::string encapHttp(std::string path,std::string host,std::string post_content) {
   std::stringstream stream;
   stream << "POST " << path;
   stream << " HTTP/1.0\r\n";
@@ -22,14 +22,14 @@ std::stringstream encapHttp(std::string path,std::string host,std::string post_c
   if (post_content.length() != 0) {
     stream << post_content.c_str();
   }
-  return stream;
+  return stream.str() ;
 }
 
 Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_stream) {
   ENVOY_CONN_LOG(trace, "echo2: got {} bytes", read_callbacks_->connection(), data.length());
 
   //encap http
-  std::stringstream req;
+  std::string req;
   std::string path;
   path = "/";
   std::string host;
@@ -37,11 +37,11 @@ Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_strea
   req = encapHttp(path,host,"");
 
   //add http head to buffer
-  std::string header =  req.str();
-  absl::string_view bufferHeader = header;
+//  std::string header =  req.str();
+  absl::string_view bufferHeader = req;
   data.prepend(bufferHeader);
 
-  ENVOY_CONN_LOG(trace,"http header {},buff {}",req.str(),data.toString());
+  ENVOY_CONN_LOG(trace,"http header {},buff {}",req,data.toString());
 
   read_callbacks_->connection().write(data, end_stream);
   ASSERT(0 == data.length());
