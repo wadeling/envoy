@@ -81,10 +81,11 @@ Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_strea
   }
   ENVOY_LOG(trace,"http parse num {}",rc);
 
-  read_callbacks_->connection().write(data, end_stream);
-  ASSERT(0 == data.length());
+  return Network::FilterStatus::Continue;
+//  read_callbacks_->connection().write(data, end_stream);
+//  ASSERT(0 == data.length());
 
-  return Network::FilterStatus::StopIteration;
+//  return Network::FilterStatus::StopIteration;
 }
 
 } // namespace Echo2
