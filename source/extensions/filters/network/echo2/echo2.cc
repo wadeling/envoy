@@ -13,7 +13,7 @@ namespace Echo2 {
 std::string encapHttp(std::string path,std::string host,std::string post_content) {
   std::stringstream stream;
   stream << "POST " << path;
-  stream << " HTTP/1.0\r\n";
+  stream << " HTTP/1.1\r\n";
   stream << "Host: "<< host << "\r\n";
   stream << "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
   stream << "X-Test: haha\r\n";
