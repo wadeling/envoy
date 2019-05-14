@@ -61,7 +61,7 @@ Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_strea
   path = "/";
   std::string host;
   host = "servicename";
-  req = encapHttp(path,host,"",data.toString());
+  req = encapHttp(path,host,data.toString());
 
   //add http head to buffer
 //  std::string header =  req.str();
