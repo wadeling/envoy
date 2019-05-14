@@ -79,7 +79,7 @@ Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_strea
   if (HTTP_PARSER_ERRNO(&parser_) != HPE_OK && HTTP_PARSER_ERRNO(&parser_) != HPE_PAUSED) {
       ENVOY_LOG(trace,"parse http err {}",HTTP_PARSER_ERRNO(&parser_));
   }
-  ENVOY_LOG(trace,"http parse num {}",rc);
+  ENVOY_LOG(trace,"http parse num {},end_stream {}",rc,end_stream);
 
   return Network::FilterStatus::Continue;
 //  read_callbacks_->connection().write(data, end_stream);
