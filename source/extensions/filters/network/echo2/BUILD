@@ -15,6 +15,7 @@ envoy_cc_library(
     name = "echo2",
     srcs = ["echo2.cc"],
     hdrs = ["echo2.h"],
+    external_deps = ["http_parser"],
     deps = [
         "//include/envoy/buffer:buffer_interface",
         "//include/envoy/network:connection_interface",
