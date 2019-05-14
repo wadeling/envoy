@@ -426,14 +426,15 @@ void ConnectionImpl::onHeaderValue(const char* data, size_t length) {
   // have an invariant that they must not contain embedded zero characters
   // (NUL, ASCII 0x0).
   if (absl::string_view(data, length).find('\0') != absl::string_view::npos) {
-    throw CodecProtocolException("http/1.1 protocol error: header value contains NUL");
+    std::string errmsg;
+    errmsg = "http/1.1 protocol error: header value contains NUL";
+    throw CodecProtocolException(errmsg);
   }
 
   header_parsing_state_ = HeaderParsingState::Value;
   current_header_value_.append(data, length);
 
-  const uint32_t total =
-      current_header_field_.size() + current_header_value_.size() + current_header_map_->byteSize();
+  const uint32_t total = current_header_field_.size() + current_header_value_.size() + current_header_map_->byteSize();
   if (total > (max_headers_kb_ * 1024)) {
     error_code_ = Http::Code::RequestHeaderFieldsTooLarge;
     sendProtocolError();
