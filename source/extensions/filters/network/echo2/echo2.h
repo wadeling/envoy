@@ -3,10 +3,10 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <map>
 #include <http_parser.h>
 
 #include "envoy/network/filter.h"
-
 #include "common/common/logger.h"
 
 namespace Envoy {
@@ -37,6 +37,22 @@ public:
 
   // deal body
   void onBody(const char* data, size_t length) ;
+
+  // header field
+  void onHeaderField(const char* data,size_t length);
+
+  // header value
+  void onHeaderValue(const char* data, size_t length);
+
+private:
+  // for http parse: parse state
+  enum class HeaderParsingState { Nothing,Field, Value };
+
+  HeaderParsingState header_parsing_state_{HeaderParsingState::Nothing};
+
+  std::string current_header_field_;
+  std::string current_header_value_;
+  std::map<std::string, std::string> headers_;
 
 private:
   Network::ReadFilterCallbacks* read_callbacks_{};

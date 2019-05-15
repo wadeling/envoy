@@ -30,8 +30,14 @@ http_parser_settings Echo2Filter::settings_{
     nullptr, // on_message_begin
     nullptr, // on_url
     nullptr, // on_status
-    nullptr, // on_header_fileld
-    nullptr, // on_header_value
+    [](http_parser* parser, const char* at, size_t length) -> int {
+        static_cast<Echo2Filter*>(parser->data)->onHeaderField(at, length);
+        return 0;
+    },
+    [](http_parser* parser, const char* at, size_t length) -> int {
+        static_cast<Echo2Filter*>(parser->data)->onHeaderValue(at, length);
+        return 0;
+    }, // on_header_value
     nullptr, // on_headerComplete
     [](http_parser* parser, const char* at, size_t length) -> int {
         static_cast<Echo2Filter*>(parser->data)->onBody(at, length);
@@ -50,6 +56,41 @@ Echo2Filter::Echo2Filter() {
 
 void Echo2Filter::onBody(const char *data, size_t length) {
   ENVOY_LOG(trace,"get body len {}, data {}",length,data);
+}
+
+void Echo2Filter::onHeaderField(const char* data, size_t length) {
+    std::string field(data,length);
+
+    switch(header_parsing_state_){
+        case HeaderParsingState::Nothing:
+            current_header_field_ = field;
+            break;
+        case HeaderParsingState::Value:
+            headers_[current_header_field_] = current_header_value_;
+            current_header_field_= field;
+            break;
+        case HeaderParsingState::Field:
+            current_header_field_.append(field);
+            break;
+    }
+    header_parsing_state_ = HeaderParsingState::Field;
+}
+
+void Echo2Filter::onHeaderValue(const char* data, size_t length) {
+    const std::string value(data,length);
+    switch(header_parsing_state_){
+        case HeaderParsingState::Field:
+            current_header_value_ = value;
+            break;
+        case HeaderParsingState::Value:
+            current_header_value_.append(value);
+            break;
+        case HeaderParsingState::Nothing:
+            // this shouldn't happen
+            ENVOY_LOG("Internal error in http-parser");
+            break;
+    }
+    header_parsing_state_ = HeaderParsingState::Value;
 }
 
 Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_stream) {
