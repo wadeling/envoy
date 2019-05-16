@@ -106,7 +106,7 @@ void Echo2Filter::onHeadersComplete() {
 
 void Echo2Filter::dumpHeaders() {
     ENVOY_LOG(trace,"dump headers");
-    std::map<string,string>::iterator iter;
+    std::map<std::string,std::string>::iterator iter;
     for (iter = headers_.begin(); iter != headers_.end() ; ++iter) {
         ENVOY_LOG(trace,"header field: {},value {}",iter.first,iter.second);
     }
