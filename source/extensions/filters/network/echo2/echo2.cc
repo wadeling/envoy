@@ -37,8 +37,11 @@ http_parser_settings Echo2Filter::settings_{
     [](http_parser* parser, const char* at, size_t length) -> int {
         static_cast<Echo2Filter*>(parser->data)->onHeaderValue(at, length);
         return 0;
-    }, // on_header_value
-    nullptr, // on_headerComplete
+    },
+    [](http_parser* parser) -> int {
+        static_cast<Echo2Filter*>(parser->data)->onHeadersComplete();
+        return 0;
+    }, // on_headerComplete
     [](http_parser* parser, const char* at, size_t length) -> int {
         static_cast<Echo2Filter*>(parser->data)->onBody(at, length);
         return 0;
@@ -51,11 +54,14 @@ http_parser_settings Echo2Filter::settings_{
 Echo2Filter::Echo2Filter() {
   http_parser_init(&parser_,HTTP_REQUEST);
   parser_.data = this;
-
+  biz_buff_ = "";
 }
 
 void Echo2Filter::onBody(const char *data, size_t length) {
   ENVOY_LOG(trace,"get body len {}, data {}",length,data);
+
+  // save buf
+  biz_buff_.append(data,length);
 }
 
 void Echo2Filter::onHeaderField(const char* data, size_t length) {
@@ -87,12 +93,24 @@ void Echo2Filter::onHeaderValue(const char* data, size_t length) {
             break;
         case HeaderParsingState::Nothing:
             // this shouldn't happen
-            ENVOY_LOG("Internal error in http-parser");
+            ENVOY_LOG(trace,"Internal error in http-parser");
             break;
     }
     header_parsing_state_ = HeaderParsingState::Value;
 }
 
+void Echo2Filter::onHeadersComplete() {
+    ENVOY_LOG(trace,"header complete");
+    dumpHeaders();
+}
+
+void Echo2Filter::dumpHeaders() {
+    ENVOY_LOG(trace,"dump headers");
+    std::map<string,string>::iterator iter;
+    for (iter = headers_.begin(); iter != headers_.end() ; ++iter) {
+        ENVOY_LOG(trace,"header field: {},value {}",iter.first,iter.second);
+    }
+}
 Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_stream) {
   ENVOY_CONN_LOG(trace, "echo2: got {} bytes", read_callbacks_->connection(), data.length());
 
@@ -121,6 +139,10 @@ Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_strea
       ENVOY_LOG(trace,"parse http err {}",HTTP_PARSER_ERRNO(&parser_));
   }
   ENVOY_LOG(trace,"http parse num {},end_stream {}",rc,end_stream);
+
+  //http包解析完成后，onBody里面会解析并保存业务数据。然后这里把业务数据取出来，放到入参data里面，这样流程继续往下执行，最后发到后端服务
+//  data.drain(data.length());
+//  data.add(biz_buff_);
 
   return Network::FilterStatus::Continue;
 //  read_callbacks_->connection().write(data, end_stream);

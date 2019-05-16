@@ -44,6 +44,12 @@ public:
   // header value
   void onHeaderValue(const char* data, size_t length);
 
+  // header complete
+  void onHeadersComplete();
+
+  // dump header
+  void dumpHeaders();
+
 private:
   // for http parse: parse state
   enum class HeaderParsingState { Nothing,Field, Value };
@@ -53,6 +59,9 @@ private:
   std::string current_header_field_;
   std::string current_header_value_;
   std::map<std::string, std::string> headers_;
+
+  //biz buffer
+  std::string biz_buff_;
 
 private:
   Network::ReadFilterCallbacks* read_callbacks_{};
