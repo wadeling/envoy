@@ -108,7 +108,7 @@ void Echo2Filter::dumpHeaders() {
     ENVOY_LOG(trace,"dump headers");
     std::map<std::string,std::string>::iterator iter;
     for (iter = headers_.begin(); iter != headers_.end() ; ++iter) {
-        ENVOY_LOG(trace,"header field: {},value {}",iter.first,iter.second);
+        ENVOY_LOG(trace,"header field: {},value {}",iter->first,iter->second);
     }
 }
 Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_stream) {
