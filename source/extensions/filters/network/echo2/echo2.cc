@@ -102,6 +102,7 @@ void Echo2Filter::onHeaderValue(const char* data, size_t length) {
 void Echo2Filter::onHeadersComplete() {
     ENVOY_LOG(trace,"header complete");
     dumpHeaders();
+    headers_.clear();
 }
 
 void Echo2Filter::dumpHeaders() {
@@ -131,14 +132,14 @@ Network::FilterStatus Echo2Filter::onData(Buffer::Instance& data, bool end_strea
   absl::string_view httpData = req;
   data.add(httpData);
 
-  ENVOY_LOG(trace,"http header {},buff {}",req,data.toString());
+  ENVOY_LOG(trace,"http header {},buff {},end_stream",req,data.toString(),end_stream);
 
   // http parse
-  ssize_t rc = http_parser_execute(&parser_, &settings_, data.toString().c_str(), data.length());
-  if (HTTP_PARSER_ERRNO(&parser_) != HPE_OK && HTTP_PARSER_ERRNO(&parser_) != HPE_PAUSED) {
-      ENVOY_LOG(trace,"parse http err {}",HTTP_PARSER_ERRNO(&parser_));
-  }
-  ENVOY_LOG(trace,"http parse num {},end_stream {}",rc,end_stream);
+//  ssize_t rc = http_parser_execute(&parser_, &settings_, data.toString().c_str(), data.length());
+//  if (HTTP_PARSER_ERRNO(&parser_) != HPE_OK && HTTP_PARSER_ERRNO(&parser_) != HPE_PAUSED) {
+//      ENVOY_LOG(trace,"parse http err {}",HTTP_PARSER_ERRNO(&parser_));
+//  }
+//  ENVOY_LOG(trace,"http parse num {},end_stream {}",rc,end_stream);
 
   //http包解析完成后，onBody里面会解析并保存业务数据。然后这里把业务数据取出来，放到入参data里面，这样流程继续往下执行，最后发到后端服务
 //  data.drain(data.length());
