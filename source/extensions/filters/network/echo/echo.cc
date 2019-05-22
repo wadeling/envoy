@@ -15,9 +15,10 @@ std::string encapHttpRsp(std::string post_content) {
     stream << "HTTP/1.1 200 OK\r\n";
     stream << "Server: nginx/1.6.2\r\n";
     stream << "Content-Type:application/octet-stream\r\n";
-    stream << "Connection: keep-alive\r\n";
+    stream << "Connection: close\r\n";
     stream << "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
     stream << "Content-Length:" << post_content.length()<<"\r\n";
+    stream << "Connection: close\r\n\r\n";
     if (post_content.length() != 0) {
         stream << post_content.c_str();
     }
