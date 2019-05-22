@@ -111,6 +111,7 @@ void CodecClient::onReset(ActiveRequest& request, StreamResetReason reason) {
 }
 
 void CodecClient::onData(Buffer::Instance& data) {
+  ENVOY_CONN_LOG(trace, "CodeClient onData: ",*connection_);
   bool protocol_error = false;
   try {
     codec_->dispatch(data);
