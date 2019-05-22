@@ -34,7 +34,7 @@ Network::FilterStatus EchoFilter::onData(Buffer::Instance& data, bool end_stream
   absl::string_view rspData=rsp;
   data.drain(data.length());
   data.add(rspData);
-  ENVOY_CONN_LOG(trace,"rsp:{},end stream {},data {}",rsp,end_stream,data.toString());
+  ENVOY_CONN_LOG(trace,"rsp:{},end stream {},data {}",read_callbacks_->connection(),rsp,end_stream,data.toString());
 
 //  read_callbacks_->connection().write(data, end_stream);
 
