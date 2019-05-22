@@ -28,8 +28,7 @@ namespace HttpConnectionManager {
  */
 class HttpConnectionManagerFilterConfigFactory
     : Logger::Loggable<Logger::Id::config>,
-      public Common::FactoryBase<
-          envoy::config::filter::network::http_connection_manager::v2::HttpConnectionManager> {
+      public Common::FactoryBase<envoy::config::filter::network::http_connection_manager::v2::HttpConnectionManager> {
 public:
   HttpConnectionManagerFilterConfigFactory()
       : FactoryBase(NetworkFilterNames::get().HttpConnectionManager) {}

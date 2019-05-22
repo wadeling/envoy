@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <iostream>
+#include <sstream>
 #include "envoy/network/filter.h"
 
 #include "common/common/logger.h"

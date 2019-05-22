@@ -1103,7 +1103,7 @@ void Filter::UpstreamRequest::encodeData(Buffer::Instance& data, bool end_stream
   encode_complete_ = end_stream;
 
   if (!request_encoder_) {
-    ENVOY_STREAM_LOG(trace, "buffering {} bytes", *parent_.callbacks_, data.length());
+    ENVOY_STREAM_LOG(trace, "buffering {} bytes,data {}", *parent_.callbacks_, data.length(),data.toString());
     if (!buffered_request_body_) {
       buffered_request_body_ = std::make_unique<Buffer::WatermarkBuffer>(
           [this]() -> void { this->enableDataFromDownstream(); },
