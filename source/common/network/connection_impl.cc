@@ -382,7 +382,7 @@ void ConnectionImpl::write(Buffer::Instance& data, bool end_stream) {
 
   write_end_stream_ = end_stream;
   if (data.length() > 0 || end_stream) {
-    ENVOY_CONN_LOG(trace, "writing {} bytes, end_stream {},data {}", *this, data.length(), end_stream,data);
+    ENVOY_CONN_LOG(trace, "writing {} bytes, end_stream {},data {}", *this, data.length(), end_stream,data.toString());
     // TODO(mattklein123): All data currently gets moved from the source buffer to the write buffer.
     // This can lead to inefficient behavior if writing a bunch of small chunks. In this case, it
     // would likely be more efficient to copy data below a certain size. VERY IMPORTANT: If this is
