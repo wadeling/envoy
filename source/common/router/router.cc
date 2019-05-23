@@ -360,7 +360,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
     return Http::FilterHeadersStatus::StopIteration;
   }
 
-  ENVOY_STREAM_LOG(debug, "conn pool pointer {} ",*callbacks_, conn_pool);
+  ENVOY_STREAM_LOG(debug, "conn pool pointer {} ",*callbacks_, static_cast<const void*>(conn_pool));
 
   timeout_ = FilterUtility::finalTimeout(*route_entry_, headers, !config_.suppress_envoy_headers_,
                                          grpc_request_);
