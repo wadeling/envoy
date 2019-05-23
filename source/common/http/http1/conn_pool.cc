@@ -66,6 +66,8 @@ bool ConnPoolImpl::hasActiveConnections() const {
 void ConnPoolImpl::attachRequestToClient(ActiveClient& client, StreamDecoder& response_decoder,
                                          ConnectionPool::Callbacks& callbacks) {
   ASSERT(!client.stream_wrapper_);
+  ENVOY_LOG(debug, "attachRequestToClient");
+
   host_->cluster().stats().upstream_rq_total_.inc();
   host_->stats().rq_total_.inc();
   client.stream_wrapper_ = std::make_unique<StreamWrapper>(response_decoder, client);
@@ -92,6 +94,8 @@ void ConnPoolImpl::createNewConnection() {
 
 ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_decoder,
                                                      ConnectionPool::Callbacks& callbacks) {
+  ENVOY_LOG(debug, "ConnPoolImpl newstream");
+
   if (!ready_clients_.empty()) {
     ready_clients_.front()->moveBetweenLists(ready_clients_, busy_clients_);
     ENVOY_CONN_LOG(debug, "using existing connection", *busy_clients_.front()->codec_client_);
@@ -122,6 +126,8 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_dec
 }
 
 void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEvent event) {
+  ENVOY_LOG(debug, "ConnPoolImpl::onConnectionEvent {}",int(event));
+
   if (event == Network::ConnectionEvent::RemoteClose ||
       event == Network::ConnectionEvent::LocalClose) {
     // The client died.
@@ -233,6 +239,8 @@ void ConnPoolImpl::onUpstreamReady() {
 }
 
 void ConnPoolImpl::processIdleClient(ActiveClient& client, bool delay) {
+  ENVOY_CONN_LOG(debug, "processIdleClient", *client.codec_client_);
+
   client.stream_wrapper_.reset();
   if (pending_requests_.empty() || delay) {
     // There is nothing to service or delayed processing is requested, so just move the connection
@@ -243,6 +251,7 @@ void ConnPoolImpl::processIdleClient(ActiveClient& client, bool delay) {
     // There is work to do immediately so bind a request to the client and move it to the busy list.
     // Pending requests are pushed onto the front, so pull from the back.
     ENVOY_CONN_LOG(debug, "attaching to next request", *client.codec_client_);
+    ENVOY_CONN_LOG(debug, "pending requests size {}", *client.codec_client_,pending_requests_.size());
     attachRequestToClient(client, pending_requests_.back()->decoder_,
                           pending_requests_.back()->callbacks_);
     pending_requests_.pop_back();
