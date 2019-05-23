@@ -683,6 +683,8 @@ StreamEncoder& ClientConnectionImpl::newStream(StreamDecoder& response_decoder) 
     throw CodecClientException("cannot create new streams after calling reset");
   }
 
+  ENVOY_CONN_LOG(trace, "client connection impl new stream", connection_);
+
   // If reads were disabled due to flow control, we expect reads to always be enabled again before
   // reusing this connection. This is done when the final pipeline response is received.
   ASSERT(connection_.readEnabled());
@@ -699,6 +701,8 @@ void ClientConnectionImpl::onEncodeHeaders(const HeaderMap& headers) {
 }
 
 int ClientConnectionImpl::onHeadersComplete(HeaderMapImplPtr&& headers) {
+  ENVOY_CONN_LOG(trace, "client onHeaders complete", connection_);
+
   headers->insertStatus().value(parser_.status_code);
 
   // Handle the case where the client is closing a kept alive connection (by sending a 408
@@ -713,8 +717,10 @@ int ClientConnectionImpl::onHeadersComplete(HeaderMapImplPtr&& headers) {
       ignore_message_complete_for_100_continue_ = true;
       pending_responses_.front().decoder_->decode100ContinueHeaders(std::move(headers));
     } else if (cannotHaveBody()) {
+      ENVOY_CONN_LOG(trace, "cannot have body", connection_);
       deferred_end_stream_headers_ = std::move(headers);
     } else {
+      ENVOY_CONN_LOG(trace, "response decode headers", connection_);
       pending_responses_.front().decoder_->decodeHeaders(std::move(headers), false);
     }
   }

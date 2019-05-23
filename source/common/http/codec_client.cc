@@ -51,6 +51,8 @@ void CodecClient::deleteRequest(ActiveRequest& request) {
 }
 
 StreamEncoder& CodecClient::newStream(StreamDecoder& response_decoder) {
+  ENVOY_CONN_LOG(trace, "codec client newstream", *connection_);
+
   ActiveRequestPtr request(new ActiveRequest(*this, response_decoder));
   request->encoder_ = &codec_->newStream(*request);
   request->encoder_->getStream().addCallbacks(*request);
@@ -68,6 +70,8 @@ void CodecClient::onEvent(Network::ConnectionEvent event) {
   if (event == Network::ConnectionEvent::RemoteClose) {
     remote_closed_ = true;
   }
+
+  ENVOY_CONN_LOG(trace, "type_ {},event {},active_requests_ size {}", *connection_,type,event,active_requests_.size());
 
   // HTTP/1 can signal end of response by disconnecting. We need to handle that case.
   if (type_ == Type::HTTP1 && event == Network::ConnectionEvent::RemoteClose &&
