@@ -72,7 +72,9 @@ void CodecClient::onEvent(Network::ConnectionEvent event) {
   }
 
   int tmpSize = int(active_requests_.size());
-  ENVOY_CONN_LOG(trace, "type_ {},event {},active_requests_ size {}", *connection_,type_,event,tmpSize);
+  int tmpType = int(type_);
+  int tmpEvent = int(event);
+  ENVOY_CONN_LOG(trace, "type {} event {} active_requests size {}", *connection_,tmpType,tmpEvent,tmpSize);
 
   // HTTP/1 can signal end of response by disconnecting. We need to handle that case.
   if (type_ == Type::HTTP1 && event == Network::ConnectionEvent::RemoteClose &&
