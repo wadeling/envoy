@@ -111,8 +111,10 @@ void CodecClient::onReset(ActiveRequest& request, StreamResetReason reason) {
 }
 
 void CodecClient::onData(Buffer::Instance& data) {
-   Network::Address::InstanceConstSharedPtr addr = connection_->localAddress();
-  ENVOY_CONN_LOG(trace, "CodeClient onData,addr {} ",*connection_,addr->asString());
+  Network::Address::InstanceConstSharedPtr addr = connection_->localAddress();
+  Network::Address::InstanceConstSharedPtr remoteAddr = connection_->remoteAddress();
+
+  ENVOY_CONN_LOG(trace, "CodeClient onData,local addr {},remote {} ",*connection_,addr->asString(),remoteAddr->asString());
   bool protocol_error = false;
   try {
     codec_->dispatch(data);
