@@ -24,6 +24,7 @@
 #include "common/router/header_parser.h"
 #include "common/router/metadatamatchcriteria_impl.h"
 #include "common/router/router_ratelimit.h"
+#include "common/common/logger.h"
 
 #include "absl/types/optional.h"
 
