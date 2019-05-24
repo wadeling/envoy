@@ -1810,8 +1810,10 @@ Tracing::Span& ConnectionManagerImpl::ActiveStreamFilterBase::activeSpan() {
 Tracing::Config& ConnectionManagerImpl::ActiveStreamFilterBase::tracingConfig() { return parent_; }
 
 Upstream::ClusterInfoConstSharedPtr ConnectionManagerImpl::ActiveStreamFilterBase::clusterInfo() {
+  ENVOY_LOG(trace,"active stream filter base cluster info");
   // NOTE: Refreshing route caches clusterInfo as well.
   if (!parent_.cached_route_.has_value()) {
+    ENVOY_LOG(trace,"active stream filter base cluster info , refresh cached route");
     parent_.refreshCachedRoute();
   }
 
@@ -1819,8 +1821,9 @@ Upstream::ClusterInfoConstSharedPtr ConnectionManagerImpl::ActiveStreamFilterBas
 }
 
 Router::RouteConstSharedPtr ConnectionManagerImpl::ActiveStreamFilterBase::route() {
+  ENVOY_LOG(trace,"activestream filter base route");
   if (!parent_.cached_route_.has_value()) {
-    ENVOY_LOG(trace,"canched route empty,refresh");
+    ENVOY_LOG(trace,"activestream filter cached route empty,refresh");
     parent_.refreshCachedRoute();
   }
 
