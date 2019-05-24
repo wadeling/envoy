@@ -1051,6 +1051,9 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
     return default_virtual_host_.get();
   }
 
+  std::string tmpHost = std::string(headers.Host()->value().getStringView());
+  ENVOY_LOG(treace,"find virtualHost,header host {}",tmpHost);
+  
   // TODO (@rshriram) Match Origin header in WebSocket
   // request with VHost, using wildcard match
   const std::string host =

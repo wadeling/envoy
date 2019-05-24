@@ -1116,9 +1116,13 @@ void ConnectionManagerImpl::startDrainSequence() {
 
 void ConnectionManagerImpl::ActiveStream::refreshCachedRoute() {
   Router::RouteConstSharedPtr route;
+
+  ENVOY_STREAM_LOG(debug, "refresh cache route,request headers {},stream_id {}", *this, static_cast<void*>(request_headers_),stream_id_);
   if (request_headers_ != nullptr) {
     route = snapped_route_config_->route(*request_headers_, stream_id_);
   }
+  ENVOY_STREAM_LOG(debug, "snapped route config ,route {}", *this, static_cast<void*>(route));
+
   stream_info_.route_entry_ = route ? route->routeEntry() : nullptr;
   cached_route_ = std::move(route);
   if (nullptr == stream_info_.route_entry_) {
@@ -1813,6 +1817,7 @@ Upstream::ClusterInfoConstSharedPtr ConnectionManagerImpl::ActiveStreamFilterBas
 
 Router::RouteConstSharedPtr ConnectionManagerImpl::ActiveStreamFilterBase::route() {
   if (!parent_.cached_route_.has_value()) {
+    ENVOY_LOG(trace,"canched route empty,refresh");
     parent_.refreshCachedRoute();
   }
 
