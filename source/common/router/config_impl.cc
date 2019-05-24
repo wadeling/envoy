@@ -1048,11 +1048,18 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
   // Fast path the case where we only have a default virtual host.
   if (virtual_hosts_.empty() && wildcard_virtual_host_suffixes_.empty() &&
       wildcard_virtual_host_prefixes_.empty()) {
+
+    ENVOY_LOG_MISC(debug,"findVirtualHost return default host");
     return default_virtual_host_.get();
   }
 
+  //test
   std::string tmpHost = std::string(headers.Host()->value().getStringView());
-  ENVOY_LOG(trace,"find virtualHost,header host {}",tmpHost);
+  ENVOY_LOG_MISC(debug,"find virtualHost,header host {}",tmpHost);
+  std::unordered_map<std::string, VirtualHostSharedPtr>::iterator  tmpIter;
+  for (tmpIter = virtual_hosts_.begin();tmpIter != virtual_hosts_.end()) {
+      ENVOY_LOG_MISC(debug,"vhost name {}",tmpIter->first);
+  }
 
   // TODO (@rshriram) Match Origin header in WebSocket
   // request with VHost, using wildcard match
@@ -1060,9 +1067,12 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
       Http::LowerCaseString(std::string(headers.Host()->value().getStringView())).get();
   const auto& iter = virtual_hosts_.find(host);
   if (iter != virtual_hosts_.end()) {
+    ENVOY_LOG_MISC(debug,"found match vhost");
     return iter->second.get();
   }
+
   if (!wildcard_virtual_host_suffixes_.empty()) {
+    ENVOY_LOG_MISC(debug,"find from wildcard virtual host suffix");
     const VirtualHostImpl* vhost = findWildcardVirtualHost(
         host, wildcard_virtual_host_suffixes_,
         [](const std::string& h, int l) -> std::string { return h.substr(h.size() - l); });
@@ -1071,6 +1081,7 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
     }
   }
   if (!wildcard_virtual_host_prefixes_.empty()) {
+    ENVOY_LOG_MISC(debug,"find from wildcard virtual host prefix");
     const VirtualHostImpl* vhost = findWildcardVirtualHost(
         host, wildcard_virtual_host_prefixes_,
         [](const std::string& h, int l) -> std::string { return h.substr(0, l); });
