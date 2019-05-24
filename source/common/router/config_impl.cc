@@ -1034,7 +1034,7 @@ RouteConstSharedPtr VirtualHostImpl::getRouteFromEntries(const Http::HeaderMap& 
     ENVOY_LOG_MISC(debug,"forwaredproto header is null");
     return nullptr;
   }
-  ENVOY_LOG_MISC(debug,"forwaredproto header {}",forwarded_proto_header->value());
+  ENVOY_LOG_MISC(debug,"forwaredproto header {}",forwarded_proto_header->value().getStringView());
 
   // First check for ssl redirect.
   if (ssl_requirements_ == SslRequirements::ALL && forwarded_proto_header->value() != "https") {
