@@ -1057,7 +1057,7 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
   std::string tmpHost = std::string(headers.Host()->value().getStringView());
   ENVOY_LOG_MISC(debug,"find virtualHost,header host {}",tmpHost);
   std::unordered_map<std::string, VirtualHostSharedPtr>::iterator  tmpIter;
-  for (tmpIter = virtual_hosts_.begin();tmpIter != virtual_hosts_.end()) {
+  for (tmpIter = virtual_hosts_.begin();tmpIter != virtual_hosts_.end();tmpIter++) {
       ENVOY_LOG_MISC(debug,"vhost name {}",tmpIter->first);
   }
 
