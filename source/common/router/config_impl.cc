@@ -453,6 +453,7 @@ bool RouteEntryImplBase::matchRoute(const Http::HeaderMap& headers, uint64_t ran
   }
 
   if (match_grpc_) {
+    ENVOY_LOG_MISC(debug,"grpc match check");
     matches &= Grpc::Common::hasGrpcContentType(headers);
   }
 
@@ -1033,6 +1034,7 @@ RouteConstSharedPtr VirtualHostImpl::getRouteFromEntries(const Http::HeaderMap& 
     ENVOY_LOG_MISC(debug,"forwaredproto header is null");
     return nullptr;
   }
+  ENVOY_LOG_MISC(debug,"forwaredproto header {}",forwarded_proto_header->value());
 
   // First check for ssl redirect.
   if (ssl_requirements_ == SslRequirements::ALL && forwarded_proto_header->value() != "https") {
