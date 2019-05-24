@@ -19,7 +19,7 @@
 #include "common/common/empty_string.h"
 #include "common/common/fmt.h"
 #include "common/common/hash.h"
-#include "common/common/logger.h"
+//#include "common/common/logger.h"
 #include "common/common/utility.h"
 #include "common/config/metadata.h"
 #include "common/config/rds_json.h"
