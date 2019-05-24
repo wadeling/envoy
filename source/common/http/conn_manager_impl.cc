@@ -1125,6 +1125,9 @@ void ConnectionManagerImpl::ActiveStream::refreshCachedRoute() {
 
   stream_info_.route_entry_ = route ? route->routeEntry() : nullptr;
   cached_route_ = std::move(route);
+
+  ENVOY_STREAM_LOG(debug, "cached_route{},route entry {}", *this, cached_route_.value(),static_cast<const void*>(stream_info_.route_entry_));
+
   if (nullptr == stream_info_.route_entry_) {
     cached_cluster_info_ = nullptr;
   } else {

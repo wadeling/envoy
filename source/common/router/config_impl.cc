@@ -447,6 +447,7 @@ bool RouteEntryImplBase::matchRoute(const Http::HeaderMap& headers, uint64_t ran
 
   matches &= evaluateRuntimeMatch(random_value);
   if (!matches) {
+    ENVOY_LOG_MISC(debug,"runtime match false");
     // No need to waste further cycles calculating a route match.
     return false;
   }
@@ -456,7 +457,9 @@ bool RouteEntryImplBase::matchRoute(const Http::HeaderMap& headers, uint64_t ran
   }
 
   matches &= Http::HeaderUtility::matchHeaders(headers, config_headers_);
+    ENVOY_LOG_MISC(debug,"match headers result {}",matches);
   if (!config_query_parameters_.empty()) {
+      ENVOY_LOG_MISC(debug,"query parameters match");
     Http::Utility::QueryParams query_parameters =
         Http::Utility::parseQueryString(headers.Path()->value().getStringView());
     matches &= ConfigUtility::matchQueryParams(query_parameters, config_query_parameters_);
@@ -789,12 +792,14 @@ void PrefixRouteEntryImpl::rewritePathHeader(Http::HeaderMap& headers,
 
 RouteConstSharedPtr PrefixRouteEntryImpl::matches(const Http::HeaderMap& headers,
                                                   uint64_t random_value) const {
+    ENVOY_LOG_MISC(debug,"prefix route matches start");
   if (RouteEntryImplBase::matchRoute(headers, random_value) &&
       (case_sensitive_
            ? absl::StartsWith(headers.Path()->value().getStringView(), prefix_)
            : absl::StartsWithIgnoreCase(headers.Path()->value().getStringView(), prefix_))) {
     return clusterEntry(headers, random_value);
   }
+    ENVOY_LOG_MISC(debug,"prefix route matches null");
   return nullptr;
 }
 
@@ -810,6 +815,7 @@ void PathRouteEntryImpl::rewritePathHeader(Http::HeaderMap& headers,
 
 RouteConstSharedPtr PathRouteEntryImpl::matches(const Http::HeaderMap& headers,
                                                 uint64_t random_value) const {
+  ENVOY_LOG_MISC(debug,"PathRoute match start");
   if (RouteEntryImplBase::matchRoute(headers, random_value)) {
     const Http::HeaderString& path = headers.Path()->value();
     absl::string_view query_string = Http::Utility::findQueryStringStart(path);
@@ -860,6 +866,7 @@ void RegexRouteEntryImpl::rewritePathHeader(Http::HeaderMap& headers,
 
 RouteConstSharedPtr RegexRouteEntryImpl::matches(const Http::HeaderMap& headers,
                                                  uint64_t random_value) const {
+    ENVOY_LOG_MISC(debug,"regex route matches start");
   if (RouteEntryImplBase::matchRoute(headers, random_value)) {
     const Http::HeaderString& path = headers.Path()->value();
     const absl::string_view query_string = Http::Utility::findQueryStringStart(path);
@@ -869,6 +876,7 @@ RouteConstSharedPtr RegexRouteEntryImpl::matches(const Http::HeaderMap& headers,
       return clusterEntry(headers, random_value);
     }
   }
+    ENVOY_LOG_MISC(debug,"regex route matches null");
   return nullptr;
 }
 
@@ -1022,6 +1030,7 @@ RouteConstSharedPtr VirtualHostImpl::getRouteFromEntries(const Http::HeaderMap& 
   // bails early (as it rejects a request), so there is no routing is going to happen anyway.
   const auto* forwarded_proto_header = headers.ForwardedProto();
   if (forwarded_proto_header == nullptr) {
+    ENVOY_LOG_MISC(debug,"forwaredproto header is null");
     return nullptr;
   }
 
@@ -1037,10 +1046,12 @@ RouteConstSharedPtr VirtualHostImpl::getRouteFromEntries(const Http::HeaderMap& 
   for (const RouteEntryImplBaseConstSharedPtr& route : routes_) {
     RouteConstSharedPtr route_entry = route->matches(headers, random_value);
     if (nullptr != route_entry) {
+      ENVOY_LOG_MISC(debug,"header match ok");
       return route_entry;
     }
   }
 
+  ENVOY_LOG_MISC(debug,"header match null");
   return nullptr;
 }
 
@@ -1068,7 +1079,7 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
       Http::LowerCaseString(std::string(headers.Host()->value().getStringView())).get();
   const auto& iter = virtual_hosts_.find(host);
   if (iter != virtual_hosts_.end()) {
-    ENVOY_LOG_MISC(debug,"found match vhost");
+    ENVOY_LOG_MISC(debug,"found match vhost,{}", static_cast<void*>(iter->second.get()));
     return iter->second.get();
   }
 

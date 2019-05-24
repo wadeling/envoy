@@ -68,6 +68,7 @@ bool HeaderUtility::matchHeaders(const Http::HeaderMap& request_headers,
                                  const std::vector<HeaderData>& config_headers) {
   // No headers to match is considered a match.
   if (!config_headers.empty()) {
+      ENVOY_LOG_MISC(debug,"config header not empty,match headers");
     for (const HeaderData& cfg_header_data : config_headers) {
       if (!matchHeaders(request_headers, cfg_header_data)) {
         return false;
