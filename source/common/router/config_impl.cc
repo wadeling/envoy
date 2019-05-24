@@ -1203,5 +1203,10 @@ const RouteSpecificFilterConfig* PerFilterConfigs::get(const std::string& name) 
   return it == configs_.end() ? nullptr : it->second.get();
 }
 
+RouteConstSharedPtr NullConfigImpl::route(const Http::HeaderMap&, uint64_t) const{
+    ENVOY_LOG_MISC(debug,"null config impl route return null ptr");
+    return nullptr;
+}
+
 } // namespace Router
 } // namespace Envoy

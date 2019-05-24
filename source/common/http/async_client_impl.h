@@ -167,9 +167,9 @@ private:
   };
 
   struct NullConfig : public Router::Config {
-    Router::RouteConstSharedPtr route(const Http::HeaderMap&, uint64_t) const override {
+    Router::RouteConstSharedPtr route(const Http::HeaderMap&, uint64_t) const override;/* {
       return nullptr;
-    }
+    }*/
 
     const std::list<LowerCaseString>& internalOnlyHeaders() const override {
       return internal_only_headers_;

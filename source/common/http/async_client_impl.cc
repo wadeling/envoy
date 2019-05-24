@@ -230,6 +230,10 @@ void AsyncRequestImpl::cancel() {
   cancelled_ = true;
   reset();
 }
+Router::RouteConstSharedPtr AsyncStreamImpl::NullConfig::route(const Http::HeaderMap&, uint64_t) const {
+  ENVOY_LOG(debug, "AsyncStreamImpl::NullConfig::route nullptr");
+  return nullptr;
+}
 
 } // namespace Http
 } // namespace Envoy
