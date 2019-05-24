@@ -280,6 +280,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
   config_.stats_.rq_total_.inc();
 
   // Determine if there is a route entry or a direct response for the request.
+  // :match by http header 'host'
   route_ = callbacks_->route();
   if (!route_) {
     config_.stats_.no_route_.inc();
