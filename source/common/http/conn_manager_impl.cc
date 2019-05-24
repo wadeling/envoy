@@ -1121,7 +1121,7 @@ void ConnectionManagerImpl::ActiveStream::refreshCachedRoute() {
   if (request_headers_ != nullptr) {
     route = snapped_route_config_->route(*request_headers_, stream_id_);
   }
-  ENVOY_STREAM_LOG(debug, "snapped route config ,route {}", *this, static_cast<void*>(route));
+  ENVOY_STREAM_LOG(debug, "snapped route config ,route {}", *this, static_cast<const void*>(route.get()));
 
   stream_info_.route_entry_ = route ? route->routeEntry() : nullptr;
   cached_route_ = std::move(route);
