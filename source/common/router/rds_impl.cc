@@ -95,12 +95,14 @@ void RdsRouteConfigSubscription::onConfigUpdate(
   last_updated_ = time_source_.systemTime();
 
   if (resources.empty()) {
-    ENVOY_LOG(debug, "Missing RouteConfiguration for {} in onConfigUpdate()", route_config_name_);
+    ENVOY_LOG(error, "Missing RouteConfiguration for {} in onConfigUpdate()", route_config_name_);
     stats_.update_empty_.inc();
     init_target_.ready();
     return;
   }
   if (resources.size() != 1) {
+    ENVOY_LOG(error, "onConfigUpdate resource size not 1,{}",resources.size());
+
     throw EnvoyException(fmt::format("Unexpected RDS resource length: {}", resources.size()));
   }
   auto route_config = MessageUtil::anyConvert<envoy::api::v2::RouteConfiguration>(resources[0]);
@@ -124,11 +126,18 @@ void RdsRouteConfigSubscription::onConfigUpdate(
   }
 
   init_target_.ready();
+  if (!config_info_) {
+      ENVOY_LOG(debug, "config info has valueonfig,last config hash ={} last config version={}", config_info_.value().last_config_hash_,config_info_.value().last_config_version_);
+  } else {
+    ENVOY_LOG(debug, "config info has no value");
+  }
+
 }
 
 void RdsRouteConfigSubscription::onConfigUpdateFailed(const EnvoyException*) {
   // We need to allow server startup to continue, even if we have a bad
   // config.
+  ENVOY_LOG(error,"rds route config sub onConfigUpdateFailed ");
   init_target_.ready();
 }
 
@@ -139,9 +148,12 @@ RdsRouteConfigProviderImpl::RdsRouteConfigProviderImpl(
       tls_(factory_context.threadLocal().allocateSlot()) {
   ConfigConstSharedPtr initial_config;
   if (subscription_->config_info_.has_value()) {
+    ENVOY_LOG(debug, "rds route subscription has value");
+
     initial_config =
         std::make_shared<ConfigImpl>(subscription_->route_config_proto_, factory_context_, false);
   } else {
+    ENVOY_LOG(error, "rds route subscription has not value,null config impl");
     initial_config = std::make_shared<NullConfigImpl>();
   }
   tls_->set([initial_config](Event::Dispatcher&) -> ThreadLocal::ThreadLocalObjectSharedPtr {
@@ -170,6 +182,9 @@ absl::optional<RouteConfigProvider::ConfigInfo> RdsRouteConfigProviderImpl::conf
 void RdsRouteConfigProviderImpl::onConfigUpdate() {
   ConfigConstSharedPtr new_config(
       new ConfigImpl(subscription_->route_config_proto_, factory_context_, false));
+
+  ENVOY_LOG(debug,"RdsRouteConfigProviderImpl::onConfigUpdate {}",static_cast<void *>(new_config.get()));
+
   tls_->runOnAllThreads(
       [this, new_config]() -> void { tls_->getTyped<ThreadLocalConfig>().config_ = new_config; });
 }
