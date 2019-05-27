@@ -183,7 +183,7 @@ void RdsRouteConfigProviderImpl::onConfigUpdate() {
   ConfigConstSharedPtr new_config(
       new ConfigImpl(subscription_->route_config_proto_, factory_context_, false));
 
-  ENVOY_LOG(debug,"RdsRouteConfigProviderImpl::onConfigUpdate {}",static_cast<void *>(new_config.get()));
+  ENVOY_LOG(debug,"RdsRouteConfigProviderImpl::onConfigUpdate {}",static_cast<const void *>(new_config.get()));
 
   tls_->runOnAllThreads(
       [this, new_config]() -> void { tls_->getTyped<ThreadLocalConfig>().config_ = new_config; });
