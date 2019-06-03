@@ -48,6 +48,7 @@ void ClusterManagerInitHelper::addCluster(Cluster& cluster) {
 
   const auto initialize_cb = [&cluster, this] { onClusterInit(cluster); };
   if (cluster.initializePhase() == Cluster::InitializePhase::Primary) {
+    ENVOY_LOG(debug,"add cluster,initializee phase primary");
     primary_init_clusters_.push_back(&cluster);
     cluster.initialize(initialize_cb);
   } else {
@@ -65,6 +66,7 @@ void ClusterManagerInitHelper::addCluster(Cluster& cluster) {
 }
 
 void ClusterManagerInitHelper::onClusterInit(Cluster& cluster) {
+  ENVOY_LOG(debug,"onCluster init");
   ASSERT(state_ != State::AllClustersInitialized);
   per_cluster_init_callback_(cluster);
   removeCluster(cluster);
@@ -94,6 +96,8 @@ void ClusterManagerInitHelper::removeCluster(Cluster& cluster) {
 }
 
 void ClusterManagerInitHelper::maybeFinishInitialize() {
+  ENVOY_LOG(debug,"maybeFinishInitialize");
+
   // Do not do anything if we are still doing the initial static load or if we are waiting for
   // CDS initialize.
   if (state_ == State::Loading || state_ == State::WaitingForCdsInitialize) {
@@ -137,6 +141,7 @@ void ClusterManagerInitHelper::maybeFinishInitialize() {
     ENVOY_LOG(info, "cm init: all clusters initialized");
     state_ = State::AllClustersInitialized;
     if (initialized_callback_) {
+      ENVOY_LOG(debug,"initialized end,call cb");
       initialized_callback_();
     }
   }
@@ -144,6 +149,8 @@ void ClusterManagerInitHelper::maybeFinishInitialize() {
 
 void ClusterManagerInitHelper::onStaticLoadComplete() {
   ASSERT(state_ == State::Loading);
+  ENVOY_LOG(debug,"ClusterManagerInitHelper::onStaticLoadComplete");
+
   state_ = State::WaitingForStaticInitialize;
   maybeFinishInitialize();
 }
@@ -161,9 +168,12 @@ void ClusterManagerInitHelper::setCds(CdsApi* cds) {
 }
 
 void ClusterManagerInitHelper::setInitializedCb(std::function<void()> callback) {
+  ENVOY_LOG(debug,"ClusterManagerInitHelper::setInitializedCb");
   if (state_ == State::AllClustersInitialized) {
+    ENVOY_LOG(debug,"ClusterManagerInitHelper::setInitializedCb allculsterinitialized");
     callback();
   } else {
+    ENVOY_LOG(debug,"ClusterManagerInitHelper::setInitializedCb set call back");
     initialized_callback_ = callback;
   }
 }
@@ -182,6 +192,8 @@ ClusterManagerImpl::ClusterManagerImpl(
           admin.getConfigTracker().add("clusters", [this] { return dumpClusterConfigs(); })),
       time_source_(main_thread_dispatcher.timeSource()), dispatcher_(main_thread_dispatcher),
       http_context_(http_context) {
+
+    ENVOY_LOG(debug,"new clusterManagerImpl");
   async_client_manager_ =
       std::make_unique<Grpc::AsyncClientManagerImpl>(*this, tls, time_source_, api);
   const auto& cm_config = bootstrap.cluster_manager();
@@ -199,6 +211,7 @@ ClusterManagerImpl::ClusterManagerImpl(
   // each EDS cluster individually sets up a subscription. When this subscription is an API source
   // the cluster will depend on a non-EDS cluster, so the non-EDS clusters must be loaded first.
   for (const auto& cluster : bootstrap.static_resources().clusters()) {
+    ENVOY_LOG(debug,"load static clusters");
     // First load all the primary clusters.
     if (cluster.type() != envoy::api::v2::Cluster::EDS) {
       loadCluster(cluster, "", false, active_clusters_);
@@ -207,6 +220,7 @@ ClusterManagerImpl::ClusterManagerImpl(
 
   // Now setup ADS if needed, this might rely on a primary cluster.
   if (bootstrap.dynamic_resources().has_ads_config()) {
+    ENVOY_LOG(debug,"dynamic resources has ads config,cluster");
     ads_mux_ = std::make_unique<Config::GrpcMuxImpl>(
         local_info,
         Config::Utility::factoryForGrpcApiConfigSource(
@@ -223,6 +237,7 @@ ClusterManagerImpl::ClusterManagerImpl(
 
   // After ADS is initialized, load EDS static clusters as EDS config may potentially need ADS.
   for (const auto& cluster : bootstrap.static_resources().clusters()) {
+    ENVOY_LOG(debug,"load static clusters 2");
     // Now load all the secondary clusters.
     if (cluster.type() == envoy::api::v2::Cluster::EDS) {
       loadCluster(cluster, "", false, active_clusters_);
@@ -261,6 +276,7 @@ ClusterManagerImpl::ClusterManagerImpl(
   // initialize any primary clusters. Post-init processing further initializes any thread
   // aware load balancer and sets up the per-worker host set updates.
   for (auto& cluster : active_clusters_) {
+    ENVOY_LOG(debug,"init helper add cluster");
     init_helper_.addCluster(*cluster.second->cluster_);
   }
 
@@ -570,6 +586,7 @@ bool ClusterManagerImpl::removeCluster(const std::string& cluster_name) {
 void ClusterManagerImpl::loadCluster(const envoy::api::v2::Cluster& cluster,
                                      const std::string& version_info, bool added_via_api,
                                      ClusterMap& cluster_map) {
+  ENVOY_LOG(debug,"load cluster,added_via_api {}",added_via_api);
   ClusterSharedPtr new_cluster =
       factory_.clusterFromProto(cluster, *this, outlier_event_logger_, added_via_api);
 
@@ -582,6 +599,8 @@ void ClusterManagerImpl::loadCluster(const envoy::api::v2::Cluster& cluster,
 
   Cluster& cluster_reference = *new_cluster;
   if (new_cluster->healthChecker() != nullptr) {
+    ENVOY_LOG(debug,"new cluster healthchecker not null");
+
     new_cluster->healthChecker()->addHostCheckCompleteCb(
         [this](HostSharedPtr host, HealthTransition changed_state) {
           if (changed_state == HealthTransition::Changed &&
@@ -592,6 +611,7 @@ void ClusterManagerImpl::loadCluster(const envoy::api::v2::Cluster& cluster,
   }
 
   if (new_cluster->outlierDetector() != nullptr) {
+    ENVOY_LOG(debug,"new cluster has outlierdetctor");
     new_cluster->outlierDetector()->addChangedStateCb([this](HostSharedPtr host) {
       if (host->healthFlagGet(Host::HealthFlag::FAILED_OUTLIER_CHECK)) {
         postThreadLocalHealthFailure(host);

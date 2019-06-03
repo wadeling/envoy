@@ -71,6 +71,7 @@ void ManagerImpl::onTargetReady() {
 }
 
 void ManagerImpl::ready() {
+  ENVOY_LOG(debug, "ManagerImpl::ready");
   state_ = State::Initialized;
   watcher_handle_->ready();
 }

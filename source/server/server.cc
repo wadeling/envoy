@@ -289,6 +289,7 @@ void InstanceImpl::initialize(const Options& options,
   loadServerFlags(initial_config.flagsPath());
 
   // Initialize the overload manager early so other modules can register for actions.
+  ENVOY_LOG(debug,"init overload manager");
   overload_manager_ = std::make_unique<OverloadManagerImpl>(
       *dispatcher_, stats_store_, thread_local_, bootstrap_.overload_manager(), *api_);
 
@@ -296,6 +297,7 @@ void InstanceImpl::initialize(const Options& options,
       std::make_unique<Memory::HeapShrinker>(*dispatcher_, *overload_manager_, stats_store_);
 
   // Workers get created first so they register for thread local updates.
+  ENVOY_LOG(debug,"init listener manager");
   listener_manager_ = std::make_unique<ListenerManagerImpl>(
       *this, listener_component_factory_, worker_factory_, bootstrap_.enable_dispatcher_stats());
 
@@ -330,6 +332,7 @@ void InstanceImpl::initialize(const Options& options,
   // thread local data per above. See MainImpl::initialize() for why ConfigImpl
   // is constructed as part of the InstanceImpl and then populated once
   // cluster_manager_factory_ is available.
+  ENVOY_LOG(debug, "config_.initialize");
   config_.initialize(bootstrap_, *this, *cluster_manager_factory_);
   http_context_.setTracer(config_.httpTracer());
 
@@ -365,6 +368,8 @@ void InstanceImpl::initialize(const Options& options,
   // GuardDog (deadlock detection) object and thread setup before workers are
   // started and before our own run() loop runs.
   guard_dog_ = std::make_unique<Server::GuardDogImpl>(stats_store_, config_, *api_);
+
+  ENVOY_LOG(debug,"initialize end");
 }
 
 void InstanceImpl::startWorkers() {
@@ -442,6 +447,9 @@ RunHelper::RunHelper(Instance& instance, const Options& options, Event::Dispatch
   // Start overload manager before workers.
   overload_manager.start();
 
+  ENVOY_LOG(debug, "overload manager start");
+
+
   // Register for cluster manager init notification. We don't start serving worker traffic until
   // upstream clusters are initialized which may involve running the event loop. Note however that
   // this can fire immediately if all clusters have already initialized. Also note that we need
@@ -467,6 +475,8 @@ RunHelper::RunHelper(Instance& instance, const Options& options, Event::Dispatch
 }
 
 void InstanceImpl::run() {
+  ENVOY_LOG(info, "InstanceImpl::run");
+
   // RunHelper exists primarily to facilitate testing of how we respond to early shutdown during
   // startup (see RunHelperTest in server_test.cc).
   auto run_helper = RunHelper(*this, options_, *dispatcher_, clusterManager(), access_log_manager_,
