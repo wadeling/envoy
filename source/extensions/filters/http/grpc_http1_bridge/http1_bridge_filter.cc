@@ -22,7 +22,7 @@ void Http1BridgeFilter::chargeStat(const Http::HeaderMap& headers) {
 }
 
 Http::FilterHeadersStatus Http1BridgeFilter::decodeHeaders(Http::HeaderMap& headers, bool) {
-  //ENVOY_LOG(trace,"grpc decode headers");
+  ENVOY_LOG(trace,"grpc decode headers");
   const bool grpc_request = Grpc::Common::hasGrpcContentType(headers);
   if (grpc_request) {
     setupStatTracking(headers);
