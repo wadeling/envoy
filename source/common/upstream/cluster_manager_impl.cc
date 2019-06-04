@@ -96,12 +96,12 @@ void ClusterManagerInitHelper::removeCluster(Cluster& cluster) {
 }
 
 void ClusterManagerInitHelper::maybeFinishInitialize() {
-  ENVOY_LOG(debug,"maybeFinishInitialize,state {}",state_);
+  ENVOY_LOG(debug,"maybeFinishInitialize,state {}",int(state_));
 
   // Do not do anything if we are still doing the initial static load or if we are waiting for
   // CDS initialize.
   if (state_ == State::Loading || state_ == State::WaitingForCdsInitialize) {
-    ENVOY_LOG(debug,"state  {} return",state_);
+    ENVOY_LOG(debug,"state  {} return",int(state_));
     return;
   }
 
