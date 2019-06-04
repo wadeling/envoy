@@ -96,17 +96,19 @@ void ClusterManagerInitHelper::removeCluster(Cluster& cluster) {
 }
 
 void ClusterManagerInitHelper::maybeFinishInitialize() {
-  ENVOY_LOG(debug,"maybeFinishInitialize");
+  ENVOY_LOG(debug,"maybeFinishInitialize,state {}",state_);
 
   // Do not do anything if we are still doing the initial static load or if we are waiting for
   // CDS initialize.
   if (state_ == State::Loading || state_ == State::WaitingForCdsInitialize) {
+    ENVOY_LOG(debug,"state  {} return",state_);
     return;
   }
 
   // If we are still waiting for primary clusters to initialize, do nothing.
   ASSERT(state_ == State::WaitingForStaticInitialize || state_ == State::CdsInitialized);
   if (!primary_init_clusters_.empty()) {
+    ENVOY_LOG(debug,"primary init clusters no empty,return");
     return;
   }
 
@@ -127,6 +129,7 @@ void ClusterManagerInitHelper::maybeFinishInitialize() {
       }
     }
 
+    ENVOY_LOG(debug, "second init cluster not empty ");
     return;
   }
 
