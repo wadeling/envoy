@@ -749,6 +749,7 @@ void ClusterImplBase::onPreInitComplete() {
 }
 
 void ClusterImplBase::onInitDone() {
+  ENVOY_LOG(debug, "ClusterImplBase::onInitDone" );
   if (health_checker_ && pending_initialize_health_checks_ == 0) {
     for (auto& host_set : prioritySet().hostSetsPerPriority()) {
       pending_initialize_health_checks_ += host_set->hosts().size();
@@ -771,6 +772,8 @@ void ClusterImplBase::finishInitialization() {
   ASSERT(initialization_complete_callback_ != nullptr);
   ASSERT(initialization_started_);
 
+  ENVOY_LOG(debug, "ClusterImplBase::finishInitialization" );
+
   // Snap a copy of the completion callback so that we can set it to nullptr to unblock
   // reloadHealthyHosts(). See that function for more info on why we do this.
   auto snapped_callback = initialization_complete_callback_;
@@ -781,6 +784,7 @@ void ClusterImplBase::finishInitialization() {
   }
 
   if (snapped_callback != nullptr) {
+    ENVOY_LOG(debug, "ClusterImplBase::initialization_complete_callback_" );
     snapped_callback();
   }
 }
