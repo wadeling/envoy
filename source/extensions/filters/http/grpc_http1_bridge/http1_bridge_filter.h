@@ -2,6 +2,7 @@
 
 #include "envoy/http/filter.h"
 #include "envoy/upstream/cluster_manager.h"
+#include "common/common/logger.h"
 
 namespace Envoy {
 namespace Extensions {

@@ -25,6 +25,7 @@ envoy_cc_library(
         "//source/common/grpc:common_lib",
         "//source/common/http:headers_lib",
         "//source/common/http/http1:codec_lib",
+        "//source/common/common:minimal_logger_lib",
     ],
 )
 
