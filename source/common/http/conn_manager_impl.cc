@@ -711,6 +711,8 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
   }
   ASSERT(stream_info_.downstreamRemoteAddress() != nullptr);
 
+  ENVOY_STREAM_LOG(debug, "before refresh cache route", *this);
+
   ASSERT(!cached_route_);
   refreshCachedRoute();
   const bool upgrade_rejected = createFilterChain() == false;
@@ -754,6 +756,7 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
     traceRequest();
   }
 
+  ENVOY_STREAM_LOG(debug, "before before decode headers", *this);
   decodeHeaders(nullptr, *request_headers_, end_stream);
 
   // Reset it here for both global and overridden cases.
