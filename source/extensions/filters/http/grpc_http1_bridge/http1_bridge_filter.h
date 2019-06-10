@@ -4,6 +4,8 @@
 #include "envoy/upstream/cluster_manager.h"
 #include "common/common/logger.h"
 
+#include "common/grpc/common.h"
+
 namespace Envoy {
 namespace Extensions {
 namespace HttpFilters {
@@ -14,6 +16,8 @@ namespace GrpcHttp1Bridge {
 class Http1BridgeFilter : public Logger::Loggable<Logger::Id::filter>,
                           public Http::StreamFilter {
 public:
+  explicit Http1BridgeFilter(Grpc::Context& context) : context_(context) {}
+
   // Http::StreamFilterBase
   void onDestroy() override {}
 
@@ -43,6 +47,8 @@ public:
     encoder_callbacks_ = &callbacks;
   }
 
+  bool doStatTracking() const { return request_names_.has_value(); }
+
 private:
   void chargeStat(const Http::HeaderMap& headers);
   void setupStatTracking(const Http::HeaderMap& headers);
@@ -51,10 +57,9 @@ private:
   Http::StreamEncoderFilterCallbacks* encoder_callbacks_{};
   Http::HeaderMap* response_headers_{};
   bool do_bridging_{};
-  bool do_stat_tracking_{};
   Upstream::ClusterInfoConstSharedPtr cluster_;
-  std::string grpc_service_;
-  std::string grpc_method_;
+  absl::optional<Grpc::Context::RequestNames> request_names_;
+  Grpc::Context& context_;
 };
 
 } // namespace GrpcHttp1Bridge

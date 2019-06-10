@@ -1,10 +1,14 @@
+#include <arpa/inet.h>
+
 #include "common/grpc/common.h"
 #include "common/http/headers.h"
 #include "common/http/message_impl.h"
 #include "common/http/utility.h"
+#include "common/stats/fake_symbol_table_impl.h"
 
 #include "test/mocks/upstream/mocks.h"
 #include "test/proto/helloworld.pb.h"
+#include "test/test_common/global.h"
 #include "test/test_common/utility.h"
 
 #include "gtest/gtest.h"
@@ -102,12 +106,18 @@ TEST(GrpcCommonTest, ToGrpcTimeout) {
 
 TEST(GrpcCommonTest, ChargeStats) {
   NiceMock<Upstream::MockClusterInfo> cluster;
-  Common::chargeStat(cluster, "service", "method", true);
+  Envoy::Test::Global<Stats::FakeSymbolTableImpl> symbol_table_;
+  Stats::StatNamePool pool(*symbol_table_);
+  const Stats::StatName service = pool.add("service");
+  const Stats::StatName method = pool.add("method");
+  Common::RequestNames request_names{service, method};
+  Common common(*symbol_table_);
+  common.chargeStat(cluster, request_names, true);
   EXPECT_EQ(1U, cluster.stats_store_.counter("grpc.service.method.success").value());
   EXPECT_EQ(0U, cluster.stats_store_.counter("grpc.service.method.failure").value());
   EXPECT_EQ(1U, cluster.stats_store_.counter("grpc.service.method.total").value());
 
-  Common::chargeStat(cluster, "service", "method", false);
+  common.chargeStat(cluster, request_names, false);
   EXPECT_EQ(1U, cluster.stats_store_.counter("grpc.service.method.success").value());
   EXPECT_EQ(1U, cluster.stats_store_.counter("grpc.service.method.failure").value());
   EXPECT_EQ(2U, cluster.stats_store_.counter("grpc.service.method.total").value());
@@ -115,14 +125,14 @@ TEST(GrpcCommonTest, ChargeStats) {
   Http::TestHeaderMapImpl trailers;
   Http::HeaderEntry& status = trailers.insertGrpcStatus();
   status.value("0", 1);
-  Common::chargeStat(cluster, "grpc", "service", "method", &status);
+  common.chargeStat(cluster, Context::Protocol::Grpc, request_names, &status);
   EXPECT_EQ(1U, cluster.stats_store_.counter("grpc.service.method.0").value());
   EXPECT_EQ(2U, cluster.stats_store_.counter("grpc.service.method.success").value());
   EXPECT_EQ(1U, cluster.stats_store_.counter("grpc.service.method.failure").value());
   EXPECT_EQ(3U, cluster.stats_store_.counter("grpc.service.method.total").value());
 
   status.value("1", 1);
-  Common::chargeStat(cluster, "grpc", "service", "method", &status);
+  common.chargeStat(cluster, Context::Protocol::Grpc, request_names, &status);
   EXPECT_EQ(1U, cluster.stats_store_.counter("grpc.service.method.0").value());
   EXPECT_EQ(1U, cluster.stats_store_.counter("grpc.service.method.1").value());
   EXPECT_EQ(2U, cluster.stats_store_.counter("grpc.service.method.success").value());
@@ -209,19 +219,22 @@ TEST(GrpcCommonTest, ResolveServiceAndMethod) {
   Http::HeaderMapImpl headers;
   Http::HeaderEntry& path = headers.insertPath();
   path.value(std::string("/service_name/method_name"));
-  EXPECT_TRUE(Common::resolveServiceAndMethod(&path, &service, &method));
-  EXPECT_EQ("service_name", service);
-  EXPECT_EQ("method_name", method);
+  Envoy::Test::Global<Stats::FakeSymbolTableImpl> symbol_table;
+  Common common(*symbol_table);
+  absl::optional<Common::RequestNames> request_names = common.resolveServiceAndMethod(&path);
+  EXPECT_TRUE(request_names);
+  EXPECT_EQ("service_name", symbol_table->toString(request_names->service_));
+  EXPECT_EQ("method_name", symbol_table->toString(request_names->method_));
   path.value(std::string(""));
-  EXPECT_FALSE(Common::resolveServiceAndMethod(&path, &service, &method));
+  EXPECT_FALSE(common.resolveServiceAndMethod(&path));
   path.value(std::string("/"));
-  EXPECT_FALSE(Common::resolveServiceAndMethod(&path, &service, &method));
+  EXPECT_FALSE(common.resolveServiceAndMethod(&path));
   path.value(std::string("//"));
-  EXPECT_FALSE(Common::resolveServiceAndMethod(&path, &service, &method));
+  EXPECT_FALSE(common.resolveServiceAndMethod(&path));
   path.value(std::string("/service_name"));
-  EXPECT_FALSE(Common::resolveServiceAndMethod(&path, &service, &method));
+  EXPECT_FALSE(common.resolveServiceAndMethod(&path));
   path.value(std::string("/service_name/"));
-  EXPECT_FALSE(Common::resolveServiceAndMethod(&path, &service, &method));
+  EXPECT_FALSE(common.resolveServiceAndMethod(&path));
 }
 
 TEST(GrpcCommonTest, GrpcToHttpStatus) {
@@ -347,6 +360,19 @@ TEST(GrpcCommonTest, ValidateResponse) {
         {":status", "200"}, {"grpc-status", "4"}, {"grpc-message", "custom error"}}});
     EXPECT_THROW_WITH_MESSAGE(Common::validateResponse(response), Exception, "custom error");
   }
+}
+
+// Ensure that the correct gPRC header is constructed for a Buffer::Instance.
+TEST(GrpcCommonTest, PrependGrpcFrameHeader) {
+  auto buffer = std::make_unique<Buffer::OwnedImpl>();
+  buffer->add("test", 4);
+  std::array<char, 5> expected_header;
+  expected_header[0] = 0; // flags
+  const uint32_t nsize = htonl(4);
+  std::memcpy(&expected_header[1], reinterpret_cast<const void*>(&nsize), sizeof(uint32_t));
+  std::string header_string(&expected_header[0], 5);
+  Common::prependGrpcFrameHeader(*buffer);
+  EXPECT_EQ(buffer->toString(), header_string + "test");
 }
 
 } // namespace Grpc

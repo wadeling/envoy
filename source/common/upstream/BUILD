@@ -46,6 +46,7 @@ envoy_cc_library(
         "//include/envoy/ssl:context_manager_interface",
         "//include/envoy/thread_local:thread_local_interface",
         "//include/envoy/upstream:cluster_manager_interface",
+        "//source/common/common:cleanup_lib",
         "//source/common/common:enum_to_int",
         "//source/common/common:utility_lib",
         "//source/common/config:cds_json_lib",
@@ -355,8 +356,11 @@ envoy_cc_library(
     deps = [
         ":eds_lib",
         ":health_checker_lib",
+        # TODO(mattklein123): Move the clusters to extensions so they can be compiled out.
         ":logical_dns_cluster_lib",
         ":original_dst_cluster_lib",
+        ":static_cluster_lib",
+        ":strict_dns_cluster_lib",
         ":upstream_includes",
         "//include/envoy/event:dispatcher_interface",
         "//include/envoy/event:timer_interface",
@@ -378,6 +382,26 @@ envoy_cc_library(
         "//source/extensions/transport_sockets:well_known_names",
         "//source/server:transport_socket_config_lib",
         "@envoy_api//envoy/api/v2/core:base_cc",
+    ],
+)
+
+envoy_cc_library(
+    name = "static_cluster_lib",
+    srcs = ["static_cluster.cc"],
+    hdrs = ["static_cluster.h"],
+    deps = [
+        ":cluster_factory_includes",
+        ":upstream_includes",
+    ],
+)
+
+envoy_cc_library(
+    name = "strict_dns_cluster_lib",
+    srcs = ["strict_dns_cluster.cc"],
+    hdrs = ["strict_dns_cluster.h"],
+    deps = [
+        ":cluster_factory_includes",
+        ":upstream_includes",
     ],
 )
 

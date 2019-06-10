@@ -25,6 +25,7 @@ The Redis project offers a thorough reference on partitioning as it relates to R
 * Active and passive healthchecking.
 * Hash tagging.
 * Prefix routing.
+* Separate downstream client and upstream server authentication.
 
 **Planned future enhancements**:
 
@@ -57,16 +58,41 @@ If passive healthchecking is desired, also configure
 For the purposes of passive healthchecking, connect timeouts, command timeouts, and connection
 close map to 5xx. All other responses from Redis are counted as a success.
 
+Redis Cluster Support (Experimental)
+----------------------------------------
+
+Envoy currently offers experimental support for `Redis Cluster <https://redis.io/topics/cluster-spec>`_.
+
+When using Envoy as a sidecar proxy for a Redis Cluster, the service can use a non-cluster Redis client
+implemented in any language to connect to the proxy as if it's a single node Redis instance.
+The Envoy proxy will keep track of the cluster topology and send commands to the correct Redis node in the
+cluster according to the `spec <https://redis.io/topics/cluster-spec>`_. Advance features such as reading
+from replicas can also be added to the Envoy proxy instead of updating redis clients in each language.
+
+Envoy proxy tracks the topology of the cluster by sending periodic
+`cluster slots <https://redis.io/commands/cluster-slots>`_ commands to a random node in the cluster, and maintains the
+following information:
+
+* List of known nodes.
+* The masters for each shard.
+* Nodes entering or leaving the cluster.
+
+For topology configuration details, see the Redis Cluster
+:ref:`v2 API reference <envoy_api_msg_config.cluster.redis.RedisClusterConfig>`.
+
 Supported commands
 ------------------
 
 At the protocol level, pipelines are supported. MULTI (transaction block) is not.
 Use pipelining wherever possible for the best performance.
 
-At the command level, Envoy only supports commands that can be reliably hashed to a server. PING
-is the only exception, which Envoy responds to immediately with PONG. Arguments to PING are not
-allowed. All other supported commands must contain a key. Supported commands are functionally
-identical to the original Redis command except possibly in failure scenarios.
+At the command level, Envoy only supports commands that can be reliably hashed to a server. AUTH and PING
+are the only exceptions. AUTH is processed locally by Envoy if a downstream password has been configured, 
+and no other commands will be processed until authentication is successful when a password has been 
+configured. Envoy will transparently issue AUTH commands upon connecting to upstream servers, if upstream 
+authentication passwords are configured for the cluster. Envoy responds to PING immediately with PONG. 
+Arguments to PING are not allowed. All other supported commands must contain a key. Supported commands are 
+functionally identical to the original Redis command except possibly in failure scenarios.
 
 For details on each command's usage see the official
 `Redis command reference <https://redis.io/commands>`_.
@@ -75,6 +101,7 @@ For details on each command's usage see the official
   :header: Command, Group
   :widths: 1, 1
 
+  AUTH, Authentication
   PING, Connection
   DEL, Generic
   DUMP, Generic
@@ -205,6 +232,12 @@ Envoy can also generate its own errors in response to the client.
   responded with a response that not conform to the Redis protocol."
   wrong number of arguments for command, "Certain commands check in Envoy that the number of
   arguments is correct."
+  "NOAUTH Authentication required.", "The command was rejected because a downstream authentication
+  password has been set and the client has not successfully authenticated."
+  ERR invalid password, "The authentication command failed due to an invalid password."
+  "ERR Client sent AUTH, but no password is set", "An authentication command was received, but no 
+  downstream authentication password has been configured."
+
 
 In the case of MGET, each individual key that cannot be fetched will generate an error response.
 For example, if we fetch five keys and two of the keys' backends time out, we would get an error

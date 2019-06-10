@@ -10,12 +10,26 @@ load(
 envoy_package()
 
 envoy_cc_library(
+    name = "typed_async_client_lib",
+    srcs = ["typed_async_client.cc"],
+    hdrs = ["typed_async_client.h"],
+    deps = [
+        ":codec_lib",
+        ":common_lib",
+        "//include/envoy/grpc:async_client_interface",
+        "//source/common/buffer:zero_copy_input_stream_lib",
+        "//source/common/http:async_client_lib",
+    ],
+)
+
+envoy_cc_library(
     name = "async_client_lib",
     srcs = ["async_client_impl.cc"],
     hdrs = ["async_client_impl.h"],
     deps = [
         ":codec_lib",
         ":common_lib",
+        ":typed_async_client_lib",
         "//include/envoy/grpc:async_client_interface",
         "//source/common/buffer:zero_copy_input_stream_lib",
         "//source/common/http:async_client_lib",
@@ -28,6 +42,7 @@ envoy_cc_library(
     hdrs = ["async_client_manager_impl.h"],
     deps = [
         ":async_client_lib",
+        ":common_lib",
         "//include/envoy/grpc:async_client_manager_interface",
         "//include/envoy/singleton:manager_interface",
         "//include/envoy/thread_local:thread_local_interface",
@@ -63,15 +78,18 @@ envoy_cc_library(
     hdrs = ["common.h"],
     external_deps = ["abseil_optional"],
     deps = [
+        "//include/envoy/grpc:context_interface",
         "//include/envoy/http:header_map_interface",
         "//include/envoy/http:message_interface",
         "//include/envoy/stats:stats_interface",
         "//include/envoy/upstream:cluster_manager_interface",
         "//include/envoy/upstream:upstream_interface",
         "//source/common/buffer:buffer_lib",
+        "//source/common/buffer:zero_copy_input_stream_lib",
         "//source/common/common:assert_lib",
         "//source/common/common:empty_string",
         "//source/common/common:enum_to_int",
+        "//source/common/common:hash_lib",
         "//source/common/common:macros",
         "//source/common/common:utility_lib",
         "//source/common/grpc:status_lib",
@@ -79,6 +97,26 @@ envoy_cc_library(
         "//source/common/http:message_lib",
         "//source/common/http:utility_lib",
         "//source/common/protobuf",
+        "//source/common/stats:symbol_table_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "google_grpc_utils_lib",
+    srcs = ["google_grpc_utils.cc"],
+    hdrs = ["google_grpc_utils.h"],
+    external_deps = [
+        "abseil_optional",
+        "grpc",
+    ],
+    deps = [
+        "//source/common/buffer:buffer_lib",
+        "//source/common/common:assert_lib",
+        "//source/common/common:empty_string",
+        "//source/common/common:enum_to_int",
+        "//source/common/common:macros",
+        "//source/common/common:utility_lib",
+        "//source/common/grpc:status_lib",
     ],
 )
 
@@ -91,7 +129,10 @@ envoy_cc_library(
         "grpc",
     ],
     deps = [
+        ":common_lib",
         ":google_grpc_creds_lib",
+        ":google_grpc_utils_lib",
+        ":typed_async_client_lib",
         "//include/envoy/api:api_interface",
         "//include/envoy/grpc:google_grpc_creds_interface",
         "//include/envoy/thread:thread_interface",

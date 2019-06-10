@@ -37,6 +37,7 @@ namespace Logger {
   FUNCTION(http2)                \
   FUNCTION(hystrix)              \
   FUNCTION(init)                 \
+  FUNCTION(kafka)                \
   FUNCTION(lua)                  \
   FUNCTION(main)                 \
   FUNCTION(misc)                 \
@@ -53,7 +54,8 @@ namespace Logger {
   FUNCTION(testing)              \
   FUNCTION(thrift)               \
   FUNCTION(tracing)              \
-  FUNCTION(upstream)
+  FUNCTION(upstream)             \
+  FUNCTION(udp)           
 
 enum class Id {
   ALL_LOGGER_IDS(GENERATE_ENUM)

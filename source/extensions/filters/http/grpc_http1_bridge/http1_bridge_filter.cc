@@ -18,7 +18,8 @@ namespace HttpFilters {
 namespace GrpcHttp1Bridge {
 
 void Http1BridgeFilter::chargeStat(const Http::HeaderMap& headers) {
-  Grpc::Common::chargeStat(*cluster_, "grpc", grpc_service_, grpc_method_, headers.GrpcStatus());
+  context_.chargeStat(*cluster_, Grpc::Common::Protocol::Grpc, *request_names_,
+                      headers.GrpcStatus());
 }
 
 Http::FilterHeadersStatus Http1BridgeFilter::decodeHeaders(Http::HeaderMap& headers, bool) {
@@ -50,7 +51,7 @@ Http::FilterHeadersStatus Http1BridgeFilter::decodeHeaders(Http::HeaderMap& head
 //}
 Http::FilterHeadersStatus Http1BridgeFilter::encodeHeaders(Http::HeaderMap& headers,
                                                            bool end_stream) {
-  if (do_stat_tracking_) {
+  if (doStatTracking()) {
     chargeStat(headers);
   }
   ENVOY_LOG(trace,"grpc encode headers do_bridging {},end_stream {}",do_bridging_,end_stream);
@@ -74,7 +75,7 @@ Http::FilterDataStatus Http1BridgeFilter::encodeData(Buffer::Instance&, bool end
 }
 
 Http::FilterTrailersStatus Http1BridgeFilter::encodeTrailers(Http::HeaderMap& trailers) {
-  if (do_stat_tracking_) {
+  if (doStatTracking()) {
     chargeStat(trailers);
   }
 
@@ -119,9 +120,8 @@ void Http1BridgeFilter::setupStatTracking(const Http::HeaderMap& headers) {
   if (!cluster_) {
     return;
   }
-  do_stat_tracking_ =
-      Grpc::Common::resolveServiceAndMethod(headers.Path(), &grpc_service_, &grpc_method_);
-  ENVOY_LOG(trace,"grpc setup stat tracking ,cluster {}, service {},method {}",cluster_->name(),grpc_service_,grpc_method_);
+
+  request_names_ = context_.resolveServiceAndMethod(headers.Path());
 }
 
 } // namespace GrpcHttp1Bridge
