@@ -43,7 +43,7 @@ public:
  * This is an HTTP client that multiple stream management and underlying connection management
  * across multiple HTTP codec types.
  */
-class CodecClient : Logger::Loggable<Logger::Id::client>,
+class CodecClient : public Logger::Loggable<Logger::Id::client>,
                     public Http::ConnectionCallbacks,
                     public Network::ConnectionCallbacks,
                     public Event::DeferredDeletable {
@@ -238,8 +238,7 @@ typedef std::unique_ptr<CodecClient> CodecClientPtr;
 /**
  * Production implementation that installs a real codec.
  */
-class CodecClientProd : Logger::Loggable<Logger::Id::client>,
-        public CodecClient {
+class CodecClientProd :public CodecClient {
 public:
   CodecClientProd(Type type, Network::ClientConnectionPtr&& connection,
                   Upstream::HostDescriptionConstSharedPtr host, Event::Dispatcher& dispatcher);
