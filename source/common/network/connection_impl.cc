@@ -329,6 +329,8 @@ void ConnectionImpl::readDisable(bool disable) {
 }
 
 void ConnectionImpl::raiseEvent(ConnectionEvent event) {
+  ENVOY_CONN_LOG(trace, "raiseEvent: event={}", *this,int(event));
+
   for (ConnectionCallbacks* callback : callbacks_) {
     // TODO(mattklein123): If we close while raising a connected event we should not raise further
     // connected events.
@@ -561,6 +563,8 @@ void ConnectionImpl::onWriteReady() {
       return;
     }
   }
+
+  ENVOY_CONN_LOG(trace,"write buffer:{}",*this,(*write_buffer_).toString());
 
   IoResult result = transport_socket_->doWrite(*write_buffer_, write_end_stream_);
   ASSERT(!result.end_stream_read_); // The interface guarantees that only read operations set this.
