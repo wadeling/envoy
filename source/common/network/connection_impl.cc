@@ -564,7 +564,7 @@ void ConnectionImpl::onWriteReady() {
     }
   }
 
-  ENVOY_CONN_LOG(trace,"write buffer:{}",*this,(*write_buffer_).toString());
+  ENVOY_CONN_LOG(trace,"write buffer:{},length {}",*this,write_buffer_->toString(),write_buffer_->length());
 
   IoResult result = transport_socket_->doWrite(*write_buffer_, write_end_stream_);
   ASSERT(!result.end_stream_read_); // The interface guarantees that only read operations set this.

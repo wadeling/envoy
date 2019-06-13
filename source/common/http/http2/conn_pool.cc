@@ -109,6 +109,8 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(Http::StreamDecoder& respon
                                                      ConnectionPool::Callbacks& callbacks) {
   ASSERT(drained_callbacks_.empty());
 
+  ENVOY_LOG(trace,"http2 connpool new stream");
+
   // First see if we need to handle max streams rollover.
   uint64_t max_streams = host_->cluster().maxRequestsPerConnection();
   if (max_streams == 0) {
@@ -270,12 +272,16 @@ void ConnPoolImpl::onUpstreamReady() {
 ConnPoolImpl::ActiveClient::ActiveClient(ConnPoolImpl& parent)
     : parent_(parent),
       connect_timer_(parent_.dispatcher_.createTimer([this]() -> void { onConnectTimeout(); })) {
+
+  ENVOY_LOG(debug,"new http2 active client ");
+
   parent_.conn_connect_ms_ = std::make_unique<Stats::Timespan>(
       parent_.host_->cluster().stats().upstream_cx_connect_ms_, parent_.dispatcher_.timeSource());
   Upstream::Host::CreateConnectionData data =
       parent_.host_->createConnection(parent_.dispatcher_, parent_.socket_options_, nullptr);
   real_host_description_ = data.host_description_;
   client_ = parent_.createCodecClient(data);
+
   client_->addConnectionCallbacks(*this);
   client_->setCodecClientCallbacks(*this);
   client_->setCodecConnectionCallbacks(*this);

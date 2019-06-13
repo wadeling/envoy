@@ -149,6 +149,8 @@ CodecClientProd::CodecClientProd(Type type, Network::ClientConnectionPtr&& conne
                                  Upstream::HostDescriptionConstSharedPtr host,
                                  Event::Dispatcher& dispatcher)
     : CodecClient(type, std::move(connection), host, dispatcher) {
+
+  ENVOY_LOG(trace,"codec client prod,type {}",int(type));
   switch (type) {
   case Type::HTTP1: {
     codec_ = std::make_unique<Http1::ClientConnectionImpl>(*connection_, *this);

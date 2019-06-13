@@ -411,6 +411,8 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
   }
 
   // Fetch a connection pool for the upstream cluster.
+  ENVOY_STREAM_LOG(debug, "ready to get conn pool", *callbacks_);
+
   Http::ConnectionPool::Instance* conn_pool = getConnPool();
   if (!conn_pool) {
     sendNoHealthyUpstreamResponse();
@@ -495,6 +497,7 @@ Http::ConnectionPool::Instance* Filter::getConnPool() {
   // Choose protocol based on cluster configuration and downstream connection
   // Note: Cluster may downgrade HTTP2 to HTTP1 based on runtime configuration.
   auto features = cluster_->features();
+  ENVOY_STREAM_LOG(debug, "get conn pool,features:{}", *callbacks_, features);
 
   Http::Protocol protocol;
   if (features & Upstream::ClusterInfo::Features::USE_DOWNSTREAM_PROTOCOL) {
@@ -503,6 +506,7 @@ Http::ConnectionPool::Instance* Filter::getConnPool() {
     protocol = (features & Upstream::ClusterInfo::Features::HTTP2) ? Http::Protocol::Http2
                                                                    : Http::Protocol::Http11;
   }
+  ENVOY_STREAM_LOG(debug, "get conn pool,protocol:{}", *callbacks_, int(protocol));
   return config_.cm_.httpConnPoolForCluster(route_entry_->clusterName(), route_entry_->priority(),
                                             protocol, this);
 }
@@ -1330,6 +1334,8 @@ void Filter::UpstreamRequest::maybeEndDecode(bool end_stream) {
 void Filter::UpstreamRequest::encodeHeaders(bool end_stream) {
   ASSERT(!encode_complete_);
   encode_complete_ = end_stream;
+
+  ENVOY_LOG(trace,"router new stream");
 
   // It's possible for a reset to happen inline within the newStream() call. In this case, we might
   // get deleted inline as well. Only write the returned handle out if it is not nullptr to deal
