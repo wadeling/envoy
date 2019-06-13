@@ -238,7 +238,8 @@ typedef std::unique_ptr<CodecClient> CodecClientPtr;
 /**
  * Production implementation that installs a real codec.
  */
-class CodecClientProd : public CodecClient {
+class CodecClientProd : Logger::Loggable<Logger::Id::client>,
+        public CodecClient {
 public:
   CodecClientProd(Type type, Network::ClientConnectionPtr&& connection,
                   Upstream::HostDescriptionConstSharedPtr host, Event::Dispatcher& dispatcher);
