@@ -1489,10 +1489,12 @@ void Filter::UpstreamRequest::onPoolReady(Http::StreamEncoder& request_encoder,
 
   upstream_timing_.onFirstUpstreamTxByteSent(parent_.callbacks_->dispatcher().timeSource());
 
+  // this will encode headers and send http2 frams and invoke callback like onSend
   ENVOY_STREAM_LOG(debug, "request_encoder.encodeHeader", *parent_.callbacks_);
   request_encoder.encodeHeaders(*parent_.downstream_headers_,
                                 !buffered_request_body_ && encode_complete_ && !encode_trailers_);
   calling_encode_headers_ = false;
+  ENVOY_STREAM_LOG(debug, "request_encoder.encodeHeader end", *parent_.callbacks_);
 
   // It is possible to get reset in the middle of an encodeHeaders() call. This happens for example
   // in the HTTP/2 codec if the frame cannot be encoded for some reason. This should never happen

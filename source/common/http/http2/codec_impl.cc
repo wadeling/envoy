@@ -122,6 +122,8 @@ void ConnectionImpl::StreamImpl::encodeHeaders(const HeaderMap& headers, bool en
 
   local_end_stream_ = end_stream;
   submitHeaders(final_headers, end_stream ? nullptr : &provider);
+
+  //this will send http2 frames and invoke callback
   parent_.sendPendingFrames();
 }
 
@@ -258,6 +260,8 @@ int ConnectionImpl::StreamImpl::onDataSourceSend(const uint8_t* framehd, size_t 
 
   Buffer::OwnedImpl output(framehd, FRAME_HEADER_SIZE);
   output.move(pending_send_data_, length);
+  ENVOY_CONN_LOG(debug, "onDataSourceSend,output:{} ", parent_.connection_,output.toString());
+
   parent_.connection_.write(output, false);
   return 0;
 }
@@ -372,6 +376,8 @@ ConnectionImpl::StreamImpl* ConnectionImpl::getStream(int32_t stream_id) {
 }
 
 int ConnectionImpl::onData(int32_t stream_id, const uint8_t* data, size_t len) {
+  ENVOY_CONN_LOG(trace, "onData,recv data", connection_);
+
   StreamImpl* stream = getStream(stream_id);
   // If this results in buffering too much data, the watermark buffer will call
   // pendingRecvBufferHighWatermark, resulting in ++read_disable_count_
@@ -513,7 +519,7 @@ int ConnectionImpl::onFrameSend(const nghttp2_frame* frame) {
   // data from our peer. Sometimes it raises the invalid frame callback, and sometimes it does not.
   // In all cases however it will attempt to send a GOAWAY frame with an error status. If we see
   // an outgoing frame of this type, we will return an error code so that we can abort execution.
-  ENVOY_CONN_LOG(trace, "sent frame type={}", connection_, static_cast<uint64_t>(frame->hd.type));
+  ENVOY_CONN_LOG(trace, "sented frame type={}", connection_, static_cast<uint64_t>(frame->hd.type));
   switch (frame->hd.type) {
   case NGHTTP2_GOAWAY: {
     if (frame->goaway.error_code != NGHTTP2_NO_ERROR) {
@@ -564,6 +570,7 @@ ssize_t ConnectionImpl::onSend(const uint8_t* data, size_t length) {
   Buffer::OwnedImpl buffer(data, length);
   ENVOY_CONN_LOG(trace, "http2 onSend buffer={}", connection_, buffer.toString());
 
+  // 调用conncetion发数据,这里的connection是纯连接对象.conn_manager_impl是server连接
   connection_.write(buffer, false);
   return length;
 }
@@ -665,6 +672,7 @@ void ConnectionImpl::sendPendingFrames() {
   if (dispatching_ || connection_.state() == Network::Connection::State::Closed) {
     return;
   }
+  // nghttp2_session_send will call callback,like onSend etc
   ENVOY_CONN_LOG(debug, "http2 sendPendingFrames", connection_);
   int rc = nghttp2_session_send(session_);
   if (rc != 0) {
@@ -901,6 +909,7 @@ ClientConnectionImpl::ClientConnectionImpl(Network::Connection& connection,
   ENVOY_LOG(trace,"http2 new client conn impl");
 
   ClientHttp2Options client_http2_options(http2_settings);
+  //注意这里设置了nghttp2 session的userdata -> base(),也就是自己
   nghttp2_session_client_new2(&session_, http2_callbacks_.callbacks(), base(),
                               client_http2_options.options());
   ENVOY_LOG(trace,"nghttp2_session_client_new2");
@@ -927,6 +936,8 @@ int ClientConnectionImpl::onBeginHeaders(const nghttp2_frame* frame) {
   RELEASE_ASSERT(frame->headers.cat == NGHTTP2_HCAT_RESPONSE ||
                      frame->headers.cat == NGHTTP2_HCAT_HEADERS,
                  "");
+  ENVOY_LOG(trace,"onBeginHeaders");
+
   if (frame->headers.cat == NGHTTP2_HCAT_HEADERS) {
     StreamImpl* stream = getStream(frame->hd.stream_id);
     ASSERT(!stream->headers_);
@@ -941,6 +952,8 @@ int ClientConnectionImpl::onHeader(const nghttp2_frame* frame, HeaderString&& na
   // The client code explicitly does not currently support push promise.
   ASSERT(frame->hd.type == NGHTTP2_HEADERS);
   ASSERT(frame->headers.cat == NGHTTP2_HCAT_RESPONSE || frame->headers.cat == NGHTTP2_HCAT_HEADERS);
+  ENVOY_LOG(trace,"onHeader,recv header");
+
   return saveHeader(frame, std::move(name), std::move(value));
 }
 
