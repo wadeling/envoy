@@ -94,19 +94,24 @@ void ConnectionImpl::StreamImpl::encode100ContinueHeaders(const HeaderMap& heade
 void ConnectionImpl::StreamImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
   std::vector<nghttp2_nv> final_headers;
 
+  ENVOY_CONN_LOG(debug, "StreamImpl::encodeHeader ", parent_.connection_);
+
   // This must exist outside of the scope of isUpgrade as the underlying memory is
   // needed until submitHeaders has been called.
   Http::HeaderMapPtr modified_headers;
   if (Http::Utility::isUpgrade(headers)) {
+    ENVOY_CONN_LOG(debug, "StreamImpl::encodeHeader deal upgrade header ", parent_.connection_);
     modified_headers = std::make_unique<Http::HeaderMapImpl>(headers);
     transformUpgradeFromH1toH2(*modified_headers);
     buildHeaders(final_headers, *modified_headers);
   } else {
+    ENVOY_CONN_LOG(debug, "StreamImpl::encodeHeader deal normal header ", parent_.connection_);
     buildHeaders(final_headers, headers);
   }
 
   nghttp2_data_provider provider;
   if (!end_stream) {
+    ENVOY_CONN_LOG(debug, "StreamImpl::encodeHeader provider set read cb ", parent_.connection_);
     provider.source.ptr = this;
     provider.read_callback = [](nghttp2_session*, int32_t, uint8_t*, size_t length,
                                 uint32_t* data_flags, nghttp2_data_source* source,
@@ -555,8 +560,10 @@ int ConnectionImpl::onInvalidFrame(int32_t stream_id, int error_code) {
 }
 
 ssize_t ConnectionImpl::onSend(const uint8_t* data, size_t length) {
-  ENVOY_CONN_LOG(trace, "send data: bytes={}", connection_, length);
+  ENVOY_CONN_LOG(trace, "http2 onSend send data: bytes={}", connection_, length);
   Buffer::OwnedImpl buffer(data, length);
+  ENVOY_CONN_LOG(trace, "http2 onSend buffer={}", connection_, buffer.toString());
+
   connection_.write(buffer, false);
   return length;
 }
@@ -658,7 +665,7 @@ void ConnectionImpl::sendPendingFrames() {
   if (dispatching_ || connection_.state() == Network::Connection::State::Closed) {
     return;
   }
-
+  ENVOY_CONN_LOG(debug, "http2 sendPendingFrames", connection_);
   int rc = nghttp2_session_send(session_);
   if (rc != 0) {
     ASSERT(rc == NGHTTP2_ERR_CALLBACK_FAILURE);
@@ -678,6 +685,7 @@ void ConnectionImpl::sendPendingFrames() {
   //       resetting. In other cases, we just do the reset now which will blow away pending data
   //       frames and release any memory associated with the stream.
   if (pending_deferred_reset_) {
+    ENVOY_CONN_LOG(debug, "http2 pending_deferred_reset", connection_);
     pending_deferred_reset_ = false;
     for (auto& stream : active_streams_) {
       if (stream->deferred_reset_) {
@@ -889,9 +897,13 @@ ClientConnectionImpl::ClientConnectionImpl(Network::Connection& connection,
                                            const uint32_t max_request_headers_kb)
     : ConnectionImpl(connection, stats, http2_settings, max_request_headers_kb),
       callbacks_(callbacks) {
+
+  ENVOY_LOG(trace,"http2 new client conn impl");
+
   ClientHttp2Options client_http2_options(http2_settings);
   nghttp2_session_client_new2(&session_, http2_callbacks_.callbacks(), base(),
                               client_http2_options.options());
+  ENVOY_LOG(trace,"nghttp2_session_client_new2");
   sendSettings(http2_settings, true);
   allow_metadata_ = http2_settings.allow_metadata_;
 }

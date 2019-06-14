@@ -412,7 +412,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
 
   // Fetch a connection pool for the upstream cluster.
   ENVOY_STREAM_LOG(debug, "ready to get conn pool", *callbacks_);
-
+  // this will create different pool by protocal type.
   Http::ConnectionPool::Instance* conn_pool = getConnPool();
   if (!conn_pool) {
     sendNoHealthyUpstreamResponse();
@@ -501,6 +501,7 @@ Http::ConnectionPool::Instance* Filter::getConnPool() {
 
   Http::Protocol protocol;
   if (features & Upstream::ClusterInfo::Features::USE_DOWNSTREAM_PROTOCOL) {
+    ENVOY_STREAM_LOG(debug, "get protocol by streaminfo ", *callbacks_);
     protocol = callbacks_->streamInfo().protocol().value();
   } else {
     protocol = (features & Upstream::ClusterInfo::Features::HTTP2) ? Http::Protocol::Http2
@@ -1335,7 +1336,7 @@ void Filter::UpstreamRequest::encodeHeaders(bool end_stream) {
   ASSERT(!encode_complete_);
   encode_complete_ = end_stream;
 
-  ENVOY_LOG(trace,"router new stream");
+  ENVOY_LOG(trace,"encode headers,router new stream");
 
   // It's possible for a reset to happen inline within the newStream() call. In this case, we might
   // get deleted inline as well. Only write the returned handle out if it is not nullptr to deal
@@ -1465,6 +1466,8 @@ void Filter::UpstreamRequest::onPoolReady(Http::StreamEncoder& request_encoder,
 
   // TODO(ggreenway): set upstream local address in the StreamInfo.
   onUpstreamHostSelected(host);
+
+  ENVOY_STREAM_LOG(debug, "request_encoder.getStream().addCallbacks", *parent_.callbacks_);
   request_encoder.getStream().addCallbacks(*this);
 
   if (parent_.downstream_end_stream_) {
@@ -1485,6 +1488,8 @@ void Filter::UpstreamRequest::onPoolReady(Http::StreamEncoder& request_encoder,
   }
 
   upstream_timing_.onFirstUpstreamTxByteSent(parent_.callbacks_->dispatcher().timeSource());
+
+  ENVOY_STREAM_LOG(debug, "request_encoder.encodeHeader", *parent_.callbacks_);
   request_encoder.encodeHeaders(*parent_.downstream_headers_,
                                 !buffered_request_body_ && encode_complete_ && !encode_trailers_);
   calling_encode_headers_ = false;
@@ -1495,14 +1500,17 @@ void Filter::UpstreamRequest::onPoolReady(Http::StreamEncoder& request_encoder,
   // specific example of a case where this happens is if we try to encode a total header size that
   // is too big in HTTP/2 (64K currently).
   if (deferred_reset_reason_) {
+    ENVOY_STREAM_LOG(debug, "onResetStream", *parent_.callbacks_);
     onResetStream(deferred_reset_reason_.value(), absl::string_view());
   } else {
     if (buffered_request_body_) {
       stream_info_.addBytesSent(buffered_request_body_->length());
+      ENVOY_STREAM_LOG(debug, "request_encoder.encodeData", *parent_.callbacks_);
       request_encoder.encodeData(*buffered_request_body_, encode_complete_ && !encode_trailers_);
     }
 
     if (encode_trailers_) {
+      ENVOY_STREAM_LOG(debug, "request_encoder.encodeTrailer", *parent_.callbacks_);
       request_encoder.encodeTrailers(*parent_.downstream_trailers_);
     }
 
