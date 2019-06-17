@@ -1489,7 +1489,8 @@ void Filter::UpstreamRequest::onPoolReady(Http::StreamEncoder& request_encoder,
 
   upstream_timing_.onFirstUpstreamTxByteSent(parent_.callbacks_->dispatcher().timeSource());
 
-  // this will encode headers and send http2 frams and invoke callback like onSend
+  // this will encode headers and send http2 frams and invoke callback like onSend to send headers
+  // also will invoke OnDataSourceRead to read data that will be send
   ENVOY_STREAM_LOG(debug, "request_encoder.encodeHeader", *parent_.callbacks_);
   request_encoder.encodeHeaders(*parent_.downstream_headers_,
                                 !buffered_request_body_ && encode_complete_ && !encode_trailers_);

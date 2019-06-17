@@ -688,6 +688,7 @@ void ConnectionImpl::sendPendingFrames() {
   // nghttp2_session_send will call callback,like onSend etc
   ENVOY_CONN_LOG(debug, "http2 sendPendingFrames", connection_);
   int rc = nghttp2_session_send(session_);
+  ENVOY_CONN_LOG(debug, "http2 sendPendingFrames end,rc {}", connection_,rc);
   if (rc != 0) {
     ASSERT(rc == NGHTTP2_ERR_CALLBACK_FAILURE);
     throw CodecProtocolException(fmt::format("{}", nghttp2_strerror(rc)));
