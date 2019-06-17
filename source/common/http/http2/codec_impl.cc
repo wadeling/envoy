@@ -94,7 +94,7 @@ void ConnectionImpl::StreamImpl::encode100ContinueHeaders(const HeaderMap& heade
 void ConnectionImpl::StreamImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
   std::vector<nghttp2_nv> final_headers;
 
-  ENVOY_CONN_LOG(debug, "StreamImpl::encodeHeader ", parent_.connection_);
+  ENVOY_CONN_LOG(debug, "StreamImpl::encodeHeader,end_stream {} ", parent_.connection_,end_stream);
 
   // This must exist outside of the scope of isUpgrade as the underlying memory is
   // needed until submitHeaders has been called.
@@ -232,6 +232,8 @@ void ConnectionImpl::StreamImpl::submitMetadata() {
 }
 
 ssize_t ConnectionImpl::StreamImpl::onDataSourceRead(uint64_t length, uint32_t* data_flags) {
+  ENVOY_CONN_LOG(debug, "onDataSource Read,length:{} ", parent_.connection_,length);
+
   if (pending_send_data_.length() == 0 && !local_end_stream_) {
     ASSERT(!data_deferred_);
     data_deferred_ = true;
@@ -258,7 +260,12 @@ int ConnectionImpl::StreamImpl::onDataSourceSend(const uint8_t* framehd, size_t 
   // https://nghttp2.org/documentation/types.html#c.nghttp2_send_data_callback
   static const uint64_t FRAME_HEADER_SIZE = 9;
 
+  //test
+//  Buffer::OwnedImpl tmp(framehd, FRAME_HEADER_SIZE);
   Buffer::OwnedImpl output(framehd, FRAME_HEADER_SIZE);
+  ENVOY_CONN_LOG(debug, "onDataSourceSend,framehd data:{} ", parent_.connection_,output.toString());
+  ENVOY_CONN_LOG(debug, "onDataSourceSend,origin pending_send_data_:{} ", parent_.connection_,pending_send_data_.toString());
+
   output.move(pending_send_data_, length);
   ENVOY_CONN_LOG(debug, "onDataSourceSend,output:{} ", parent_.connection_,output.toString());
 
@@ -268,6 +275,9 @@ int ConnectionImpl::StreamImpl::onDataSourceSend(const uint8_t* framehd, size_t 
 
 void ConnectionImpl::ClientStreamImpl::submitHeaders(const std::vector<nghttp2_nv>& final_headers,
                                                      nghttp2_data_provider* provider) {
+
+  ENVOY_CONN_LOG(debug, "client stream impl submitHeaders:", parent_.connection_);
+
   ASSERT(stream_id_ == -1);
   stream_id_ = nghttp2_submit_request(parent_.session_, nullptr, &final_headers.data()[0],
                                       final_headers.size(), provider, base());
@@ -283,6 +293,9 @@ void ConnectionImpl::ServerStreamImpl::submitHeaders(const std::vector<nghttp2_n
 }
 
 void ConnectionImpl::StreamImpl::encodeData(Buffer::Instance& data, bool end_stream) {
+
+  ENVOY_CONN_LOG(debug, "stream impl encodeData:", parent_.connection_);
+
   ASSERT(!local_end_stream_);
   local_end_stream_ = end_stream;
   pending_send_data_.move(data);
