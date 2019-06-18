@@ -446,6 +446,7 @@ int ConnectionImpl::onFrameReceived(const nghttp2_frame* frame) {
       stream->headers_->addViaMove(std::move(key), std::move(stream->cookies_));
     }
 
+    ENVOY_CONN_LOG(trace, "recv headers cat={}", connection_, static_cast<uint64_t>(frame->headers.cat));
     switch (frame->headers.cat) {
     case NGHTTP2_HCAT_RESPONSE: {
       if (CodeUtility::is1xx(Http::Utility::getResponseStatus(*stream->headers_))) {
@@ -985,6 +986,8 @@ ServerConnectionImpl::ServerConnectionImpl(Network::Connection& connection,
 }
 
 int ServerConnectionImpl::onBeginHeaders(const nghttp2_frame* frame) {
+   ENVOY_LOG(trace,"onBeginHeader, {}",int(frame->headers.cat));
+
   // For a server connection, we should never get push promise frames.
   ASSERT(frame->hd.type == NGHTTP2_HEADERS);
   if (frame->headers.cat != NGHTTP2_HCAT_REQUEST) {
@@ -1011,6 +1014,8 @@ int ServerConnectionImpl::onBeginHeaders(const nghttp2_frame* frame) {
 
 int ServerConnectionImpl::onHeader(const nghttp2_frame* frame, HeaderString&& name,
                                    HeaderString&& value) {
+  ENVOY_LOG(trace,"server conn onHeader" );
+
   // For a server connection, we should never get push promise frames.
   ASSERT(frame->hd.type == NGHTTP2_HEADERS);
   ASSERT(frame->headers.cat == NGHTTP2_HCAT_REQUEST || frame->headers.cat == NGHTTP2_HCAT_HEADERS);
