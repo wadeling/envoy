@@ -362,7 +362,7 @@ Http::ServerConnectionPtr
 HttpConnectionManagerConfig::createCodec(Network::Connection& connection,
                                          const Buffer::Instance& data,
                                          Http::ServerConnectionCallbacks& callbacks) {
-  ENVOY_LOG(debug, "create server conn,codec_type {}", codec_type_);
+  ENVOY_LOG(debug, "create server conn,codec_type {}", int(codec_type_));
 
   switch (codec_type_) {
   case CodecType::HTTP1:
