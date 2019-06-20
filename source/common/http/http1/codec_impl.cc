@@ -31,6 +31,7 @@ StreamEncoderImpl::StreamEncoderImpl(ConnectionImpl& connection) : connection_(c
 
 void StreamEncoderImpl::encodeHeader(const char* key, uint32_t key_size, const char* value,
                                      uint32_t value_size) {
+  ENVOY_LOG(trace, "StreamEncoderImpl::encodeHeader1");
 
   connection_.reserveBuffer(key_size + value_size + 4);
   ASSERT(key_size > 0);
@@ -43,6 +44,7 @@ void StreamEncoderImpl::encodeHeader(const char* key, uint32_t key_size, const c
   connection_.addCharToBuffer('\n');
 }
 void StreamEncoderImpl::encodeHeader(absl::string_view key, absl::string_view value) {
+  ENVOY_LOG(trace, "StreamEncoderImpl::encodeHeader2");
   this->encodeHeader(key.data(), key.size(), value.data(), value.size());
 }
 
@@ -54,6 +56,7 @@ void StreamEncoderImpl::encode100ContinueHeaders(const HeaderMap& headers) {
 }
 
 void StreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
+  ENVOY_LOG(trace, "StreamEncoderImpl::encodeHeaders");
   bool saw_content_length = false;
   headers.iterate(
       [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
@@ -229,6 +232,7 @@ static const char RESPONSE_PREFIX[] = "HTTP/1.1 ";
 static const char HTTP_10_RESPONSE_PREFIX[] = "HTTP/1.0 ";
 
 void ResponseStreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
+  ENVOY_LOG(trace, "ResponseStreamEncoderImpl::encodeHeaders");
   started_response_ = true;
   uint64_t numeric_status = Utility::getResponseStatus(headers);
 
@@ -263,6 +267,7 @@ void ResponseStreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end
 static const char REQUEST_POSTFIX[] = " HTTP/1.1\r\n";
 
 void RequestStreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
+  ENVOY_LOG(trace, "RequestStreamEncoderImpl::encodeHeaders");
   const HeaderEntry* method = headers.Method();
   const HeaderEntry* path = headers.Path();
   if (!method || !path) {

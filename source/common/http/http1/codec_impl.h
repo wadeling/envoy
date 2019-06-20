@@ -29,7 +29,7 @@ class ConnectionImpl;
  */
 class StreamEncoderImpl : public StreamEncoder,
                           public Stream,
-                          Logger::Loggable<Logger::Id::http>,
+                          public Logger::Loggable<Logger::Id::http>,
                           public StreamCallbackHelper {
 public:
   // Http::StreamEncoder
