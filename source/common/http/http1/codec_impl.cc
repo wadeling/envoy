@@ -31,7 +31,7 @@ StreamEncoderImpl::StreamEncoderImpl(ConnectionImpl& connection) : connection_(c
 
 void StreamEncoderImpl::encodeHeader(const char* key, uint32_t key_size, const char* value,
                                      uint32_t value_size) {
-  ENVOY_LOG(trace, "StreamEncoderImpl::encodeHeader1");
+  ENVOY_LOG(trace, "StreamEncoderImpl::encodeHeader add to conn buf");
 
   connection_.reserveBuffer(key_size + value_size + 4);
   ASSERT(key_size > 0);
@@ -44,7 +44,7 @@ void StreamEncoderImpl::encodeHeader(const char* key, uint32_t key_size, const c
   connection_.addCharToBuffer('\n');
 }
 void StreamEncoderImpl::encodeHeader(absl::string_view key, absl::string_view value) {
-  ENVOY_LOG(trace, "StreamEncoderImpl::encodeHeader2");
+  ENVOY_LOG(trace, "StreamEncoderImpl::encodeHeader,key {} value {}",key,value);
   this->encodeHeader(key.data(), key.size(), value.data(), value.size());
 }
 
