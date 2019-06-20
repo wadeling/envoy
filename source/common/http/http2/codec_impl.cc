@@ -286,6 +286,7 @@ void ConnectionImpl::ClientStreamImpl::submitHeaders(const std::vector<nghttp2_n
 
 void ConnectionImpl::ServerStreamImpl::submitHeaders(const std::vector<nghttp2_nv>& final_headers,
                                                      nghttp2_data_provider* provider) {
+  ENVOY_CONN_LOG(debug, "server stream impl submitHeaders:", parent_.connection_);
   ASSERT(stream_id_ != -1);
   int rc = nghttp2_submit_response(parent_.session_, stream_id_, &final_headers.data()[0],
                                    final_headers.size(), provider);
