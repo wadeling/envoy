@@ -68,7 +68,12 @@ static void insertHeader(std::vector<nghttp2_nv>& headers, const HeaderEntry& he
     flags |= NGHTTP2_NV_FLAG_NO_COPY_VALUE;
   }
   const absl::string_view header_key = header.key().getStringView();
-  const absl::string_view header_value = header.value().getStringView();
+  //const absl::string_view header_value = header.value().getStringView();
+  absl::string_view header_value = header.value().getStringView();
+  if(header_key == "x-tencent-trim-header" && header_value == "false") {
+      header_value = "true";
+      //ENVOY_LOG(debug, "match x-tencent-trim-header, and change value to {}", header_value);
+  }
   headers.push_back({remove_const<uint8_t>(header_key.data()),
                      remove_const<uint8_t>(header_value.data()), header_key.size(),
                      header_value.size(), flags});
