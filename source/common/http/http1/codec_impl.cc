@@ -461,6 +461,7 @@ int ConnectionImpl::onHeadersCompleteBase() {
   }
 
   int rc = onHeadersComplete(std::move(current_header_map_));
+  ENVOY_CONN_LOG(trace, "onHeadersComplete end", connection_);
   current_header_map_.reset();
   header_parsing_state_ = HeaderParsingState::Done;
 
@@ -558,6 +559,8 @@ int ServerConnectionImpl::onHeadersComplete(HeaderMapImplPtr&& headers) {
   // Handle the case where response happens prior to request complete. It's up to upper layer code
   // to disconnect the connection but we shouldn't fire any more events since it doesn't make
   // sense.
+  ENVOY_CONN_LOG(trace, "ServerConnectionImpl::onHeadersComplete", connection_);
+
   if (active_request_) {
     const char* method_string = http_method_str(static_cast<http_method>(parser_.method));
 
