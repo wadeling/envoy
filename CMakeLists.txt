@@ -7,225 +7,125 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include_directories(include)
 include_directories(source)
 add_executable(envoy
-    api/envoy/api/v2/auth/BUILD
     api/envoy/api/v2/auth/cert.proto
-    api/envoy/api/v2/cluster/BUILD
     api/envoy/api/v2/cluster/circuit_breaker.proto
     api/envoy/api/v2/cluster/outlier_detection.proto
     api/envoy/api/v2/core/address.proto
     api/envoy/api/v2/core/base.proto
-    api/envoy/api/v2/core/BUILD
     api/envoy/api/v2/core/config_source.proto
     api/envoy/api/v2/core/grpc_service.proto
     api/envoy/api/v2/core/health_check.proto
     api/envoy/api/v2/core/http_uri.proto
     api/envoy/api/v2/core/protocol.proto
-    api/envoy/api/v2/endpoint/BUILD
     api/envoy/api/v2/endpoint/endpoint.proto
     api/envoy/api/v2/endpoint/load_report.proto
-    api/envoy/api/v2/listener/BUILD
     api/envoy/api/v2/listener/listener.proto
-    api/envoy/api/v2/ratelimit/BUILD
     api/envoy/api/v2/ratelimit/ratelimit.proto
-    api/envoy/api/v2/route/BUILD
     api/envoy/api/v2/route/route.proto
-    api/envoy/api/v2/BUILD
     api/envoy/api/v2/cds.proto
     api/envoy/api/v2/discovery.proto
     api/envoy/api/v2/eds.proto
     api/envoy/api/v2/lds.proto
     api/envoy/api/v2/rds.proto
-    api/envoy/api/v2/README.md
     api/envoy/api/v2/srds.proto
     api/envoy/config/accesslog/v2/als.proto
-    api/envoy/config/accesslog/v2/BUILD
     api/envoy/config/accesslog/v2/file.proto
     api/envoy/config/bootstrap/v2/bootstrap.proto
-    api/envoy/config/bootstrap/v2/BUILD
-    api/envoy/config/common/tap/v2alpha/BUILD
     api/envoy/config/common/tap/v2alpha/common.proto
     api/envoy/config/filter/accesslog/v2/accesslog.proto
-    api/envoy/config/filter/accesslog/v2/BUILD
-    api/envoy/config/filter/dubbo/router/v2alpha1/BUILD
     api/envoy/config/filter/dubbo/router/v2alpha1/router.proto
-    api/envoy/config/filter/fault/v2/BUILD
     api/envoy/config/filter/fault/v2/fault.proto
     api/envoy/config/filter/http/buffer/v2/buffer.proto
-    api/envoy/config/filter/http/buffer/v2/BUILD
-    api/envoy/config/filter/http/csrf/v2/BUILD
     api/envoy/config/filter/http/csrf/v2/csrf.proto
-    api/envoy/config/filter/http/ext_authz/v2/BUILD
     api/envoy/config/filter/http/ext_authz/v2/ext_authz.proto
-    api/envoy/config/filter/http/fault/v2/BUILD
     api/envoy/config/filter/http/fault/v2/fault.proto
-    api/envoy/config/filter/http/grpc_http1_reverse_bridge/v2alpha1/BUILD
     api/envoy/config/filter/http/grpc_http1_reverse_bridge/v2alpha1/config.proto
-    api/envoy/config/filter/http/gzip/v2/BUILD
     api/envoy/config/filter/http/gzip/v2/gzip.proto
-    api/envoy/config/filter/http/header_to_metadata/v2/BUILD
     api/envoy/config/filter/http/header_to_metadata/v2/header_to_metadata.proto
-    api/envoy/config/filter/http/health_check/v2/BUILD
     api/envoy/config/filter/http/health_check/v2/health_check.proto
-    api/envoy/config/filter/http/ip_tagging/v2/BUILD
     api/envoy/config/filter/http/ip_tagging/v2/ip_tagging.proto
-    api/envoy/config/filter/http/jwt_authn/v2alpha/BUILD
     api/envoy/config/filter/http/jwt_authn/v2alpha/config.proto
-    api/envoy/config/filter/http/jwt_authn/v2alpha/README.md
-    api/envoy/config/filter/http/lua/v2/BUILD
     api/envoy/config/filter/http/lua/v2/lua.proto
-    api/envoy/config/filter/http/rate_limit/v2/BUILD
     api/envoy/config/filter/http/rate_limit/v2/rate_limit.proto
-    api/envoy/config/filter/http/rbac/v2/BUILD
     api/envoy/config/filter/http/rbac/v2/rbac.proto
-    api/envoy/config/filter/http/router/v2/BUILD
     api/envoy/config/filter/http/router/v2/router.proto
-    api/envoy/config/filter/http/squash/v2/BUILD
-    api/envoy/config/filter/http/squash/v2/squash.proto
-    api/envoy/config/filter/http/tap/v2alpha/BUILD
     api/envoy/config/filter/http/tap/v2alpha/tap.proto
-    api/envoy/config/filter/http/transcoder/v2/BUILD
     api/envoy/config/filter/http/transcoder/v2/transcoder.proto
-    api/envoy/config/filter/listener/original_src/v2alpha1/BUILD
     api/envoy/config/filter/listener/original_src/v2alpha1/original_src.proto
-    api/envoy/config/filter/network/client_ssl_auth/v2/BUILD
     api/envoy/config/filter/network/client_ssl_auth/v2/client_ssl_auth.proto
-    api/envoy/config/filter/network/dubbo_proxy/v2alpha1/BUILD
     api/envoy/config/filter/network/dubbo_proxy/v2alpha1/dubbo_proxy.proto
-    api/envoy/config/filter/network/dubbo_proxy/v2alpha1/README.md
     api/envoy/config/filter/network/dubbo_proxy/v2alpha1/route.proto
-    api/envoy/config/filter/network/ext_authz/v2/BUILD
     api/envoy/config/filter/network/ext_authz/v2/ext_authz.proto
-    api/envoy/config/filter/network/http_connection_manager/v2/BUILD
     api/envoy/config/filter/network/http_connection_manager/v2/http_connection_manager.proto
-    api/envoy/config/filter/network/mongo_proxy/v2/BUILD
     api/envoy/config/filter/network/mongo_proxy/v2/mongo_proxy.proto
-    api/envoy/config/filter/network/mysql_proxy/v1alpha1/BUILD
     api/envoy/config/filter/network/mysql_proxy/v1alpha1/mysql_proxy.proto
-    api/envoy/config/filter/network/rate_limit/v2/BUILD
     api/envoy/config/filter/network/rate_limit/v2/rate_limit.proto
-    api/envoy/config/filter/network/rbac/v2/BUILD
     api/envoy/config/filter/network/rbac/v2/rbac.proto
-    api/envoy/config/filter/network/redis_proxy/v2/BUILD
     api/envoy/config/filter/network/redis_proxy/v2/redis_proxy.proto
-    api/envoy/config/filter/network/tcp_proxy/v2/BUILD
     api/envoy/config/filter/network/tcp_proxy/v2/tcp_proxy.proto
-    api/envoy/config/filter/network/thrift_proxy/v2alpha1/BUILD
-    api/envoy/config/filter/network/thrift_proxy/v2alpha1/README.md
     api/envoy/config/filter/network/thrift_proxy/v2alpha1/route.proto
     api/envoy/config/filter/network/thrift_proxy/v2alpha1/thrift_proxy.proto
-    api/envoy/config/filter/network/zookeeper_proxy/v1alpha1/BUILD
     api/envoy/config/filter/network/zookeeper_proxy/v1alpha1/zookeeper_proxy.proto
-    api/envoy/config/filter/thrift/rate_limit/v2alpha1/BUILD
     api/envoy/config/filter/thrift/rate_limit/v2alpha1/rate_limit.proto
-    api/envoy/config/filter/thrift/router/v2alpha1/BUILD
     api/envoy/config/filter/thrift/router/v2alpha1/router.proto
-    api/envoy/config/filter/README.md
-    api/envoy/config/grpc_credential/v2alpha/BUILD
     api/envoy/config/grpc_credential/v2alpha/file_based_metadata.proto
-    api/envoy/config/health_checker/redis/v2/BUILD
     api/envoy/config/health_checker/redis/v2/redis.proto
-    api/envoy/config/metrics/v2/BUILD
     api/envoy/config/metrics/v2/metrics_service.proto
     api/envoy/config/metrics/v2/stats.proto
-    api/envoy/config/overload/v2alpha/BUILD
     api/envoy/config/overload/v2alpha/overload.proto
-    api/envoy/config/ratelimit/v2/BUILD
     api/envoy/config/ratelimit/v2/rls.proto
-    api/envoy/config/rbac/v2/BUILD
     api/envoy/config/rbac/v2/rbac.proto
-    api/envoy/config/resource_monitor/fixed_heap/v2alpha/BUILD
     api/envoy/config/resource_monitor/fixed_heap/v2alpha/fixed_heap.proto
-    api/envoy/config/resource_monitor/injected_resource/v2alpha/BUILD
     api/envoy/config/resource_monitor/injected_resource/v2alpha/injected_resource.proto
-    api/envoy/config/retry/previous_priorities/BUILD
     api/envoy/config/retry/previous_priorities/previous_priorities_config.proto
-    api/envoy/config/trace/v2/BUILD
     api/envoy/config/trace/v2/trace.proto
     api/envoy/config/transport_socket/alts/v2alpha/alts.proto
-    api/envoy/config/transport_socket/alts/v2alpha/BUILD
-    api/envoy/config/transport_socket/tap/v2alpha/BUILD
     api/envoy/config/transport_socket/tap/v2alpha/tap.proto
-    api/envoy/config/README.md
     api/envoy/data/accesslog/v2/accesslog.proto
-    api/envoy/data/accesslog/v2/BUILD
-    api/envoy/data/cluster/v2alpha/BUILD
     api/envoy/data/cluster/v2alpha/outlier_detection_event.proto
-    api/envoy/data/core/v2alpha/BUILD
     api/envoy/data/core/v2alpha/health_check_event.proto
-    api/envoy/data/tap/v2alpha/BUILD
     api/envoy/data/tap/v2alpha/common.proto
     api/envoy/data/tap/v2alpha/http.proto
     api/envoy/data/tap/v2alpha/transport.proto
     api/envoy/data/tap/v2alpha/wrapper.proto
     api/envoy/service/accesslog/v2/als.proto
-    api/envoy/service/accesslog/v2/BUILD
     api/envoy/service/auth/v2/attribute_context.proto
-    api/envoy/service/auth/v2/BUILD
     api/envoy/service/auth/v2/external_auth.proto
-    api/envoy/service/auth/v2alpha/BUILD
     api/envoy/service/auth/v2alpha/external_auth.proto
     api/envoy/service/discovery/v2/ads.proto
-    api/envoy/service/discovery/v2/BUILD
     api/envoy/service/discovery/v2/hds.proto
     api/envoy/service/discovery/v2/sds.proto
-    api/envoy/service/load_stats/v2/BUILD
     api/envoy/service/load_stats/v2/lrs.proto
-    api/envoy/service/metrics/v2/BUILD
     api/envoy/service/metrics/v2/metrics_service.proto
-    api/envoy/service/ratelimit/v2/BUILD
     api/envoy/service/ratelimit/v2/rls.proto
-    api/envoy/service/tap/v2alpha/BUILD
     api/envoy/service/tap/v2alpha/common.proto
-    api/envoy/service/trace/v2/BUILD
     api/envoy/service/trace/v2/trace_service.proto
-    api/envoy/service/README.md
-    api/envoy/type/matcher/BUILD
     api/envoy/type/matcher/metadata.proto
     api/envoy/type/matcher/number.proto
     api/envoy/type/matcher/string.proto
     api/envoy/type/matcher/value.proto
-    api/envoy/type/BUILD
     api/envoy/type/http_status.proto
     api/envoy/type/percent.proto
     api/envoy/type/range.proto
-    api/examples/service_envoy/BUILD
     api/examples/service_envoy/http_connection_manager.pb
     api/examples/service_envoy/listeners.pb
-    api/test/build/BUILD
     api/test/build/build_test.cc
     api/test/build/go_build_test.go
-    api/test/validate/BUILD
     api/test/validate/pgv_test.cc
     api/tools/data/tap2pcap_h2_ipv4.pb_text
     api/tools/data/tap2pcap_h2_ipv4.txt
-    api/tools/BUILD
-    api/tools/generate_listeners.py
-    api/tools/generate_listeners_test.py
-    api/tools/tap2pcap.py
-    api/tools/tap2pcap_test.py
-    api/udpa/data/orca/v1/BUILD
     api/udpa/data/orca/v1/orca_load_report.proto
-    api/udpa/service/orca/v1/BUILD
     api/udpa/service/orca/v1/orca.proto
-    api/API_OVERVIEW.md
-    api/BUILD
-    api/CONTRIBUTING.md
-    api/README.md
-    api/STYLE.md
     api/xds_protocol.rst
 
     include/envoy/access_log/access_log.h
-    include/envoy/access_log/BUILD
     include/envoy/api/api.h
-    include/envoy/api/BUILD
     include/envoy/api/io_error.h
     include/envoy/api/os_sys_calls.h
     include/envoy/api/os_sys_calls_common.h
     include/envoy/api/os_sys_calls_linux.h
     include/envoy/buffer/buffer.h
-    include/envoy/buffer/BUILD
     include/envoy/common/backoff_strategy.h
-    include/envoy/common/BUILD
     include/envoy/common/callback.h
     include/envoy/common/exception.h
     include/envoy/common/interval_set.h
@@ -234,33 +134,26 @@ add_executable(envoy
     include/envoy/common/pure.h
     include/envoy/common/time.h
     include/envoy/common/token_bucket.h
-    include/envoy/compressor/BUILD
     include/envoy/compressor/compressor.h
-    include/envoy/config/BUILD
     include/envoy/config/config_provider.h
     include/envoy/config/config_provider_manager.h
     include/envoy/config/grpc_mux.h
     include/envoy/config/subscription.h
     include/envoy/config/typed_metadata.h
     include/envoy/config/xds_grpc_context.h
-    include/envoy/decompressor/BUILD
     include/envoy/decompressor/decompressor.h
-    include/envoy/event/BUILD
     include/envoy/event/deferred_deletable.h
     include/envoy/event/dispatcher.h
     include/envoy/event/file_event.h
     include/envoy/event/signal.h
     include/envoy/event/timer.h
-    include/envoy/filesystem/BUILD
     include/envoy/filesystem/filesystem.h
     include/envoy/filesystem/watcher.h
     include/envoy/grpc/async_client.h
     include/envoy/grpc/async_client_manager.h
-    include/envoy/grpc/BUILD
     include/envoy/grpc/google_grpc_creds.h
     include/envoy/grpc/status.h
     include/envoy/http/async_client.h
-    include/envoy/http/BUILD
     include/envoy/http/codec.h
     include/envoy/http/codes.h
     include/envoy/http/conn_pool.h
@@ -271,16 +164,12 @@ add_executable(envoy
     include/envoy/http/metadata_interface.h
     include/envoy/http/protocol.h
     include/envoy/http/query_params.h
-    include/envoy/init/BUILD
     include/envoy/init/manager.h
     include/envoy/init/target.h
     include/envoy/init/watcher.h
-    include/envoy/json/BUILD
     include/envoy/json/json_object.h
-    include/envoy/local_info/BUILD
     include/envoy/local_info/local_info.h
     include/envoy/network/address.h
-    include/envoy/network/BUILD
     include/envoy/network/connection.h
     include/envoy/network/connection_handler.h
     include/envoy/network/dns.h
@@ -291,26 +180,19 @@ add_executable(envoy
     include/envoy/network/listener.h
     include/envoy/network/resolver.h
     include/envoy/network/transport_socket.h
-    include/envoy/ratelimit/BUILD
     include/envoy/ratelimit/ratelimit.h
-    include/envoy/registry/BUILD
     include/envoy/registry/registry.h
-    include/envoy/router/BUILD
     include/envoy/router/rds.h
     include/envoy/router/route_config_provider_manager.h
     include/envoy/router/router.h
     include/envoy/router/router_ratelimit.h
-    include/envoy/router/shadow_writer.h
     include/envoy/router/string_accessor.h
-    include/envoy/runtime/BUILD
     include/envoy/runtime/runtime.h
-    include/envoy/secret/BUILD
     include/envoy/secret/secret_callbacks.h
     include/envoy/secret/secret_manager.h
     include/envoy/secret/secret_provider.h
     include/envoy/server/access_log_config.h
     include/envoy/server/admin.h
-    include/envoy/server/BUILD
     include/envoy/server/config_tracker.h
     include/envoy/server/configuration.h
     include/envoy/server/drain_manager.h
@@ -329,17 +211,14 @@ add_executable(envoy
     include/envoy/server/transport_socket_config.h
     include/envoy/server/watchdog.h
     include/envoy/server/worker.h
-    include/envoy/singleton/BUILD
     include/envoy/singleton/instance.h
     include/envoy/singleton/manager.h
-    include/envoy/ssl/BUILD
     include/envoy/ssl/certificate_validation_context_config.h
     include/envoy/ssl/connection.h
     include/envoy/ssl/context.h
     include/envoy/ssl/context_config.h
     include/envoy/ssl/context_manager.h
     include/envoy/ssl/tls_certificate_config.h
-    include/envoy/stats/BUILD
     include/envoy/stats/histogram.h
     include/envoy/stats/scope.h
     include/envoy/stats/sink.h
@@ -353,18 +232,12 @@ add_executable(envoy
     include/envoy/stats/tag_extractor.h
     include/envoy/stats/tag_producer.h
     include/envoy/stats/timespan.h
-    include/envoy/stream_info/BUILD
     include/envoy/stream_info/filter_state.h
     include/envoy/stream_info/stream_info.h
-    include/envoy/tcp/BUILD
     include/envoy/tcp/conn_pool.h
-    include/envoy/thread/BUILD
     include/envoy/thread/thread.h
-    include/envoy/thread_local/BUILD
     include/envoy/thread_local/thread_local.h
-    include/envoy/tracing/BUILD
     include/envoy/tracing/http_tracer.h
-    include/envoy/upstream/BUILD
     include/envoy/upstream/cluster_factory.h
     include/envoy/upstream/cluster_manager.h
     include/envoy/upstream/health_check_host_monitor.h
@@ -379,33 +252,23 @@ add_executable(envoy
     include/envoy/upstream/thread_local_cluster.h
     include/envoy/upstream/types.h
     include/envoy/upstream/upstream.h
-    restarter/BUILD
-    restarter/hot-restarter.py
     source/common/access_log/access_log_formatter.cc
     source/common/access_log/access_log_formatter.h
     source/common/access_log/access_log_impl.cc
     source/common/access_log/access_log_impl.h
     source/common/access_log/access_log_manager_impl.cc
     source/common/access_log/access_log_manager_impl.h
-    source/common/access_log/BUILD
     source/common/api/api_impl.cc
     source/common/api/api_impl.h
-    source/common/api/BUILD
     source/common/api/os_sys_calls_impl.cc
     source/common/api/os_sys_calls_impl.h
     source/common/api/os_sys_calls_impl_linux.cc
     source/common/api/os_sys_calls_impl_linux.h
     source/common/buffer/buffer_impl.cc
     source/common/buffer/buffer_impl.h
-    source/common/buffer/BUILD
     source/common/buffer/watermark_buffer.cc
     source/common/buffer/watermark_buffer.h
-    source/common/buffer/zero_copy_input_stream_impl.cc
-    source/common/buffer/zero_copy_input_stream_impl.h
-    source/common/chromium_url/BUILD
-    source/common/chromium_url/envoy_shim.h
     source/common/chromium_url/LICENSE
-    source/common/chromium_url/README.md
     source/common/chromium_url/url_canon.cc
     source/common/chromium_url/url_canon.h
     source/common/chromium_url/url_canon_internal.cc
@@ -425,7 +288,6 @@ add_executable(envoy
     source/common/common/backoff_strategy.h
     source/common/common/base64.cc
     source/common/common/base64.h
-    source/common/common/BUILD
     source/common/common/byte_order.h
     source/common/common/c_smart_ptr.h
     source/common/common/callback_impl.h
@@ -435,8 +297,6 @@ add_executable(envoy
     source/common/common/empty_string.h
     source/common/common/enum_to_int.h
     source/common/common/fmt.h
-    source/common/common/hash.cc
-    source/common/common/hash.h
     source/common/common/hex.cc
     source/common/common/hex.h
     source/common/common/linked_object.h
@@ -450,7 +310,6 @@ add_executable(envoy
     source/common/common/matchers.h
     source/common/common/mutex_tracer_impl.cc
     source/common/common/mutex_tracer_impl.h
-    source/common/common/non_copyable.h
     source/common/common/perf_annotation.cc
     source/common/common/perf_annotation.h
     source/common/common/phantom.h
@@ -468,14 +327,12 @@ add_executable(envoy
     source/common/common/version.cc
     source/common/common/version.h
     source/common/common/version_linkstamp.cc
-    source/common/compressor/BUILD
     source/common/compressor/zlib_compressor_impl.cc
     source/common/compressor/zlib_compressor_impl.h
     source/common/config/address_json.cc
     source/common/config/address_json.h
     source/common/config/base_json.cc
     source/common/config/base_json.h
-    source/common/config/BUILD
     source/common/config/cds_json.cc
     source/common/config/cds_json.h
     source/common/config/config_provider_impl.cc
@@ -508,13 +365,10 @@ add_executable(envoy
     source/common/config/utility.h
     source/common/config/well_known_names.cc
     source/common/config/well_known_names.h
-    source/common/crypto/BUILD
     source/common/crypto/utility.cc
     source/common/crypto/utility.h
-    source/common/decompressor/BUILD
     source/common/decompressor/zlib_decompressor_impl.cc
     source/common/decompressor/zlib_decompressor_impl.h
-    source/common/event/BUILD
     source/common/event/dispatched_thread.cc
     source/common/event/dispatched_thread.h
     source/common/event/dispatcher_impl.cc
@@ -545,15 +399,11 @@ add_executable(envoy
     source/common/filesystem/win32/directory_iterator_impl.h
     source/common/filesystem/win32/filesystem_impl.cc
     source/common/filesystem/win32/filesystem_impl.h
-    source/common/filesystem/BUILD
     source/common/filesystem/directory.h
-    source/common/filesystem/file_shared_impl.cc
-    source/common/filesystem/file_shared_impl.h
     source/common/grpc/async_client_impl.cc
     source/common/grpc/async_client_impl.h
     source/common/grpc/async_client_manager_impl.cc
     source/common/grpc/async_client_manager_impl.h
-    source/common/grpc/BUILD
     source/common/grpc/codec.cc
     source/common/grpc/codec.h
     source/common/grpc/common.cc
@@ -564,15 +414,12 @@ add_executable(envoy
     source/common/grpc/google_grpc_creds_impl.h
     source/common/grpc/status.cc
     source/common/grpc/status.h
-    source/common/html/BUILD
     source/common/html/utility.cc
     source/common/html/utility.h
-    source/common/http/http1/BUILD
     source/common/http/http1/codec_impl.cc
     source/common/http/http1/codec_impl.h
     source/common/http/http1/conn_pool.cc
     source/common/http/http1/conn_pool.h
-    source/common/http/http2/BUILD
     source/common/http/http2/codec_impl.cc
     source/common/http/http2/codec_impl.h
     source/common/http/http2/conn_pool.cc
@@ -581,9 +428,10 @@ add_executable(envoy
     source/common/http/http2/metadata_decoder.h
     source/common/http/http2/metadata_encoder.cc
     source/common/http/http2/metadata_encoder.h
+    source/common/http/http2/nghttp2.cc
+    source/common/http/http2/nghttp2.h
     source/common/http/async_client_impl.cc
     source/common/http/async_client_impl.h
-    source/common/http/BUILD
     source/common/http/codec_client.cc
     source/common/http/codec_client.h
     source/common/http/codec_helper.h
@@ -619,24 +467,18 @@ add_executable(envoy
     source/common/http/user_agent.h
     source/common/http/utility.cc
     source/common/http/utility.h
-    source/common/init/BUILD
     source/common/init/manager_impl.cc
     source/common/init/manager_impl.h
     source/common/init/target_impl.cc
     source/common/init/target_impl.h
     source/common/init/watcher_impl.cc
     source/common/init/watcher_impl.h
-    source/common/json/BUILD
     source/common/json/config_schemas.cc
     source/common/json/config_schemas.h
     source/common/json/json_loader.cc
     source/common/json/json_loader.h
     source/common/json/json_validator.h
-    source/common/local_info/BUILD
     source/common/local_info/local_info_impl.h
-    source/common/memory/BUILD
-    source/common/memory/heap_shrinker.cc
-    source/common/memory/heap_shrinker.h
     source/common/memory/stats.cc
     source/common/memory/stats.h
     source/common/memory/utils.cc
@@ -647,7 +489,6 @@ add_executable(envoy
     source/common/network/address_impl.h
     source/common/network/base_listener_impl.cc
     source/common/network/base_listener_impl.h
-    source/common/network/BUILD
     source/common/network/cidr_range.cc
     source/common/network/cidr_range.h
     source/common/network/connection_impl.cc
@@ -682,14 +523,11 @@ add_executable(envoy
     source/common/network/upstream_server_name.h
     source/common/network/utility.cc
     source/common/network/utility.h
-    source/common/profiler/BUILD
     source/common/profiler/profiler.cc
     source/common/profiler/profiler.h
-    source/common/protobuf/BUILD
     source/common/protobuf/protobuf.h
     source/common/protobuf/utility.cc
     source/common/protobuf/utility.h
-    source/common/router/BUILD
     source/common/router/config_impl.cc
     source/common/router/config_impl.h
     source/common/router/config_utility.cc
@@ -708,34 +546,27 @@ add_executable(envoy
     source/common/router/router.h
     source/common/router/router_ratelimit.cc
     source/common/router/router_ratelimit.h
-    source/common/router/shadow_writer_impl.cc
-    source/common/router/shadow_writer_impl.h
     source/common/router/string_accessor_impl.h
-    source/common/runtime/BUILD
     source/common/runtime/runtime_features.cc
     source/common/runtime/runtime_features.h
     source/common/runtime/runtime_impl.cc
     source/common/runtime/runtime_impl.h
     source/common/runtime/uuid_util.cc
     source/common/runtime/uuid_util.h
-    source/common/secret/BUILD
     source/common/secret/sds_api.cc
     source/common/secret/sds_api.h
     source/common/secret/secret_manager_impl.cc
     source/common/secret/secret_manager_impl.h
     source/common/secret/secret_provider_impl.cc
     source/common/secret/secret_provider_impl.h
-    source/common/singleton/BUILD
     source/common/singleton/const_singleton.h
     source/common/singleton/manager_impl.cc
     source/common/singleton/manager_impl.h
     source/common/singleton/threadsafe_singleton.h
-    source/common/ssl/BUILD
     source/common/ssl/certificate_validation_context_config_impl.cc
     source/common/ssl/certificate_validation_context_config_impl.h
     source/common/ssl/tls_certificate_config_impl.cc
     source/common/ssl/tls_certificate_config_impl.h
-    source/common/stats/BUILD
     source/common/stats/fake_symbol_table_impl.h
     source/common/stats/heap_stat_data.cc
     source/common/stats/heap_stat_data.h
@@ -761,25 +592,19 @@ add_executable(envoy
     source/common/stats/thread_local_store.h
     source/common/stats/utility.cc
     source/common/stats/utility.h
-    source/common/stream_info/BUILD
     source/common/stream_info/filter_state_impl.cc
     source/common/stream_info/filter_state_impl.h
     source/common/stream_info/stream_info_impl.h
     source/common/stream_info/utility.cc
     source/common/stream_info/utility.h
-    source/common/tcp/BUILD
     source/common/tcp/conn_pool.cc
     source/common/tcp/conn_pool.h
-    source/common/tcp_proxy/BUILD
     source/common/tcp_proxy/tcp_proxy.cc
     source/common/tcp_proxy/tcp_proxy.h
-    source/common/thread_local/BUILD
     source/common/thread_local/thread_local_impl.cc
     source/common/thread_local/thread_local_impl.h
-    source/common/tracing/BUILD
     source/common/tracing/http_tracer_impl.cc
     source/common/tracing/http_tracer_impl.h
-    source/common/upstream/BUILD
     source/common/upstream/cds_api_impl.cc
     source/common/upstream/cds_api_impl.h
     source/common/upstream/cluster_factory_impl.cc
@@ -814,24 +639,16 @@ add_executable(envoy
     source/common/upstream/priority_conn_pool_map.h
     source/common/upstream/priority_conn_pool_map_impl.h
     source/common/upstream/resource_manager_impl.h
-    source/common/upstream/ring_hash_lb.cc
-    source/common/upstream/ring_hash_lb.h
     source/common/upstream/subset_lb.cc
     source/common/upstream/subset_lb.h
     source/common/upstream/thread_aware_lb_impl.cc
     source/common/upstream/thread_aware_lb_impl.h
     source/common/upstream/upstream_impl.cc
     source/common/upstream/upstream_impl.h
-    source/docs/flow_control.md
     source/docs/h2_buffers.png
-    source/docs/h2_metadata.md
-    source/docs/repokitteh.md
-    source/docs/stats.md
-    source/docs/subset_load_balancer.md
     source/docs/subset_load_balancer_diagram.svg
     source/exe/posix/platform_impl.h
     source/exe/win32/platform_impl.h
-    source/exe/BUILD
     source/exe/main.cc
     source/exe/main_common.cc
     source/exe/main_common.h
@@ -839,25 +656,20 @@ add_executable(envoy
     source/exe/signal_action.h
     source/exe/terminate_handler.cc
     source/exe/terminate_handler.h
-    source/extensions/access_loggers/file/BUILD
     source/extensions/access_loggers/file/config.cc
     source/extensions/access_loggers/file/config.h
     source/extensions/access_loggers/file/file_access_log_impl.cc
     source/extensions/access_loggers/file/file_access_log_impl.h
-    source/extensions/access_loggers/http_grpc/BUILD
     source/extensions/access_loggers/http_grpc/config.cc
     source/extensions/access_loggers/http_grpc/config.h
     source/extensions/access_loggers/http_grpc/grpc_access_log_impl.cc
     source/extensions/access_loggers/http_grpc/grpc_access_log_impl.h
     source/extensions/access_loggers/http_grpc/grpc_access_log_proto_descriptors.cc
     source/extensions/access_loggers/http_grpc/grpc_access_log_proto_descriptors.h
-    source/extensions/access_loggers/BUILD
     source/extensions/access_loggers/well_known_names.h
-    source/extensions/clusters/BUILD
     source/extensions/clusters/well_known_names.h
     source/extensions/common/tap/admin.cc
     source/extensions/common/tap/admin.h
-    source/extensions/common/tap/BUILD
     source/extensions/common/tap/extension_config_base.cc
     source/extensions/common/tap/extension_config_base.h
     source/extensions/common/tap/tap.h
@@ -865,7 +677,6 @@ add_executable(envoy
     source/extensions/common/tap/tap_config_base.h
     source/extensions/common/tap/tap_matcher.cc
     source/extensions/common/tap/tap_matcher.h
-    source/extensions/filters/common/ext_authz/BUILD
     source/extensions/filters/common/ext_authz/check_request_utils.cc
     source/extensions/filters/common/ext_authz/check_request_utils.h
     source/extensions/filters/common/ext_authz/ext_authz.h
@@ -873,19 +684,15 @@ add_executable(envoy
     source/extensions/filters/common/ext_authz/ext_authz_grpc_impl.h
     source/extensions/filters/common/ext_authz/ext_authz_http_impl.cc
     source/extensions/filters/common/ext_authz/ext_authz_http_impl.h
-    source/extensions/filters/common/fault/BUILD
     source/extensions/filters/common/fault/fault_config.cc
     source/extensions/filters/common/fault/fault_config.h
-    source/extensions/filters/common/lua/BUILD
     source/extensions/filters/common/lua/lua.cc
     source/extensions/filters/common/lua/lua.h
     source/extensions/filters/common/lua/wrappers.cc
     source/extensions/filters/common/lua/wrappers.h
-    source/extensions/filters/common/ratelimit/BUILD
     source/extensions/filters/common/ratelimit/ratelimit.h
     source/extensions/filters/common/ratelimit/ratelimit_impl.cc
     source/extensions/filters/common/ratelimit/ratelimit_impl.h
-    source/extensions/filters/common/rbac/BUILD
     source/extensions/filters/common/rbac/engine.h
     source/extensions/filters/common/rbac/engine_impl.cc
     source/extensions/filters/common/rbac/engine_impl.h
@@ -895,33 +702,27 @@ add_executable(envoy
     source/extensions/filters/common/rbac/utility.h
     source/extensions/filters/http/buffer/buffer_filter.cc
     source/extensions/filters/http/buffer/buffer_filter.h
-    source/extensions/filters/http/buffer/BUILD
     source/extensions/filters/http/buffer/config.cc
     source/extensions/filters/http/buffer/config.h
-    source/extensions/filters/http/common/aws/BUILD
     source/extensions/filters/http/common/aws/credentials_provider.h
     source/extensions/filters/http/common/aws/signer.h
     source/extensions/filters/http/common/aws/signer_impl.cc
     source/extensions/filters/http/common/aws/signer_impl.h
     source/extensions/filters/http/common/aws/utility.cc
     source/extensions/filters/http/common/aws/utility.h
-    source/extensions/filters/http/common/BUILD
     source/extensions/filters/http/common/empty_http_filter_config.h
     source/extensions/filters/http/common/factory_base.h
     source/extensions/filters/http/common/jwks_fetcher.cc
     source/extensions/filters/http/common/jwks_fetcher.h
     source/extensions/filters/http/common/pass_through_filter.h
-    source/extensions/filters/http/cors/BUILD
     source/extensions/filters/http/cors/config.cc
     source/extensions/filters/http/cors/config.h
     source/extensions/filters/http/cors/cors_filter.cc
     source/extensions/filters/http/cors/cors_filter.h
-    source/extensions/filters/http/csrf/BUILD
     source/extensions/filters/http/csrf/config.cc
     source/extensions/filters/http/csrf/config.h
     source/extensions/filters/http/csrf/csrf_filter.cc
     source/extensions/filters/http/csrf/csrf_filter.h
-    source/extensions/filters/http/dynamo/BUILD
     source/extensions/filters/http/dynamo/config.cc
     source/extensions/filters/http/dynamo/config.h
     source/extensions/filters/http/dynamo/dynamo_filter.cc
@@ -930,61 +731,50 @@ add_executable(envoy
     source/extensions/filters/http/dynamo/dynamo_request_parser.h
     source/extensions/filters/http/dynamo/dynamo_utility.cc
     source/extensions/filters/http/dynamo/dynamo_utility.h
-    source/extensions/filters/http/ext_authz/BUILD
     source/extensions/filters/http/ext_authz/config.cc
     source/extensions/filters/http/ext_authz/config.h
     source/extensions/filters/http/ext_authz/ext_authz.cc
     source/extensions/filters/http/ext_authz/ext_authz.h
-    source/extensions/filters/http/fault/BUILD
     source/extensions/filters/http/fault/config.cc
     source/extensions/filters/http/fault/config.h
     source/extensions/filters/http/fault/fault_filter.cc
     source/extensions/filters/http/fault/fault_filter.h
-    source/extensions/filters/http/grpc_http1_bridge/BUILD
     source/extensions/filters/http/grpc_http1_bridge/config.cc
     source/extensions/filters/http/grpc_http1_bridge/config.h
     source/extensions/filters/http/grpc_http1_bridge/http1_bridge_filter.cc
     source/extensions/filters/http/grpc_http1_bridge/http1_bridge_filter.h
-    source/extensions/filters/http/grpc_http1_reverse_bridge/BUILD
     source/extensions/filters/http/grpc_http1_reverse_bridge/config.cc
     source/extensions/filters/http/grpc_http1_reverse_bridge/config.h
     source/extensions/filters/http/grpc_http1_reverse_bridge/filter.cc
     source/extensions/filters/http/grpc_http1_reverse_bridge/filter.h
-    source/extensions/filters/http/grpc_json_transcoder/BUILD
     source/extensions/filters/http/grpc_json_transcoder/config.cc
     source/extensions/filters/http/grpc_json_transcoder/config.h
     source/extensions/filters/http/grpc_json_transcoder/json_transcoder_filter.cc
     source/extensions/filters/http/grpc_json_transcoder/json_transcoder_filter.h
     source/extensions/filters/http/grpc_json_transcoder/transcoder_input_stream_impl.cc
     source/extensions/filters/http/grpc_json_transcoder/transcoder_input_stream_impl.h
-    source/extensions/filters/http/grpc_web/BUILD
     source/extensions/filters/http/grpc_web/config.cc
     source/extensions/filters/http/grpc_web/config.h
     source/extensions/filters/http/grpc_web/grpc_web_filter.cc
     source/extensions/filters/http/grpc_web/grpc_web_filter.h
-    source/extensions/filters/http/gzip/BUILD
     source/extensions/filters/http/gzip/config.cc
     source/extensions/filters/http/gzip/config.h
     source/extensions/filters/http/gzip/gzip_filter.cc
     source/extensions/filters/http/gzip/gzip_filter.h
-    source/extensions/filters/http/header_to_metadata/BUILD
     source/extensions/filters/http/header_to_metadata/config.cc
     source/extensions/filters/http/header_to_metadata/config.h
     source/extensions/filters/http/header_to_metadata/header_to_metadata_filter.cc
     source/extensions/filters/http/header_to_metadata/header_to_metadata_filter.h
-    source/extensions/filters/http/health_check/BUILD
     source/extensions/filters/http/health_check/config.cc
     source/extensions/filters/http/health_check/config.h
     source/extensions/filters/http/health_check/health_check.cc
     source/extensions/filters/http/health_check/health_check.h
-    source/extensions/filters/http/ip_tagging/BUILD
     source/extensions/filters/http/ip_tagging/config.cc
     source/extensions/filters/http/ip_tagging/config.h
     source/extensions/filters/http/ip_tagging/ip_tagging_filter.cc
     source/extensions/filters/http/ip_tagging/ip_tagging_filter.h
     source/extensions/filters/http/jwt_authn/authenticator.cc
     source/extensions/filters/http/jwt_authn/authenticator.h
-    source/extensions/filters/http/jwt_authn/BUILD
     source/extensions/filters/http/jwt_authn/extractor.cc
     source/extensions/filters/http/jwt_authn/extractor.h
     source/extensions/filters/http/jwt_authn/filter.cc
@@ -998,32 +788,22 @@ add_executable(envoy
     source/extensions/filters/http/jwt_authn/matcher.h
     source/extensions/filters/http/jwt_authn/verifier.cc
     source/extensions/filters/http/jwt_authn/verifier.h
-    source/extensions/filters/http/lua/BUILD
     source/extensions/filters/http/lua/config.cc
     source/extensions/filters/http/lua/config.h
     source/extensions/filters/http/lua/lua_filter.cc
     source/extensions/filters/http/lua/lua_filter.h
     source/extensions/filters/http/lua/wrappers.cc
     source/extensions/filters/http/lua/wrappers.h
-    source/extensions/filters/http/ratelimit/BUILD
     source/extensions/filters/http/ratelimit/config.cc
     source/extensions/filters/http/ratelimit/config.h
     source/extensions/filters/http/ratelimit/ratelimit.cc
     source/extensions/filters/http/ratelimit/ratelimit.h
-    source/extensions/filters/http/rbac/BUILD
     source/extensions/filters/http/rbac/config.cc
     source/extensions/filters/http/rbac/config.h
     source/extensions/filters/http/rbac/rbac_filter.cc
     source/extensions/filters/http/rbac/rbac_filter.h
-    source/extensions/filters/http/router/BUILD
     source/extensions/filters/http/router/config.cc
     source/extensions/filters/http/router/config.h
-    source/extensions/filters/http/squash/BUILD
-    source/extensions/filters/http/squash/config.cc
-    source/extensions/filters/http/squash/config.h
-    source/extensions/filters/http/squash/squash_filter.cc
-    source/extensions/filters/http/squash/squash_filter.h
-    source/extensions/filters/http/tap/BUILD
     source/extensions/filters/http/tap/config.cc
     source/extensions/filters/http/tap/config.h
     source/extensions/filters/http/tap/tap_config.h
@@ -1031,36 +811,28 @@ add_executable(envoy
     source/extensions/filters/http/tap/tap_config_impl.h
     source/extensions/filters/http/tap/tap_filter.cc
     source/extensions/filters/http/tap/tap_filter.h
-    source/extensions/filters/http/BUILD
     source/extensions/filters/http/well_known_names.h
-    source/extensions/filters/listener/original_dst/BUILD
     source/extensions/filters/listener/original_dst/config.cc
     source/extensions/filters/listener/original_dst/original_dst.cc
     source/extensions/filters/listener/original_dst/original_dst.h
-    source/extensions/filters/listener/original_src/BUILD
     source/extensions/filters/listener/original_src/config.cc
     source/extensions/filters/listener/original_src/config.h
     source/extensions/filters/listener/original_src/original_src.cc
     source/extensions/filters/listener/original_src/original_src.h
     source/extensions/filters/listener/original_src/original_src_config_factory.cc
     source/extensions/filters/listener/original_src/original_src_config_factory.h
-    source/extensions/filters/listener/proxy_protocol/BUILD
     source/extensions/filters/listener/proxy_protocol/config.cc
     source/extensions/filters/listener/proxy_protocol/proxy_protocol.cc
     source/extensions/filters/listener/proxy_protocol/proxy_protocol.h
     source/extensions/filters/listener/proxy_protocol/proxy_protocol_header.h
-    source/extensions/filters/listener/tls_inspector/BUILD
     source/extensions/filters/listener/tls_inspector/config.cc
     source/extensions/filters/listener/tls_inspector/tls_inspector.cc
     source/extensions/filters/listener/tls_inspector/tls_inspector.h
-    source/extensions/filters/listener/BUILD
     source/extensions/filters/listener/well_known_names.h
-    source/extensions/filters/network/client_ssl_auth/BUILD
     source/extensions/filters/network/client_ssl_auth/client_ssl_auth.cc
     source/extensions/filters/network/client_ssl_auth/client_ssl_auth.h
     source/extensions/filters/network/client_ssl_auth/config.cc
     source/extensions/filters/network/client_ssl_auth/config.h
-    source/extensions/filters/network/common/redis/BUILD
     source/extensions/filters/network/common/redis/client.h
     source/extensions/filters/network/common/redis/client_impl.cc
     source/extensions/filters/network/common/redis/client_impl.h
@@ -1068,14 +840,11 @@ add_executable(envoy
     source/extensions/filters/network/common/redis/codec_impl.cc
     source/extensions/filters/network/common/redis/codec_impl.h
     source/extensions/filters/network/common/redis/supported_commands.h
-    source/extensions/filters/network/common/BUILD
     source/extensions/filters/network/common/factory_base.h
-    source/extensions/filters/network/dubbo_proxy/filters/BUILD
     source/extensions/filters/network/dubbo_proxy/filters/factory_base.h
     source/extensions/filters/network/dubbo_proxy/filters/filter.h
     source/extensions/filters/network/dubbo_proxy/filters/filter_config.h
     source/extensions/filters/network/dubbo_proxy/filters/well_known_names.h
-    source/extensions/filters/network/dubbo_proxy/router/BUILD
     source/extensions/filters/network/dubbo_proxy/router/config.cc
     source/extensions/filters/network/dubbo_proxy/router/config.h
     source/extensions/filters/network/dubbo_proxy/router/route_matcher.cc
@@ -1089,7 +858,6 @@ add_executable(envoy
     source/extensions/filters/network/dubbo_proxy/app_exception.h
     source/extensions/filters/network/dubbo_proxy/buffer_helper.cc
     source/extensions/filters/network/dubbo_proxy/buffer_helper.h
-    source/extensions/filters/network/dubbo_proxy/BUILD
     source/extensions/filters/network/dubbo_proxy/config.cc
     source/extensions/filters/network/dubbo_proxy/config.h
     source/extensions/filters/network/dubbo_proxy/conn_manager.cc
@@ -1112,7 +880,6 @@ add_executable(envoy
     source/extensions/filters/network/dubbo_proxy/metadata.h
     source/extensions/filters/network/dubbo_proxy/protocol.h
     source/extensions/filters/network/dubbo_proxy/stats.h
-    source/extensions/filters/network/echo/BUILD
     source/extensions/filters/network/echo/config.cc
     source/extensions/filters/network/echo/echo.cc
     source/extensions/filters/network/echo/echo.h
@@ -1121,18 +888,15 @@ add_executable(envoy
     source/extensions/filters/network/echo2/echo2.cc
     source/extensions/filters/network/echo2/echo2.h
 
-    source/extensions/filters/network/ext_authz/BUILD
     source/extensions/filters/network/ext_authz/config.cc
     source/extensions/filters/network/ext_authz/config.h
     source/extensions/filters/network/ext_authz/ext_authz.cc
     source/extensions/filters/network/ext_authz/ext_authz.h
-    source/extensions/filters/network/http_connection_manager/BUILD
     source/extensions/filters/network/http_connection_manager/config.cc
     source/extensions/filters/network/http_connection_manager/config.h
     source/extensions/filters/network/mongo_proxy/bson.h
     source/extensions/filters/network/mongo_proxy/bson_impl.cc
     source/extensions/filters/network/mongo_proxy/bson_impl.h
-    source/extensions/filters/network/mongo_proxy/BUILD
     source/extensions/filters/network/mongo_proxy/codec.h
     source/extensions/filters/network/mongo_proxy/codec_impl.cc
     source/extensions/filters/network/mongo_proxy/codec_impl.h
@@ -1142,7 +906,6 @@ add_executable(envoy
     source/extensions/filters/network/mongo_proxy/proxy.h
     source/extensions/filters/network/mongo_proxy/utility.cc
     source/extensions/filters/network/mongo_proxy/utility.h
-    source/extensions/filters/network/mysql_proxy/BUILD
     source/extensions/filters/network/mysql_proxy/mysql_codec.h
     source/extensions/filters/network/mysql_proxy/mysql_codec_clogin.cc
     source/extensions/filters/network/mysql_proxy/mysql_codec_clogin.h
@@ -1163,17 +926,14 @@ add_executable(envoy
     source/extensions/filters/network/mysql_proxy/mysql_session.h
     source/extensions/filters/network/mysql_proxy/mysql_utils.cc
     source/extensions/filters/network/mysql_proxy/mysql_utils.h
-    source/extensions/filters/network/ratelimit/BUILD
     source/extensions/filters/network/ratelimit/config.cc
     source/extensions/filters/network/ratelimit/config.h
     source/extensions/filters/network/ratelimit/ratelimit.cc
     source/extensions/filters/network/ratelimit/ratelimit.h
-    source/extensions/filters/network/rbac/BUILD
     source/extensions/filters/network/rbac/config.cc
     source/extensions/filters/network/rbac/config.h
     source/extensions/filters/network/rbac/rbac_filter.cc
     source/extensions/filters/network/rbac/rbac_filter.h
-    source/extensions/filters/network/redis_proxy/BUILD
     source/extensions/filters/network/redis_proxy/command_splitter.h
     source/extensions/filters/network/redis_proxy/command_splitter_impl.cc
     source/extensions/filters/network/redis_proxy/command_splitter_impl.h
@@ -1187,28 +947,22 @@ add_executable(envoy
     source/extensions/filters/network/redis_proxy/router.h
     source/extensions/filters/network/redis_proxy/router_impl.cc
     source/extensions/filters/network/redis_proxy/router_impl.h
-    source/extensions/filters/network/sni_cluster/BUILD
     source/extensions/filters/network/sni_cluster/config.cc
     source/extensions/filters/network/sni_cluster/config.h
     source/extensions/filters/network/sni_cluster/sni_cluster.cc
     source/extensions/filters/network/sni_cluster/sni_cluster.h
-    source/extensions/filters/network/tcp_proxy/BUILD
     source/extensions/filters/network/tcp_proxy/config.cc
     source/extensions/filters/network/tcp_proxy/config.h
     source/extensions/filters/network/thrift_proxy/docs/thrift_state_machine.dot
-    source/extensions/filters/network/thrift_proxy/docs/thrift_state_machine.md
     source/extensions/filters/network/thrift_proxy/docs/thrift_state_machine.svg
-    source/extensions/filters/network/thrift_proxy/filters/ratelimit/BUILD
     source/extensions/filters/network/thrift_proxy/filters/ratelimit/config.cc
     source/extensions/filters/network/thrift_proxy/filters/ratelimit/config.h
     source/extensions/filters/network/thrift_proxy/filters/ratelimit/ratelimit.cc
     source/extensions/filters/network/thrift_proxy/filters/ratelimit/ratelimit.h
-    source/extensions/filters/network/thrift_proxy/filters/BUILD
     source/extensions/filters/network/thrift_proxy/filters/factory_base.h
     source/extensions/filters/network/thrift_proxy/filters/filter.h
     source/extensions/filters/network/thrift_proxy/filters/filter_config.h
     source/extensions/filters/network/thrift_proxy/filters/well_known_names.h
-    source/extensions/filters/network/thrift_proxy/router/BUILD
     source/extensions/filters/network/thrift_proxy/router/config.cc
     source/extensions/filters/network/thrift_proxy/router/config.h
     source/extensions/filters/network/thrift_proxy/router/router.h
@@ -1227,7 +981,6 @@ add_executable(envoy
     source/extensions/filters/network/thrift_proxy/binary_protocol_impl.h
     source/extensions/filters/network/thrift_proxy/buffer_helper.cc
     source/extensions/filters/network/thrift_proxy/buffer_helper.h
-    source/extensions/filters/network/thrift_proxy/BUILD
     source/extensions/filters/network/thrift_proxy/compact_protocol_impl.cc
     source/extensions/filters/network/thrift_proxy/compact_protocol_impl.h
     source/extensions/filters/network/thrift_proxy/config.cc
@@ -1256,7 +1009,6 @@ add_executable(envoy
     source/extensions/filters/network/thrift_proxy/twitter_protocol_impl.h
     source/extensions/filters/network/thrift_proxy/unframed_transport_impl.cc
     source/extensions/filters/network/thrift_proxy/unframed_transport_impl.h
-    source/extensions/filters/network/zookeeper_proxy/BUILD
     source/extensions/filters/network/zookeeper_proxy/config.cc
     source/extensions/filters/network/zookeeper_proxy/config.h
     source/extensions/filters/network/zookeeper_proxy/decoder.cc
@@ -1265,25 +1017,18 @@ add_executable(envoy
     source/extensions/filters/network/zookeeper_proxy/filter.h
     source/extensions/filters/network/zookeeper_proxy/utils.cc
     source/extensions/filters/network/zookeeper_proxy/utils.h
-    source/extensions/filters/network/BUILD
     source/extensions/filters/network/well_known_names.h
-    source/extensions/grpc_credentials/example/BUILD
     source/extensions/grpc_credentials/example/config.cc
     source/extensions/grpc_credentials/example/config.h
-    source/extensions/grpc_credentials/file_based_metadata/BUILD
     source/extensions/grpc_credentials/file_based_metadata/config.cc
     source/extensions/grpc_credentials/file_based_metadata/config.h
-    source/extensions/grpc_credentials/BUILD
     source/extensions/grpc_credentials/well_known_names.h
-    source/extensions/health_checkers/redis/BUILD
     source/extensions/health_checkers/redis/config.cc
     source/extensions/health_checkers/redis/config.h
     source/extensions/health_checkers/redis/redis.cc
     source/extensions/health_checkers/redis/redis.h
     source/extensions/health_checkers/redis/utility.h
-    source/extensions/health_checkers/BUILD
     source/extensions/health_checkers/well_known_names.h
-    source/extensions/quic_listeners/quiche/platform/BUILD
     source/extensions/quic_listeners/quiche/platform/http2_arraysize_impl.h
     source/extensions/quic_listeners/quiche/platform/http2_bug_tracker_impl.h
     source/extensions/quic_listeners/quiche/platform/http2_containers_impl.h
@@ -1348,80 +1093,59 @@ add_executable(envoy
     source/extensions/quic_listeners/quiche/platform/spdy_unsafe_arena_impl.h
     source/extensions/quic_listeners/quiche/platform/string_utils.cc
     source/extensions/quic_listeners/quiche/platform/string_utils.h
-    source/extensions/quic_listeners/quiche/BUILD
     source/extensions/quic_listeners/quiche/dummy.cc
     source/extensions/quic_listeners/quiche/dummy.h
-    source/extensions/resource_monitors/common/BUILD
     source/extensions/resource_monitors/common/factory_base.h
-    source/extensions/resource_monitors/fixed_heap/BUILD
     source/extensions/resource_monitors/fixed_heap/config.cc
     source/extensions/resource_monitors/fixed_heap/config.h
     source/extensions/resource_monitors/fixed_heap/fixed_heap_monitor.cc
     source/extensions/resource_monitors/fixed_heap/fixed_heap_monitor.h
-    source/extensions/resource_monitors/injected_resource/BUILD
     source/extensions/resource_monitors/injected_resource/config.cc
     source/extensions/resource_monitors/injected_resource/config.h
     source/extensions/resource_monitors/injected_resource/injected_resource_monitor.cc
     source/extensions/resource_monitors/injected_resource/injected_resource_monitor.h
-    source/extensions/resource_monitors/BUILD
     source/extensions/resource_monitors/well_known_names.h
-    source/extensions/retry/host/previous_hosts/BUILD
     source/extensions/retry/host/previous_hosts/config.cc
     source/extensions/retry/host/previous_hosts/config.h
     source/extensions/retry/host/previous_hosts/previous_hosts.h
-    source/extensions/retry/host/BUILD
     source/extensions/retry/host/well_known_names.h
-    source/extensions/retry/priority/previous_priorities/BUILD
     source/extensions/retry/priority/previous_priorities/config.cc
     source/extensions/retry/priority/previous_priorities/config.h
     source/extensions/retry/priority/previous_priorities/previous_priorities.cc
     source/extensions/retry/priority/previous_priorities/previous_priorities.h
-    source/extensions/retry/priority/BUILD
     source/extensions/retry/priority/well_known_names.h
-    source/extensions/stat_sinks/common/statsd/BUILD
     source/extensions/stat_sinks/common/statsd/statsd.cc
     source/extensions/stat_sinks/common/statsd/statsd.h
-    source/extensions/stat_sinks/dog_statsd/BUILD
     source/extensions/stat_sinks/dog_statsd/config.cc
     source/extensions/stat_sinks/dog_statsd/config.h
-    source/extensions/stat_sinks/hystrix/BUILD
     source/extensions/stat_sinks/hystrix/config.cc
     source/extensions/stat_sinks/hystrix/config.h
     source/extensions/stat_sinks/hystrix/hystrix.cc
     source/extensions/stat_sinks/hystrix/hystrix.h
-    source/extensions/stat_sinks/metrics_service/BUILD
     source/extensions/stat_sinks/metrics_service/config.cc
     source/extensions/stat_sinks/metrics_service/config.h
     source/extensions/stat_sinks/metrics_service/grpc_metrics_proto_descriptors.cc
     source/extensions/stat_sinks/metrics_service/grpc_metrics_proto_descriptors.h
     source/extensions/stat_sinks/metrics_service/grpc_metrics_service_impl.cc
     source/extensions/stat_sinks/metrics_service/grpc_metrics_service_impl.h
-    source/extensions/stat_sinks/statsd/BUILD
     source/extensions/stat_sinks/statsd/config.cc
     source/extensions/stat_sinks/statsd/config.h
-    source/extensions/stat_sinks/BUILD
     source/extensions/stat_sinks/well_known_names.h
-    source/extensions/tracers/common/ot/BUILD
     source/extensions/tracers/common/ot/opentracing_driver_impl.cc
     source/extensions/tracers/common/ot/opentracing_driver_impl.h
-    source/extensions/tracers/common/BUILD
     source/extensions/tracers/common/factory_base.h
-    source/extensions/tracers/datadog/BUILD
     source/extensions/tracers/datadog/config.cc
     source/extensions/tracers/datadog/config.h
     source/extensions/tracers/datadog/datadog_tracer_impl.cc
     source/extensions/tracers/datadog/datadog_tracer_impl.h
-    source/extensions/tracers/dynamic_ot/BUILD
     source/extensions/tracers/dynamic_ot/config.cc
     source/extensions/tracers/dynamic_ot/config.h
     source/extensions/tracers/dynamic_ot/dynamic_opentracing_driver_impl.cc
     source/extensions/tracers/dynamic_ot/dynamic_opentracing_driver_impl.h
-    source/extensions/tracers/lightstep/BUILD
     source/extensions/tracers/lightstep/config.cc
     source/extensions/tracers/lightstep/config.h
     source/extensions/tracers/lightstep/lightstep_tracer_impl.cc
     source/extensions/tracers/lightstep/lightstep_tracer_impl.h
-    source/extensions/tracers/zipkin/BUILD
     source/extensions/tracers/zipkin/config.cc
     source/extensions/tracers/zipkin/config.h
     source/extensions/tracers/zipkin/span_buffer.cc
@@ -1441,23 +1165,17 @@ add_executable(envoy
     source/extensions/tracers/zipkin/zipkin_json_field_names.h
     source/extensions/tracers/zipkin/zipkin_tracer_impl.cc
     source/extensions/tracers/zipkin/zipkin_tracer_impl.h
-    source/extensions/tracers/BUILD
     source/extensions/tracers/well_known_names.h
-    source/extensions/transport_sockets/alts/BUILD
     source/extensions/transport_sockets/alts/config.cc
     source/extensions/transport_sockets/alts/config.h
     source/extensions/transport_sockets/alts/grpc_tsi.h
     source/extensions/transport_sockets/alts/noop_transport_socket_callbacks.h
     source/extensions/transport_sockets/alts/tsi_frame_protector.cc
     source/extensions/transport_sockets/alts/tsi_frame_protector.h
-    source/extensions/transport_sockets/alts/tsi_handshaker.cc
-    source/extensions/transport_sockets/alts/tsi_handshaker.h
     source/extensions/transport_sockets/alts/tsi_socket.cc
     source/extensions/transport_sockets/alts/tsi_socket.h
-    source/extensions/transport_sockets/raw_buffer/BUILD
     source/extensions/transport_sockets/raw_buffer/config.cc
     source/extensions/transport_sockets/raw_buffer/config.h
-    source/extensions/transport_sockets/tap/BUILD
     source/extensions/transport_sockets/tap/config.cc
     source/extensions/transport_sockets/tap/config.h
     source/extensions/transport_sockets/tap/tap.cc
@@ -1465,7 +1183,6 @@ add_executable(envoy
     source/extensions/transport_sockets/tap/tap_config.h
     source/extensions/transport_sockets/tap/tap_config_impl.cc
     source/extensions/transport_sockets/tap/tap_config_impl.h
-    source/extensions/transport_sockets/tls/BUILD
     source/extensions/transport_sockets/tls/config.cc
     source/extensions/transport_sockets/tls/config.h
     source/extensions/transport_sockets/tls/context_config_impl.cc
@@ -1478,10 +1195,8 @@ add_executable(envoy
     source/extensions/transport_sockets/tls/ssl_socket.h
     source/extensions/transport_sockets/tls/utility.cc
     source/extensions/transport_sockets/tls/utility.h
-    source/extensions/transport_sockets/BUILD
     source/extensions/transport_sockets/well_known_names.h
     source/extensions/all_extensions.bzl
-    source/extensions/BUILD
     source/extensions/extensions_build_config.bzl
     source/server/config_validation/admin.cc
     source/server/config_validation/admin.h
@@ -1489,7 +1204,6 @@ add_executable(envoy
     source/server/config_validation/api.h
     source/server/config_validation/async_client.cc
     source/server/config_validation/async_client.h
-    source/server/config_validation/BUILD
     source/server/config_validation/cluster_manager.cc
     source/server/config_validation/cluster_manager.h
     source/server/config_validation/connection.h
@@ -1501,11 +1215,9 @@ add_executable(envoy
     source/server/config_validation/server.h
     source/server/http/admin.cc
     source/server/http/admin.h
-    source/server/http/BUILD
     source/server/http/config_tracker_impl.cc
     source/server/http/config_tracker_impl.h
     source/server/backtrace.h
-    source/server/BUILD
     source/server/configuration_impl.cc
     source/server/configuration_impl.h
     source/server/connection_handler_impl.cc
@@ -1540,98 +1252,6 @@ add_executable(envoy
     source/server/watchdog_impl.h
     source/server/worker_impl.cc
     source/server/worker_impl.h
-    support/hooks/pre-push
     support/hooks/prepare-commit-msg
     support/bootstrap
-    support/README.md
-    tools/deprecate_features/deprecate_features.py
-    tools/deprecate_features/deprecate_features.sh
-    tools/deprecate_features/requirements.txt
-    tools/deprecate_version/deprecate_version.py
-    tools/deprecate_version/deprecate_version.sh
-    tools/deprecate_version/requirements.txt
-    tools/envoy_collect/envoy_collect.py
-    tools/envoy_collect/README.md
-    tools/protodoc/BUILD
-    tools/protodoc/protodoc.bzl
-    tools/protodoc/protodoc.py
-    tools/testdata/check_format/api/java_options.proto
-    tools/testdata/check_format/api/java_options.proto.gold
-    tools/testdata/check_format/api/missing_package.proto
-    tools/testdata/check_format/angle_bracket_include.cc
-    tools/testdata/check_format/angle_bracket_include.cc.gold
-    tools/testdata/check_format/attribute_packed.cc
-    tools/testdata/check_format/bad_envoy_build_sys_ref.BUILD
-    tools/testdata/check_format/bad_envoy_build_sys_ref.BUILD.gold
-    tools/testdata/check_format/bazel_tools.BUILD
-    tools/testdata/check_format/condition_variable.cc
-    tools/testdata/check_format/condition_variable_any.cc
-    tools/testdata/check_format/condvar_wait_for.cc
-    tools/testdata/check_format/designated_initializers.cc
-    tools/testdata/check_format/elvis_operator.cc
-    tools/testdata/check_format/extra_enthusiastic_spaces.cc
-    tools/testdata/check_format/extra_enthusiastic_spaces.cc.gold
-    tools/testdata/check_format/header_order.cc
-    tools/testdata/check_format/header_order.cc.gold
-    tools/testdata/check_format/license.BUILD
-    tools/testdata/check_format/license.BUILD.gold
-    tools/testdata/check_format/long_line.cc
-    tools/testdata/check_format/long_line.cc.gold
-    tools/testdata/check_format/mutex.cc
-    tools/testdata/check_format/no_namespace_envoy.cc
-    tools/testdata/check_format/over_enthusiastic_spaces.cc
-    tools/testdata/check_format/over_enthusiastic_spaces.cc.gold
-    tools/testdata/check_format/proto.BUILD
-    tools/testdata/check_format/proto.BUILD.gold
-    tools/testdata/check_format/proto_deps.cc
-    tools/testdata/check_format/proto_deps.cc.gold
-    tools/testdata/check_format/proto_format.proto
-    tools/testdata/check_format/proto_format.proto.gold
-    tools/testdata/check_format/proto_style.cc
-    tools/testdata/check_format/proto_style.cc.gold
-    tools/testdata/check_format/real_time_source.cc
-    tools/testdata/check_format/real_time_source_override.cc
-    tools/testdata/check_format/real_time_system.cc
-    tools/testdata/check_format/serialize_as_string.cc
-    tools/testdata/check_format/shared_mutex.cc
-    tools/testdata/check_format/sleep.cc
-    tools/testdata/check_format/std_atomic_free_functions.cc
-    tools/testdata/check_format/std_get_time.cc
-    tools/testdata/check_format/steady_clock.cc
-    tools/testdata/check_format/system_clock.cc
-    tools/testdata/check_format/testing_test.cc
-    tools/testdata/check_format/time_system_wait_for.cc
-    tools/testdata/check_format/version_history.rst
-    tools/bazel-test-docker.sh
-    tools/bazel-test-gdb
-    tools/bazel.rc
-    tools/bootstrap2pb.cc
-    tools/BUILD
-    tools/build_profile.py
-    tools/check_format.py
-    tools/check_format_test.sh
-    tools/check_format_test_helper.py
-    tools/check_repositories.sh
-    tools/check_spelling.sh
-    tools/check_spelling_pedantic.py
-    tools/common.py
-    tools/docker_wrapper.sh
-    tools/envoy-rotate-files.el
-    tools/envoy_build_fixer.py
-    tools/find_related_envoy_files.py
-    tools/format_python_tools.py
-    tools/format_python_tools.sh
-    tools/gen_compilation_database.py
-    tools/gen_gdb_wrapper_script.py
-    tools/header_order.py
-    tools/path_fix.sh
-    tools/print_dependencies.py
-    tools/requirements.txt
-    tools/run-valgrind.sh
-    tools/shell_utils.sh
-    tools/socket_passing.py
-    tools/spelling_dictionary.txt
-    tools/spelling_skip_files.txt
-    tools/spelling_whitelist_words.txt
-    tools/stack_decode.py
-    tools/valgrind-suppressions.txt)
+    )
