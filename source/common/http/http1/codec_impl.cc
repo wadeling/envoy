@@ -480,6 +480,7 @@ void ConnectionImpl::onMessageCompleteBase() {
     return;
   }
   onMessageComplete();
+  ENVOY_CONN_LOG(trace, "onMessageComplete end", connection_);
 }
 
 void ConnectionImpl::onMessageBeginBase() {
@@ -623,10 +624,12 @@ void ServerConnectionImpl::onBody(const char* data, size_t length) {
 }
 
 void ServerConnectionImpl::onMessageComplete() {
+  ENVOY_CONN_LOG(trace, "ServerConnectionImpl::onMessageComplete", connection_);
   if (active_request_) {
     Buffer::OwnedImpl buffer;
     active_request_->remote_complete_ = true;
 
+    ENVOY_CONN_LOG(trace, "deferred_end_stream_headers_ {}", connection_, deferred_end_stream_headers_);
     if (deferred_end_stream_headers_) {
       active_request_->request_decoder_->decodeHeaders(std::move(deferred_end_stream_headers_),
                                                        true);

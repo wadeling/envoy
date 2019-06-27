@@ -306,6 +306,8 @@ Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool
     }
   } while (redispatch);
 
+  ENVOY_CONN_LOG(debug, "ConnectionManagerImpl::onData end", read_callbacks_->connection());
+
   return Network::FilterStatus::StopIteration;
 }
 
@@ -952,6 +954,9 @@ void ConnectionManagerImpl::ActiveStream::decodeData(
 
     state_.filter_call_state_ |= FilterCallState::DecodeData;
     (*entry)->end_stream_ = end_stream && !request_trailers_;
+
+    ENVOY_STREAM_LOG(trace, "entry end stream {}", *this,(*entry)->end_stream_ );
+
     FilterDataStatus status = (*entry)->handle_->decodeData(data, (*entry)->end_stream_);
     if ((*entry)->end_stream_) {
       (*entry)->handle_->decodeComplete();
@@ -1069,7 +1074,7 @@ void ConnectionManagerImpl::ActiveStream::maybeEndDecode(bool end_stream) {
   state_.remote_complete_ = end_stream;
   if (end_stream) {
     stream_info_.onLastDownstreamRxByteReceived();
-    ENVOY_STREAM_LOG(debug, "request end stream", *this);
+    ENVOY_STREAM_LOG(debug, "activestream end stream", *this);
   }
 }
 

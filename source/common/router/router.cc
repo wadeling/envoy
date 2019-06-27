@@ -526,6 +526,7 @@ Http::FilterDataStatus Filter::decodeData(Buffer::Instance& data, bool end_strea
   // try timeout occurs with hedge_on_per_try_timeout enabled but the per
   // try timeout timer is not started until onUpstreamComplete().
   ASSERT(upstream_requests_.size() == 1);
+  ENVOY_STREAM_LOG(debug, "router Filter::decodeData,end_stream {}", *callbacks_,end_stream);
 
   bool buffering = (retry_state_ && retry_state_->enabled()) || do_shadowing_;
   if (buffering && buffer_limit_ > 0 &&
@@ -538,6 +539,7 @@ Http::FilterDataStatus Filter::decodeData(Buffer::Instance& data, bool end_strea
   }
 
   if (buffering) {
+    ENVOY_STREAM_LOG(debug, "buffering,upstream req encodeData", *callbacks_);
     // If we are going to buffer for retries or shadowing, we need to make a copy before encoding
     // since it's all moves from here on.
     Buffer::OwnedImpl copy(data);
@@ -616,6 +618,8 @@ void Filter::maybeDoShadowing() {
 }
 
 void Filter::onRequestComplete() {
+  ENVOY_STREAM_LOG(debug, "Filter::onRequestComplete", *callbacks_);
+
   // This should be called exactly once, when the downstream request has been received in full.
   ASSERT(!downstream_end_stream_);
   downstream_end_stream_ = true;
@@ -1308,6 +1312,7 @@ void Filter::UpstreamRequest::decodeHeaders(Http::HeaderMapPtr&& headers, bool e
 }
 
 void Filter::UpstreamRequest::decodeData(Buffer::Instance& data, bool end_stream) {
+  ENVOY_LOG(trace,"UpstreamRequest::decodeData");
   maybeEndDecode(end_stream);
   stream_info_.addBytesReceived(data.length());
   parent_.onUpstreamData(data, *this, end_stream);
