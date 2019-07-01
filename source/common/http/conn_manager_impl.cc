@@ -1232,6 +1232,8 @@ void ConnectionManagerImpl::ActiveStream::encodeHeaders(ActiveStreamEncoderFilte
       commonEncodePrefix(filter, end_stream, FilterIterationStartState::AlwaysStartFromNext);
   std::list<ActiveStreamEncoderFilterPtr>::iterator continue_data_entry = encoder_filters_.end();
 
+  ENVOY_STREAM_LOG(trace, "activestream encode_filter size {}", *this,encoder_filters_.size());
+
   for (; entry != encoder_filters_.end(); entry++) {
     ASSERT(!(state_.filter_call_state_ & FilterCallState::EncodeHeaders));
     state_.filter_call_state_ |= FilterCallState::EncodeHeaders;
@@ -1428,6 +1430,8 @@ void ConnectionManagerImpl::ActiveStream::addEncodedData(ActiveStreamEncoderFilt
 void ConnectionManagerImpl::ActiveStream::encodeData(
     ActiveStreamEncoderFilter* filter, Buffer::Instance& data, bool end_stream,
     FilterIterationStartState filter_iteration_start_state) {
+  ENVOY_STREAM_LOG(trace, "ActiveStream::encodeData end_stream={}", *this,end_stream);
+
   resetIdleTimer();
 
   // If we previously decided to encode only the headers, do nothing here.
@@ -1499,6 +1503,7 @@ void ConnectionManagerImpl::ActiveStream::encodeData(
     response_encoder_->encodeData(data, end_stream);
     maybeEndEncode(end_stream);
   }
+  ENVOY_STREAM_LOG(trace, "encoding data end", *this);
 }
 
 void ConnectionManagerImpl::ActiveStream::encodeTrailers(ActiveStreamEncoderFilter* filter,

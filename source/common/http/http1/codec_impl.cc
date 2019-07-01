@@ -470,7 +470,7 @@ int ConnectionImpl::onHeadersCompleteBase() {
 }
 
 void ConnectionImpl::onMessageCompleteBase() {
-  ENVOY_CONN_LOG(trace, "message complete", connection_);
+  ENVOY_CONN_LOG(trace, "onMessageCompleteBase start", connection_);
   if (handling_upgrade_) {
     // If this is an upgrade request, swallow the onMessageComplete. The
     // upgrade payload will be treated as stream body.
@@ -751,7 +751,7 @@ void ClientConnectionImpl::onBody(const char* data, size_t length) {
 }
 
 void ClientConnectionImpl::onMessageComplete() {
-  ENVOY_CONN_LOG(trace, "message complete", connection_);
+  ENVOY_CONN_LOG(trace, "client message complete", connection_);
   if (ignore_message_complete_for_100_continue_) {
     ignore_message_complete_for_100_continue_ = false;
     return;
@@ -778,6 +778,7 @@ void ClientConnectionImpl::onMessageComplete() {
       deferred_end_stream_headers_.reset();
     } else {
       Buffer::OwnedImpl buffer;
+      ENVOY_CONN_LOG(trace, "response decoder before", connection_);
       response.decoder_->decodeData(buffer, true);
     }
   }
