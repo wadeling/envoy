@@ -63,7 +63,7 @@ ConnectionImpl::ConnectionImpl(Event::Dispatcher& dispatcher, ConnectionSocketPt
   // We never ask for both early close and read at the same time. If we are reading, we want to
   // consume all available data.
   file_event_ =
-          er_.createFileEvent(
+          dispatcher_.createFileEvent(
       ioHandle().fd(), [this](uint32_t events) -> void { onFileEvent(events); },
       Event::FileTriggerType::Edge, Event::FileReadyType::Read | Event::FileReadyType::Write);
 
