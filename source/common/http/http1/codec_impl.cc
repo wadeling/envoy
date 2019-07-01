@@ -629,8 +629,8 @@ void ServerConnectionImpl::onMessageComplete() {
     Buffer::OwnedImpl buffer;
     active_request_->remote_complete_ = true;
 
-    ENVOY_CONN_LOG(trace, "deferred_end_stream_headers_ {}", connection_, deferred_end_stream_headers_);
     if (deferred_end_stream_headers_) {
+      ENVOY_CONN_LOG(trace, "deferred_end_stream_headers_ has value", connection_);
       active_request_->request_decoder_->decodeHeaders(std::move(deferred_end_stream_headers_),
                                                        true);
       deferred_end_stream_headers_.reset();
