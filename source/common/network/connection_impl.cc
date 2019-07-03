@@ -85,9 +85,13 @@ void ConnectionImpl::addWriteFilter(WriteFilterSharedPtr filter) {
   filter_manager_.addWriteFilter(filter);
 }
 
-void ConnectionImpl::addFilter(FilterSharedPtr filter) { filter_manager_.addFilter(filter); }
+void ConnectionImpl::addFilter(FilterSharedPtr filter) {
+  ENVOY_LOG(debug,"ConnectionImpl::addFilter");
+  filter_manager_.addFilter(filter);
+}
 
 void ConnectionImpl::addReadFilter(ReadFilterSharedPtr filter) {
+    ENVOY_LOG(debug,"ConnectionImpl::addReadFilter");
   filter_manager_.addReadFilter(filter);
 }
 

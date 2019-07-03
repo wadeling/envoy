@@ -98,7 +98,7 @@ public:
 /**
  * This is a filter manager for TCP (L4) filters. It is split out for ease of testing.
  */
-class FilterManagerImpl {
+class FilterManagerImpl:public Logger::Loggable<Logger::Id::filter> {
 public:
   FilterManagerImpl(FilterManagerConnection& connection) : connection_(connection) {}
 

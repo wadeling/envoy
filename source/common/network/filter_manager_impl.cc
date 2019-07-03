@@ -17,11 +17,14 @@ void FilterManagerImpl::addWriteFilter(WriteFilterSharedPtr filter) {
 }
 
 void FilterManagerImpl::addFilter(FilterSharedPtr filter) {
+  ENVOY_LOG(debug,"FilterManagerImpl::addFilter");
   addReadFilter(filter);
   addWriteFilter(filter);
 }
 
 void FilterManagerImpl::addReadFilter(ReadFilterSharedPtr filter) {
+  ENVOY_LOG(debug,"FilterManagerImpl::addReadFilter");
+
   ASSERT(connection_.state() == Connection::State::Open);
   ActiveReadFilterPtr new_filter(new ActiveReadFilter{*this, filter});
   filter->initializeReadFilterCallbacks(*new_filter);
