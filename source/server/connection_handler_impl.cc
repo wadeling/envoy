@@ -260,7 +260,10 @@ void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
     return;
   }
 
+  ENVOY_LOG_TO_LOGGER(parent_.logger_, debug, "ActiveTcpListener::newConnection createTransportSocket");
   auto transport_socket = filter_chain->transportSocketFactory().createTransportSocket(nullptr);
+
+  ENVOY_LOG_TO_LOGGER(parent_.logger_, debug, "ActiveTcpListener::newConnection createServerConnection");
   Network::ConnectionPtr new_connection =
       parent_.dispatcher_.createServerConnection(std::move(socket), std::move(transport_socket));
   new_connection->setBufferLimits(config_.perConnectionBufferLimitBytes());
@@ -274,6 +277,7 @@ void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
     return;
   }
 
+  ENVOY_LOG_TO_LOGGER(parent_.logger_, debug, "ActiveTcpListener::newConnection onNewConnection");
   onNewConnection(std::move(new_connection));
 }
 

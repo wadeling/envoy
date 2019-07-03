@@ -204,12 +204,14 @@ FilterChainManagerImpl::findFilterChain(const Network::ConnectionSocket& socket)
 
   // Match on destination port (only for IP addresses).
   if (address->type() == Network::Address::Type::Ip) {
+      ENVOY_LOG(debug,"findFilterChain address type ip");
     const auto port_match = destination_ports_map_.find(address->ip()->port());
     if (port_match != destination_ports_map_.end()) {
       return findFilterChainForDestinationIP(*port_match->second.second, socket);
     }
   }
 
+  ENVOY_LOG(debug,"findFilterChain port 0");
   // Match on catch-all port 0.
   const auto port_match = destination_ports_map_.find(0);
   if (port_match != destination_ports_map_.end()) {
@@ -221,6 +223,8 @@ FilterChainManagerImpl::findFilterChain(const Network::ConnectionSocket& socket)
 
 const Network::FilterChain* FilterChainManagerImpl::findFilterChainForDestinationIP(
     const DestinationIPsTrie& destination_ips_trie, const Network::ConnectionSocket& socket) const {
+
+  ENVOY_LOG(debug,"find filter by ip");
   auto address = socket.localAddress();
   if (address->type() != Network::Address::Type::Ip) {
     address = fakeAddress();
@@ -240,12 +244,15 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForServerName
     const ServerNamesMap& server_names_map, const Network::ConnectionSocket& socket) const {
   const std::string server_name(socket.requestedServerName());
 
+  ENVOY_LOG(debug,"findFilterChain by servername {}",server_name);
+
   // Match on exact server name, i.e. "www.example.com" for "www.example.com".
   const auto server_name_exact_match = server_names_map.find(server_name);
   if (server_name_exact_match != server_names_map.end()) {
     return findFilterChainForTransportProtocol(server_name_exact_match->second, socket);
   }
 
+  ENVOY_LOG(debug,"findFilterChain by wildcard servername {}",server_name);
   // Match on all wildcard domains, i.e. ".example.com" and ".com" for "www.example.com".
   size_t pos = server_name.find('.', 1);
   while (pos < server_name.size() - 1 && pos != std::string::npos) {
@@ -257,6 +264,7 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForServerName
     pos = server_name.find('.', pos + 1);
   }
 
+  ENVOY_LOG(debug,"findFilterChain server name catchall");
   // Match on a filter chain without server name requirements.
   const auto server_name_catchall_match = server_names_map.find(EMPTY_STRING);
   if (server_name_catchall_match != server_names_map.end()) {
@@ -270,6 +278,7 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForTransportP
     const TransportProtocolsMap& transport_protocols_map,
     const Network::ConnectionSocket& socket) const {
   const std::string transport_protocol(socket.detectedTransportProtocol());
+ENVOY_LOG(debug,"find filter by trans potocol {}",transport_protocol);
 
   // Match on exact transport protocol, e.g. "tls".
   const auto transport_protocol_match = transport_protocols_map.find(transport_protocol);
@@ -277,6 +286,7 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForTransportP
     return findFilterChainForApplicationProtocols(transport_protocol_match->second, socket);
   }
 
+  ENVOY_LOG(debug,"find filter by any trans potocol {}",transport_protocol);
   // Match on a filter chain without transport protocol requirements.
   const auto any_protocol_match = transport_protocols_map.find(EMPTY_STRING);
   if (any_protocol_match != transport_protocols_map.end()) {
@@ -289,6 +299,7 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForTransportP
 const Network::FilterChain* FilterChainManagerImpl::findFilterChainForApplicationProtocols(
     const ApplicationProtocolsMap& application_protocols_map,
     const Network::ConnectionSocket& socket) const {
+    ENVOY_LOG(debug,"find filter by app proto");
   // Match on exact application protocol, e.g. "h2" or "http/1.1".
   for (const auto& application_protocol : socket.requestedApplicationProtocols()) {
     const auto application_protocol_match = application_protocols_map.find(application_protocol);
@@ -297,6 +308,7 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForApplicatio
     }
   }
 
+    ENVOY_LOG(debug,"find filter by any app proto");
   // Match on a filter chain without application protocol requirements.
   const auto any_protocol_match = application_protocols_map.find(EMPTY_STRING);
   if (any_protocol_match != application_protocols_map.end()) {
@@ -308,6 +320,7 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForApplicatio
 
 const Network::FilterChain* FilterChainManagerImpl::findFilterChainForSourceTypes(
     const SourceTypesArray& source_types, const Network::ConnectionSocket& socket) const {
+ENVOY_LOG(debug,"find filter by source types");
 
   const auto& filter_chain_local =
       source_types[envoy::api::v2::listener::FilterChainMatch_ConnectionSourceType::
@@ -323,6 +336,7 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForSourceType
           ? Network::Utility::isLocalConnection(socket)
           : false;
 
+    ENVOY_LOG(debug,"find filter by source types,is_local_connection {}",is_local_connection);
   if (is_local_connection) {
     if (!filter_chain_local.first.empty()) {
       return findFilterChainForSourceIpAndPort(*filter_chain_local.second, socket);
@@ -337,6 +351,7 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForSourceType
       source_types[envoy::api::v2::listener::FilterChainMatch_ConnectionSourceType::
                        FilterChainMatch_ConnectionSourceType_ANY];
 
+  ENVOY_LOG(debug,"find filter by any source types");
   if (!filter_chain_any.first.empty()) {
     return findFilterChainForSourceIpAndPort(*filter_chain_any.second, socket);
   } else {
@@ -346,6 +361,8 @@ const Network::FilterChain* FilterChainManagerImpl::findFilterChainForSourceType
 
 const Network::FilterChain* FilterChainManagerImpl::findFilterChainForSourceIpAndPort(
     const SourceIPsTrie& source_ips_trie, const Network::ConnectionSocket& socket) const {
+    ENVOY_LOG(debug,"find filter by source ip port");
+
   auto address = socket.remoteAddress();
   if (address->type() != Network::Address::Type::Ip) {
     address = fakeAddress();

@@ -56,6 +56,7 @@ ConnectionImpl::ConnectionImpl(Event::Dispatcher& dispatcher, ConnectionSocketPt
   // condition and just crash.
   RELEASE_ASSERT(ioHandle().fd() != -1, "");
 
+  ENVOY_LOG(debug,"new ConnectionImpl");
   if (!connected) {
     connecting_ = true;
   }
