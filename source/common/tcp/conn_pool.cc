@@ -348,6 +348,8 @@ ConnPoolImpl::ActiveConn::ActiveConn(ConnPoolImpl& parent)
       connect_timer_(parent_.dispatcher_.createTimer([this]() -> void { onConnectTimeout(); })),
       remaining_requests_(parent_.host_->cluster().maxRequestsPerConnection()), timed_out_(false) {
 
+  ENVOY_LOG(debug, "new ActiveConn ");
+
   parent_.conn_connect_ms_ = std::make_unique<Stats::Timespan>(
       parent_.host_->cluster().stats().upstream_cx_connect_ms_, parent_.dispatcher_.timeSource());
 

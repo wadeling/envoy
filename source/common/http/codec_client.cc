@@ -19,6 +19,7 @@ CodecClient::CodecClient(Type type, Network::ClientConnectionPtr&& connection,
       idle_timeout_(host_->cluster().idleTimeout()) {
   // Make sure upstream connections process data and then the FIN, rather than processing
   // TCP disconnects immediately. (see https://github.com/envoyproxy/envoy/issues/1679 for details)
+  ENVOY_LOG(debug, "new CodecClient");
   connection_->detectEarlyCloseWhenReadDisabled(false);
   connection_->addConnectionCallbacks(*this);
   connection_->addReadFilter(Network::ReadFilterSharedPtr{new CodecReadFilter(*this)});

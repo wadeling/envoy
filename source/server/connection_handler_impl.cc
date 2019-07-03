@@ -248,6 +248,8 @@ void ConnectionHandlerImpl::ActiveTcpListener::onAccept(
 
 void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
     Network::ConnectionSocketPtr&& socket) {
+  ENVOY_LOG_TO_LOGGER(parent_.logger_, debug, "ActiveTcpListener::newConnection");
+
   // Find matching filter chain.
   const auto filter_chain = config_.filterChainManager().findFilterChain(*socket);
   if (filter_chain == nullptr) {
