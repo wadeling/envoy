@@ -1252,6 +1252,7 @@ add_executable(envoy
     source/server/watchdog_impl.h
     source/server/worker_impl.cc
     source/server/worker_impl.h
+    source/server/filter_chain_manager_impl.cc
     support/hooks/prepare-commit-msg
     support/bootstrap
     )

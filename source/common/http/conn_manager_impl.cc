@@ -119,6 +119,9 @@ const HeaderMapImpl& ConnectionManagerImpl::continueHeader() {
 
 void ConnectionManagerImpl::initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) {
   read_callbacks_ = &callbacks;
+
+  ENVOY_CONN_LOG(debug, "ConnectionManagerImpl::initializeReadFilterCallbacks", read_callbacks_->connection());
+
   stats_.named_.downstream_cx_total_.inc();
   stats_.named_.downstream_cx_active_.inc();
   if (read_callbacks_->connection().ssl()) {

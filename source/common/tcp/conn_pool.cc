@@ -79,7 +79,7 @@ void ConnPoolImpl::checkForDrained() {
 }
 
 void ConnPoolImpl::createNewConnection() {
-  ENVOY_LOG(debug, "creating a new connection");
+  ENVOY_LOG(debug, "ConnPoolImpl creating a new connection");
   ActiveConnPtr conn(new ActiveConn(*this));
   conn->moveIntoList(std::move(conn), pending_conns_);
 }
@@ -92,6 +92,7 @@ ConnectionPool::Cancellable* ConnPoolImpl::newConnection(ConnectionPool::Callbac
     return nullptr;
   }
 
+  ENVOY_LOG(debug, "ConnPoolImpl::newConnection");
   if (host_->cluster().resourceManager(priority_).pendingRequests().canCreate()) {
     bool can_create_connection =
         host_->cluster().resourceManager(priority_).connections().canCreate();
@@ -102,6 +103,7 @@ ConnectionPool::Cancellable* ConnPoolImpl::newConnection(ConnectionPool::Callbac
     // If we have no connections at all, make one no matter what so we don't starve.
     if ((ready_conns_.empty() && busy_conns_.empty() && pending_conns_.empty()) ||
         can_create_connection) {
+      ENVOY_LOG(debug, "ConnPoolImpl::newConnection before createNewConnection");
       createNewConnection();
     }
 
@@ -357,9 +359,11 @@ ConnPoolImpl::ActiveConn::ActiveConn(ConnPoolImpl& parent)
 
   conn_->detectEarlyCloseWhenReadDisabled(false);
   conn_->addConnectionCallbacks(*this);
+
+  ENVOY_CONN_LOG(debug, "ActiveConn addReadFilter", *conn_);
   conn_->addReadFilter(Network::ReadFilterSharedPtr{new ConnReadFilter(*this)});
 
-  ENVOY_CONN_LOG(debug, "connecting", *conn_);
+  ENVOY_CONN_LOG(debug, "ActiveConn connecting", *conn_);
   conn_->connect();
 
   parent_.host_->cluster().stats().upstream_cx_total_.inc();
