@@ -348,9 +348,11 @@ void HttpConnectionManagerConfig::processFilter(
           string_name);
   Http::FilterFactoryCb callback;
   if (Config::Utility::allowDeprecatedV1Config(context_.runtime(), *filter_config)) {
+    ENVOY_LOG(debug, "v1  config: createFilterFactory" );
     callback = factory.createFilterFactory(*filter_config->getObject("value", true), stats_prefix_,
                                            context_);
   } else {
+    ENVOY_LOG(debug, "protobuf config: createFilterFactoryFromProto");
     ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
         proto_config, context_.messageValidationVisitor(), factory);
     callback = factory.createFilterFactoryFromProto(*message, stats_prefix_, context_);

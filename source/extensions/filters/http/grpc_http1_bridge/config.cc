@@ -12,7 +12,10 @@ namespace GrpcHttp1Bridge {
 Http::FilterFactoryCb
 GrpcHttp1BridgeFilterConfig::createFilter(const std::string&,
                                           Server::Configuration::FactoryContext& factory_context) {
+  ENVOY_LOG(debug,"GrpcHttp1BridgeFilterConfig::createFilter");
+
   return [&factory_context](Http::FilterChainFactoryCallbacks& callbacks) {
+    ENVOY_LOG(debug,"grpc add to stream filter");
     callbacks.addStreamFilter(std::make_shared<Http1BridgeFilter>(factory_context.grpcContext()));
   };
 }

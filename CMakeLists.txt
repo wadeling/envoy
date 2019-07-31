@@ -656,6 +656,8 @@ add_executable(envoy
     source/exe/signal_action.h
     source/exe/terminate_handler.cc
     source/exe/terminate_handler.h
+    source/exe/process_wide.h
+    source/exe/process_wide.cc
     source/extensions/access_loggers/file/config.cc
     source/extensions/access_loggers/file/config.h
     source/extensions/access_loggers/file/file_access_log_impl.cc

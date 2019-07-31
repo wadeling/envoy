@@ -13,7 +13,7 @@ namespace GrpcHttp1Bridge {
 /**
  * Config registration for the grpc HTTP1 bridge filter. @see NamedHttpFilterConfigFactory.
  */
-class GrpcHttp1BridgeFilterConfig : public Common::EmptyHttpFilterConfig {
+class GrpcHttp1BridgeFilterConfig : public Common::EmptyHttpFilterConfig, Logger::Loggable<Logger::Id::filter> {
 public:
   GrpcHttp1BridgeFilterConfig()
       : Common::EmptyHttpFilterConfig(HttpFilterNames::get().GrpcHttp1Bridge) {}
