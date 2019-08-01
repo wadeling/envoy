@@ -769,7 +769,7 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
     traceRequest();
   }
 
-  ENVOY_STREAM_LOG(debug, "before before decode headers", *this);
+  ENVOY_STREAM_LOG(debug, "before decode headers", *this);
   decodeHeaders(nullptr, *request_headers_, end_stream);
 
   // Reset it here for both global and overridden cases.
@@ -1159,7 +1159,7 @@ void ConnectionManagerImpl::ActiveStream::sendLocalReply(
     bool is_grpc_request, Code code, absl::string_view body,
     const std::function<void(HeaderMap& headers)>& modify_headers, bool is_head_request,
     const absl::optional<Grpc::Status::GrpcStatus> grpc_status, absl::string_view details) {
-  ENVOY_STREAM_LOG(debug, "Sending local reply with details {}", *this, details);
+  ENVOY_STREAM_LOG(debug, "Sending local reply with details {},grpc status {}", *this, details,grpc_status);
   ASSERT(response_headers_ == nullptr);
   // For early error handling, do a best-effort attempt to create a filter chain
   // to ensure access logging.
