@@ -88,7 +88,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
 
 Http::FilterDataStatus Filter::decodeData(Buffer::Instance& buffer, bool) {
 
-    ENVOY_LOG(debug,"grpc http1 reverse decodeData {}",buffer);
+    ENVOY_LOG(debug,"grpc http1 reverse decodeData {}",buffer.toString());
 
     if (enabled_ && withhold_grpc_frames_ && !prefix_stripped_) {
     // Fail the request if the body is too small to possibly contain a gRPC frame.
@@ -151,7 +151,7 @@ Http::FilterHeadersStatus Filter::encodeHeaders(Http::HeaderMap& headers, bool) 
 }
 
 Http::FilterDataStatus Filter::encodeData(Buffer::Instance& buffer, bool end_stream) {
-  ENVOY_LOG(debug,"grpc http1 reverse encodeData {},end_stream {}",buffer,end_stream);
+  ENVOY_LOG(debug,"grpc http1 reverse encodeData {},end_stream {}",buffer.toString(),end_stream);
   if (!enabled_) {
     return Http::FilterDataStatus::Continue;
   }
