@@ -1159,7 +1159,7 @@ void ConnectionManagerImpl::ActiveStream::sendLocalReply(
     bool is_grpc_request, Code code, absl::string_view body,
     const std::function<void(HeaderMap& headers)>& modify_headers, bool is_head_request,
     const absl::optional<Grpc::Status::GrpcStatus> grpc_status, absl::string_view details) {
-  ENVOY_STREAM_LOG(debug, "Sending local reply with details {},grpc status {}", *this, details,grpc_status);
+  ENVOY_STREAM_LOG(debug, "Sending local reply with details {},grpc status {}", *this, details,grpc_status.value());
   ASSERT(response_headers_ == nullptr);
   // For early error handling, do a best-effort attempt to create a filter chain
   // to ensure access logging.
