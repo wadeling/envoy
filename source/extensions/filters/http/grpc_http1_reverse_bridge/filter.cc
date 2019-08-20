@@ -178,7 +178,7 @@ Http::FilterDataStatus Filter::encodeData(Buffer::Instance& buffer, bool end_str
       tmparr[1] = static_cast<uint8_t>(tmp3);
       Buffer::OwnedImpl tmpBuff(tmparr.data(),tmparr.size());
       buffer.prepend(tmpBuff);
-      ENVOY_LOG(debug,"grpc http1 reverse encodeData ,buf to pb buf {},length {},tmparr {}",buffer.toString(),buffer.length(),tmparr);
+      ENVOY_LOG(debug,"grpc http1 reverse encodeData ,buf to pb buf {},length {},tmparr {}",buffer.toString(),buffer.length(),tmparr.data());
 
       // Compute the size of the payload and construct the length prefix.
       //
