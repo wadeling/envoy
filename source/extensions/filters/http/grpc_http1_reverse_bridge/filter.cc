@@ -171,11 +171,14 @@ Http::FilterDataStatus Filter::encodeData(Buffer::Instance& buffer, bool end_str
       uint8_t  tmp=1;
       uint8_t  tmp2 = (tmp << 1) | (tmp << 3);
       uint8_t  tmp3 = buffer.length();
-      char tmparr[2];
-      sprintf(tmparr,"%x%x",tmp2,tmp3);
-      Buffer::OwnedImpl tmpBuff(tmparr,sizeof(tmparr));
+//      char tmparr[2];
+      std::array<uint8_t,2> tmparr;
+//      sprintf(tmparr,"%x%x",tmp2,tmp3);
+      tmparr[0] = static_cast<uint8_t>(tmp2);
+      tmparr[1] = static_cast<uint8_t>(tmp3);
+      Buffer::OwnedImpl tmpBuff(tmparr.data(),tmparr.size());
       buffer.prepend(tmpBuff);
-      ENVOY_LOG(debug,"grpc http1 reverse encodeData ,buf to pb buf {},length {}",buffer.toString(),buffer.length());
+      ENVOY_LOG(debug,"grpc http1 reverse encodeData ,buf to pb buf {},length {},tmparr {}",buffer.toString(),buffer.length(),tmparr);
 
       // Compute the size of the payload and construct the length prefix.
       //
