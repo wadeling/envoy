@@ -165,6 +165,18 @@ Http::FilterDataStatus Filter::encodeData(Buffer::Instance& buffer, bool end_str
 
     if (withhold_grpc_frames_) {
       ENVOY_LOG(debug,"grpc http1 reverse encodeData ,withhold grpc frames {}",withhold_grpc_frames_);
+
+      //attension,if backend service return not-pb msg , need change to pb format
+      // below is only a test
+      uint8_t  tmp=1;
+      uint8_t  tmp2 = (tmp << 1) | (tmp << 3);
+      uint8_t  tmp3 = buffer.length();
+      char tmparr[2];
+      sprintf(tmparr,"%x%x",tmp2,tmp3);
+      Buffer::OwnedImpl tmpBuff(tmparr,sizeof(tmparr));
+      buffer.prepend(tmpBuff);
+      ENVOY_LOG(debug,"grpc http1 reverse encodeData ,buf to pb buf {},length {}",buffer.toString(),buffer.length());
+
       // Compute the size of the payload and construct the length prefix.
       //
       // We do this even if the upstream failed: If the response returned non-200,
