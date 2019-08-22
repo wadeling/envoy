@@ -46,7 +46,8 @@ namespace Http {
 class ConnectionManagerImpl : Logger::Loggable<Logger::Id::http>,
                               public Network::ReadFilter,
                               public ServerConnectionCallbacks,
-                              public Network::ConnectionCallbacks {
+                              public Network::ConnectionCallbacks,
+                              public FilterChainFactoryCallbacks {
 public:
   ConnectionManagerImpl(ConnectionManagerConfig& config, const Network::DrainDecision& drain_close,
                         Runtime::RandomGenerator& random_generator, Http::Context& http_context,
@@ -75,6 +76,9 @@ public:
   // Http::ServerConnectionCallbacks
   StreamDecoder& newStream(StreamEncoder& response_encoder,
                            bool is_internally_created = false) override;
+
+  // add pre srv filter
+  void addPreSrvDecodeFilter(Http::StreamDecoderFilterSharedPtr filter) override;
 
   // Network::ConnectionCallbacks
   void onEvent(Network::ConnectionEvent event) override;
@@ -535,6 +539,23 @@ private:
   typedef std::unique_ptr<ActiveStream> ActiveStreamPtr;
 
   /**
+   * Wrapper for a pre srv stream decoder filter.
+   */
+  struct PreSrvStreamDecoderFilter : LinkedObject<PreSrvStreamDecoderFilter> {
+      PreSrvStreamDecoderFilter(ConnectionManagerImpl& connection_manager, StreamDecoderFilterSharedPtr filter)
+              : connection_manager_(connection_manager), handle_(filter) {}
+      StreamDecoderFilterSharedPtr handle_;
+      ConnectionManagerImpl& connection_manager_;
+
+      FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) {
+          FilterDataStatus status = handle_->decodeData(data, end_stream);
+          return status;
+      }
+  };
+
+  typedef std::unique_ptr<PreSrvStreamDecoderFilter> PreSrvStreamDecoderFilterPtr;
+
+  /**
    * Check to see if the connection can be closed after gracefully waiting to send pending codec
    * data.
    */
@@ -585,6 +606,9 @@ private:
   const Server::OverloadActionState& overload_stop_accepting_requests_ref_;
   const Server::OverloadActionState& overload_disable_keepalive_ref_;
   TimeSource& time_source_;
+
+  // pre srv filter
+  std::list<PreSrvStreamDecoderFilterPtr> pre_srv_decoder_filters_;
 };
 
 } // namespace Http

@@ -307,6 +307,14 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
     processFilter(filters[i], i, "http", filter_factories_);
   }
 
+  // add pre srv filter cb
+  const auto& pre_srv_filters = config.http_pre_srv_filters();
+  for (int32_t i = 0; i < pre_srv_filters.size(); i++) {
+    processPreSrvFilter(pre_srv_filters[i], i, "http", pre_srv_filter_factories_);
+  }
+
+  // todo: add pre client filter cb
+
   for (auto upgrade_config : config.upgrade_configs()) {
     const std::string& name = upgrade_config.upgrade_type();
     const bool enabled = upgrade_config.has_enabled() ? upgrade_config.enabled().value() : true;
@@ -360,6 +368,27 @@ void HttpConnectionManagerConfig::processFilter(
   filter_factories.push_back(callback);
 }
 
+void HttpConnectionManagerConfig::processPreSrvFilter(
+      const envoy::config::filter::network::http_connection_manager::v2::HttpPreSrvFilter& proto_config,
+      int i, absl::string_view prefix, std::list<Http::FilterFactoryCb>& filter_factories) {
+  const std::string& string_name = proto_config.name();
+
+  ENVOY_LOG(debug, "    {} pre srv filter #{}", prefix, i);
+  ENVOY_LOG(debug, "      name: {}", string_name);
+
+  const Json::ObjectSharedPtr filter_config =
+            MessageUtil::getJsonObjectFromMessage(proto_config.config());
+  ENVOY_LOG(debug, "    config: {}", filter_config->asJsonString());
+
+  // Now see if there is a factory that will accept the config.
+  auto& factory = Config::Utility::getAndCheckFactory<Server::Configuration::NamedHttpFilterConfigFactory>(string_name);
+  Http::FilterFactoryCb callback;
+  ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
+              proto_config, context_.messageValidationVisitor(), factory);
+  callback = factory.createFilterFactoryFromProto(*message, stats_prefix_, context_);
+  filter_factories.push_back(callback);
+}
+
 Http::ServerConnectionPtr
 HttpConnectionManagerConfig::createCodec(Network::Connection& connection,
                                          const Buffer::Instance& data,
@@ -385,6 +414,12 @@ HttpConnectionManagerConfig::createCodec(Network::Connection& connection,
 void HttpConnectionManagerConfig::createFilterChain(Http::FilterChainFactoryCallbacks& callbacks) {
   for (const Http::FilterFactoryCb& factory : filter_factories_) {
     factory(callbacks);
+  }
+}
+
+void HttpConnectionManagerConfig::createPreSrvFilterChain(Http::FilterChainFactoryCallbacks& callbacks) {
+  for (const Http::FilterFactoryCb& factory : pre_srv_filter_factories_) {
+      factory(callbacks);
   }
 }
 

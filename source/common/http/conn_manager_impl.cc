@@ -110,7 +110,17 @@ ConnectionManagerImpl::ConnectionManagerImpl(ConnectionManagerConfig& config,
           overload_manager ? overload_manager->getThreadLocalOverloadState().getState(
                                  Server::OverloadActionNames::get().DisableHttpKeepAlive)
                            : Server::OverloadManager::getInactiveState()),
-      time_source_(time_source) {}
+      time_source_(time_source) {
+
+   // create pre srv filter
+   config_.filterFactory().createPreSrvFilterChain(*this);
+}
+
+void ConnectionManagerImpl::addPreSrvDecodeFilter(Http::StreamDecoderFilterSharedPtr filter) {
+    // wrapper and add to list
+    PreSrvStreamDecoderFilterPtr wrapper(new PreSrvStreamDecoderFilter(*this, filter));
+    wrapper->moveIntoListBack(std::move(wrapper), pre_srv_decoder_filters_);
+}
 
 const HeaderMapImpl& ConnectionManagerImpl::continueHeader() {
   CONSTRUCT_ON_FIRST_USE(HeaderMapImpl,
@@ -258,6 +268,9 @@ StreamDecoder& ConnectionManagerImpl::newStream(StreamEncoder& response_encoder,
 }
 
 Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool) {
+  // create pre srv filter
+  //  config_.filterFactory().createPreSrvFilterChain(*this);
+
   if (!codec_) {
     codec_ = config_.createCodec(read_callbacks_->connection(), data, *this);
     if (codec_->protocol() == Protocol::Http2) {

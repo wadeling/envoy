@@ -141,6 +141,7 @@ add_executable(envoy
     include/envoy/config/subscription.h
     include/envoy/config/typed_metadata.h
     include/envoy/config/xds_grpc_context.h
+    include/envoy/config/filter/network/http_connection_manager/v2/http_connection_manager.pb.h
     include/envoy/decompressor/decompressor.h
     include/envoy/event/deferred_deletable.h
     include/envoy/event/dispatcher.h

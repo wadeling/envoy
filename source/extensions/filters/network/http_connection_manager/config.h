@@ -85,6 +85,9 @@ public:
 
   // Http::FilterChainFactory
   void createFilterChain(Http::FilterChainFactoryCallbacks& callbacks) override;
+
+  void createPreSrvFilterChain(Http::FilterChainFactoryCallbacks& callbacks) override;
+
   typedef std::list<Http::FilterFactoryCb> FilterFactoriesList;
   struct FilterConfig {
     std::unique_ptr<FilterFactoriesList> filter_factories;
@@ -143,9 +146,16 @@ private:
   void processFilter(
       const envoy::config::filter::network::http_connection_manager::v2::HttpFilter& proto_config,
       int i, absl::string_view prefix, FilterFactoriesList& filter_factories);
+  void processPreSrvFilter(
+      const envoy::config::filter::network::http_connection_manager::v2::HttpPreSrvFilter& proto_config,
+      int i, absl::string_view prefix, FilterFactoriesList& filter_factories);
 
   Server::Configuration::FactoryContext& context_;
   FilterFactoriesList filter_factories_;
+
+  FilterFactoriesList pre_srv_filter_factories_;
+  FilterFactoriesList pre_client_filter_factories_;
+
   std::map<std::string, FilterConfig> upgrade_filter_factories_;
   std::list<AccessLog::InstanceSharedPtr> access_logs_;
   const std::string stats_prefix_;
