@@ -160,6 +160,7 @@ add_executable(envoy
     include/envoy/http/conn_pool.h
     include/envoy/http/context.h
     include/envoy/http/filter.h
+    include/envoy/http/private_proto_filter.h
     include/envoy/http/header_map.h
     include/envoy/http/message.h
     include/envoy/http/metadata_interface.h

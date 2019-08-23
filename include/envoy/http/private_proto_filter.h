@@ -5,9 +5,7 @@
 #include <memory>
 #include <string>
 
-#include "envoy/access_log/access_log.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/grpc/status.h"
 #include "envoy/http/codec.h"
 #include "envoy/http/header_map.h"
 #include "envoy/router/router.h"
@@ -427,9 +425,9 @@ public:
 /**
  * Common base class for both decoder and encoder filters.
  */
-class StreamFilterBase {
+class PrivateProtoFilterBase {
 public:
-  virtual ~StreamFilterBase() {}
+  virtual ~PrivateProtoFilterBase() {}
 
   /**
    * This routine is called prior to a filter being destroyed. This may happen after normal stream
@@ -610,151 +608,39 @@ public:
 /**
  * Stream encoder filter interface.
  */
-class StreamEncoderFilter : public StreamFilterBase {
+class PrivateProtoEncoderFilter : public PriavateProtoFilterBase {
 public:
-  /**
-   * Called with 100-continue headers.
-   *
-   * This is not folded into encodeHeaders because most Envoy users and filters
-   * will not be proxying 100-continue and with it split out, can ignore the
-   * complexity of multiple encodeHeaders calls.
-   *
-   * @param headers supplies the 100-continue response headers to be encoded.
-   * @return FilterHeadersStatus determines how filter chain iteration proceeds.
-   *
-   */
-  virtual FilterHeadersStatus encode100ContinueHeaders(HeaderMap& headers) PURE;
 
-  /**
-   * Called with headers to be encoded, optionally indicating end of stream.
-   * @param headers supplies the headers to be encoded.
-   * @param end_stream supplies whether this is a header only request/response.
-   * @return FilterHeadersStatus determines how filter chain iteration proceeds.
-   */
-  virtual FilterHeadersStatus encodeHeaders(HeaderMap& headers, bool end_stream) PURE;
-
-  /**
-   * Called with data to be encoded, optionally indicating end of stream.
-   * @param data supplies the data to be encoded.
-   * @param end_stream supplies whether this is the last data frame.
-   * @return FilterDataStatus determines how filter chain iteration proceeds.
-   */
   virtual FilterDataStatus encodeData(Buffer::Instance& data, bool end_stream) PURE;
 
-  /**
-   * Called with trailers to be encoded, implicitly ending the stream.
-   * @param trailers supplies the trailers to be encoded.
-   */
-  virtual FilterTrailersStatus encodeTrailers(HeaderMap& trailers) PURE;
-
-  /**
-   * Called with metadata to be encoded. New metadata should be added directly to metadata_map. DO
-   * NOT call StreamDecoderFilterCallbacks::encodeMetadata() interface to add new metadata.
-   *
-   * @param metadata_map supplies the metadata to be encoded.
-   * @return FilterMetadataStatus, which currently is always FilterMetadataStatus::Continue;
-   */
-  virtual FilterMetadataStatus encodeMetadata(MetadataMap& metadata_map) PURE;
-
-  /**
-   * Called by the filter manager once to initialize the filter callbacks that the filter should
-   * use. Callbacks will not be invoked by the filter after onDestroy() is called.
-   */
-  virtual void setEncoderFilterCallbacks(StreamEncoderFilterCallbacks& callbacks) PURE;
-
-  /**
-   * Called at the end of the stream, when all data has been encoded.
-   */
-  virtual void encodeComplete() {}
 };
 
-typedef std::shared_ptr<StreamEncoderFilter> StreamEncoderFilterSharedPtr;
+typedef std::shared_ptr<PrivateProtoEncoderFilter> PrivateProtoEncoderFilterSharedPtr;
 
 /**
  * A filter that handles both encoding and decoding.
  */
-class StreamFilter : public virtual StreamDecoderFilter, public virtual StreamEncoderFilter {};
+class PrivateProtoFilter : public virtual PrivateProtoDecoderFilter, public virtual PrivateProtoEncoderFilter {};
 
-typedef std::shared_ptr<StreamFilter> StreamFilterSharedPtr;
+typedef std::shared_ptr<PrivateProtoFilter> PrivateProtoFilterSharedPtr;
 
-/**
- * These callbacks are provided by the connection manager to the factory so that the factory can
- * build the filter chain in an application specific way.
- */
-class FilterChainFactoryCallbacks {
+
+class PrivateProtoFilterChainFactoryCallbacks {
 public:
-  virtual ~FilterChainFactoryCallbacks() {}
-
-  /**
-   * Add a decoder filter that is used when reading stream data.
-   * @param filter supplies the filter to add.
-   */
-  virtual void addStreamDecoderFilter(Http::StreamDecoderFilterSharedPtr filter) PURE;
-
-  /**
-   * Add an encoder filter that is used when writing stream data.
-   * @param filter supplies the filter to add.
-   */
-  virtual void addStreamEncoderFilter(Http::StreamEncoderFilterSharedPtr filter) PURE;
-
-  /**
-   * Add a decoder/encoder filter that is used both when reading and writing stream data.
-   * @param filter supplies the filter to add.
-   */
-  virtual void addStreamFilter(Http::StreamFilterSharedPtr filter) PURE;
-
-  /**
-   * Add an access log handler that is called when the stream is destroyed.
-   * @param handler supplies the handler to add.
-   */
-  virtual void addAccessLogHandler(AccessLog::InstanceSharedPtr handler) PURE;
+  virtual ~PrivateProtoFilterChainFactoryCallbacks() {}
 
   virtual void addPreSrvDecodeFilter(Http::StreamDecoderFilterSharedPtr filter) PURE;
 
 };
 
-/**
- * This function is used to wrap the creation of an HTTP filter chain for new streams as they
- * come in. Filter factories create the function at configuration initialization time, and then
- * they are used at runtime.
- * @param callbacks supplies the callbacks for the stream to install filters to. Typically the
- * function will install a single filter, but it's technically possibly to install more than one
- * if desired.
- */
-typedef std::function<void(FilterChainFactoryCallbacks& callbacks)> FilterFactoryCb;
+typedef std::function<void(PrivateProtoFilterChainFactoryCallbacks& callbacks)> PrivateProtoFilterFactoryCb;
 
-/**
- * A FilterChainFactory is used by a connection manager to create an HTTP level filter chain when a
- * new stream is created on the connection (either locally or remotely). Typically it would be
- * implemented by a configuration engine that would install a set of filters that are able to
- * process an application scenario on top of a stream.
- */
-class FilterChainFactory {
+class PrivateProtoFilterChainFactory {
 public:
-  virtual ~FilterChainFactory() {}
+  virtual ~PrivateProtoFilterChainFactory() {}
 
-  /**
-   * Called when a new HTTP stream is created on the connection.
-   * @param callbacks supplies the "sink" that is used for actually creating the filter chain. @see
-   *                  FilterChainFactoryCallbacks.
-   */
-  virtual void createFilterChain(FilterChainFactoryCallbacks& callbacks) PURE;
+  virtual void createPreSrvFilterChain(PrivateProtoFilterChainFactoryCallbacks& callbacks) PURE;
 
-  virtual void createPreSrvFilterChain(FilterChainFactoryCallbacks& callbacks) PURE;
-
-  /**
-   * Called when a new upgrade stream is created on the connection.
-   * @param upgrade supplies the upgrade header from downstream
-   * @param per_route_upgrade_map supplies the upgrade map, if any, for this route.
-   * @param callbacks supplies the "sink" that is used for actually creating the filter chain. @see
-   *                  FilterChainFactoryCallbacks.
-   * @return true if upgrades of this type are allowed and the filter chain has been created.
-   *    returns false if this upgrade type is not configured, and no filter chain is created.
-   */
-  typedef std::map<std::string, bool> UpgradeMap;
-  virtual bool createUpgradeFilterChain(absl::string_view upgrade,
-                                        const UpgradeMap* per_route_upgrade_map,
-                                        FilterChainFactoryCallbacks& callbacks) PURE;
 };
 
 } // namespace Http

@@ -79,8 +79,19 @@ public:
 
   // add pre srv filter
   void addPreSrvDecodeFilter(Http::StreamDecoderFilterSharedPtr filter) override;
-
-  // Network::ConnectionCallbacks
+  void addAccessLogHandler(AccessLog::InstanceSharedPtr handler) override {
+    handler = nullptr;
+  }
+  void addStreamFilter(Http::StreamFilterSharedPtr filter) override {
+      filter = nullptr;
+  }
+  void addStreamEncoderFilter(Http::StreamEncoderFilterSharedPtr filter) override {
+      filter = nullptr;
+  }
+  void addStreamDecoderFilter(Http::StreamDecoderFilterSharedPtr filter) override {
+      filter = nullptr;
+  }
+    // Network::ConnectionCallbacks
   void onEvent(Network::ConnectionEvent event) override;
   // Pass connection watermark events on to all the streams associated with that connection.
   void onAboveWriteBufferHighWatermark() override {
@@ -544,8 +555,8 @@ private:
   struct PreSrvStreamDecoderFilter : LinkedObject<PreSrvStreamDecoderFilter> {
       PreSrvStreamDecoderFilter(ConnectionManagerImpl& connection_manager, StreamDecoderFilterSharedPtr filter)
               : connection_manager_(connection_manager), handle_(filter) {}
-      StreamDecoderFilterSharedPtr handle_;
       ConnectionManagerImpl& connection_manager_;
+      StreamDecoderFilterSharedPtr handle_;
 
       FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) {
           FilterDataStatus status = handle_->decodeData(data, end_stream);
