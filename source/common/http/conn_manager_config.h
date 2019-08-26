@@ -2,6 +2,7 @@
 
 #include "envoy/config/config_provider.h"
 #include "envoy/http/filter.h"
+#include "envoy/http/private_proto_filter.h"
 #include "envoy/router/rds.h"
 #include "envoy/stats/scope.h"
 
@@ -206,6 +207,8 @@ public:
    *         chain.
    */
   virtual FilterChainFactory& filterFactory() PURE;
+  virtual PrivateProtoFilterChainFactory& privateProtoFilterFactory() PURE;
+
 
   /**
    * @return whether the connection manager will generate a fresh x-request-id if the request does

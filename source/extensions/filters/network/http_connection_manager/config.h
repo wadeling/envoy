@@ -10,6 +10,7 @@
 #include "envoy/config/config_provider_manager.h"
 #include "envoy/config/filter/network/http_connection_manager/v2/http_connection_manager.pb.validate.h"
 #include "envoy/http/filter.h"
+#include "envoy/http/private_proto_filter.h"
 #include "envoy/router/route_config_provider_manager.h"
 
 #include "common/common/logger.h"
@@ -74,6 +75,7 @@ private:
  */
 class HttpConnectionManagerConfig : Logger::Loggable<Logger::Id::config>,
                                     public Http::FilterChainFactory,
+                                    public Http::PrivateProtoFilterChainFactory,
                                     public Http::ConnectionManagerConfig {
 public:
   HttpConnectionManagerConfig(
@@ -86,7 +88,9 @@ public:
   // Http::FilterChainFactory
   void createFilterChain(Http::FilterChainFactoryCallbacks& callbacks) override;
 
-  void createPreSrvFilterChain(Http::FilterChainFactoryCallbacks& callbacks) override;
+  // Http::PrivateProtoFilterChainFactory
+  void createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) override;
+  typedef std::list<Http::PrivateProtoFilterFactoryCb> PrivateProtoFilterFactoriesList;
 
   typedef std::list<Http::FilterFactoryCb> FilterFactoriesList;
   struct FilterConfig {
@@ -105,6 +109,10 @@ public:
   Http::DateProvider& dateProvider() override { return date_provider_; }
   std::chrono::milliseconds drainTimeout() override { return drain_timeout_; }
   FilterChainFactory& filterFactory() override { return *this; }
+
+  // for private proto
+  PrivateProtoFilterChainFactory& privateProtoFilterFactory() override { return *this; }
+
   bool generateRequestId() override { return generate_request_id_; }
   uint32_t maxRequestHeadersKb() const override { return max_request_headers_kb_; }
   absl::optional<std::chrono::milliseconds> idleTimeout() const override { return idle_timeout_; }
@@ -148,13 +156,14 @@ private:
       int i, absl::string_view prefix, FilterFactoriesList& filter_factories);
   void processPreSrvFilter(
       const envoy::config::filter::network::http_connection_manager::v2::HttpPreSrvFilter& proto_config,
-      int i, absl::string_view prefix, FilterFactoriesList& filter_factories);
+      int i, absl::string_view prefix, PrivateProtoFilterFactoriesList& filter_factories);
 
   Server::Configuration::FactoryContext& context_;
   FilterFactoriesList filter_factories_;
 
-  FilterFactoriesList pre_srv_filter_factories_;
-  FilterFactoriesList pre_client_filter_factories_;
+  // private proto
+  PrivateProtoFilterFactoriesList pre_srv_filter_factories_;
+  PrivateProtoFilterFactoriesList pre_client_filter_factories_;
 
   std::map<std::string, FilterConfig> upgrade_filter_factories_;
   std::list<AccessLog::InstanceSharedPtr> access_logs_;

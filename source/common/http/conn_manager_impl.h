@@ -47,7 +47,7 @@ class ConnectionManagerImpl : Logger::Loggable<Logger::Id::http>,
                               public Network::ReadFilter,
                               public ServerConnectionCallbacks,
                               public Network::ConnectionCallbacks,
-                              public FilterChainFactoryCallbacks {
+                              public PrivateProtoFilterChainFactoryCallbacks {
 public:
   ConnectionManagerImpl(ConnectionManagerConfig& config, const Network::DrainDecision& drain_close,
                         Runtime::RandomGenerator& random_generator, Http::Context& http_context,
@@ -77,21 +77,11 @@ public:
   StreamDecoder& newStream(StreamEncoder& response_encoder,
                            bool is_internally_created = false) override;
 
+  // implement private proto chain callbacks
   // add pre srv filter
-  void addPreSrvDecodeFilter(Http::StreamDecoderFilterSharedPtr filter) override;
-  void addAccessLogHandler(AccessLog::InstanceSharedPtr handler) override {
-    handler = nullptr;
-  }
-  void addStreamFilter(Http::StreamFilterSharedPtr filter) override {
-      filter = nullptr;
-  }
-  void addStreamEncoderFilter(Http::StreamEncoderFilterSharedPtr filter) override {
-      filter = nullptr;
-  }
-  void addStreamDecoderFilter(Http::StreamDecoderFilterSharedPtr filter) override {
-      filter = nullptr;
-  }
-    // Network::ConnectionCallbacks
+  void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) override;
+
+  // Network::ConnectionCallbacks
   void onEvent(Network::ConnectionEvent event) override;
   // Pass connection watermark events on to all the streams associated with that connection.
   void onAboveWriteBufferHighWatermark() override {
@@ -553,13 +543,13 @@ private:
    * Wrapper for a pre srv stream decoder filter.
    */
   struct PreSrvStreamDecoderFilter : LinkedObject<PreSrvStreamDecoderFilter> {
-      PreSrvStreamDecoderFilter(ConnectionManagerImpl& connection_manager, StreamDecoderFilterSharedPtr filter)
+      PreSrvStreamDecoderFilter(ConnectionManagerImpl& connection_manager, PrivateProtoDecoderFilterSharedPtr filter)
               : connection_manager_(connection_manager), handle_(filter) {}
       ConnectionManagerImpl& connection_manager_;
-      StreamDecoderFilterSharedPtr handle_;
+      PrivateProtoDecoderFilterSharedPtr handle_;
 
-      FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) {
-          FilterDataStatus status = handle_->decodeData(data, end_stream);
+      PrivateProtoFilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) {
+          PrivateProtoFilterDataStatus status = handle_->decodeData(data, end_stream);
           return status;
       }
   };

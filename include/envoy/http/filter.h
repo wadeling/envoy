@@ -708,9 +708,6 @@ public:
    * @param handler supplies the handler to add.
    */
   virtual void addAccessLogHandler(AccessLog::InstanceSharedPtr handler) PURE;
-
-  virtual void addPreSrvDecodeFilter(Http::StreamDecoderFilterSharedPtr filter) PURE;
-
 };
 
 /**
@@ -739,8 +736,6 @@ public:
    *                  FilterChainFactoryCallbacks.
    */
   virtual void createFilterChain(FilterChainFactoryCallbacks& callbacks) PURE;
-
-  virtual void createPreSrvFilterChain(FilterChainFactoryCallbacks& callbacks) PURE;
 
   /**
    * Called when a new upgrade stream is created on the connection.

@@ -1232,6 +1232,11 @@ void AdminImpl::createFilterChain(Http::FilterChainFactoryCallbacks& callbacks) 
   callbacks.addStreamDecoderFilter(Http::StreamDecoderFilterSharedPtr{new AdminFilter(*this)});
 }
 
+void AdminImpl::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {
+    // not support
+    callbacks.addPreSrvDecodeFilter(nullptr);
+}
+
 Http::Code AdminImpl::runCallback(absl::string_view path_and_query,
                                   Http::HeaderMap& response_headers, Buffer::Instance& response,
                                   AdminStream& admin_stream) {

@@ -312,7 +312,6 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
   for (int32_t i = 0; i < pre_srv_filters.size(); i++) {
     processPreSrvFilter(pre_srv_filters[i], i, "http", pre_srv_filter_factories_);
   }
-
   // todo: add pre client filter cb
 
   for (auto upgrade_config : config.upgrade_configs()) {
@@ -370,7 +369,7 @@ void HttpConnectionManagerConfig::processFilter(
 
 void HttpConnectionManagerConfig::processPreSrvFilter(
       const envoy::config::filter::network::http_connection_manager::v2::HttpPreSrvFilter& proto_config,
-      int i, absl::string_view prefix, std::list<Http::FilterFactoryCb>& filter_factories) {
+      int i, absl::string_view prefix, std::list<Http::PrivateProtoFilterFactoryCb>& filter_factories) {
   const std::string& string_name = proto_config.name();
 
   ENVOY_LOG(debug, "    {} pre srv filter #{}", prefix, i);
@@ -382,10 +381,10 @@ void HttpConnectionManagerConfig::processPreSrvFilter(
 
   // Now see if there is a factory that will accept the config.
   auto& factory = Config::Utility::getAndCheckFactory<Server::Configuration::NamedHttpFilterConfigFactory>(string_name);
-  Http::FilterFactoryCb callback;
+  Http::PrivateProtoFilterFactoryCb callback;
   ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
               proto_config, context_.messageValidationVisitor(), factory);
-  callback = factory.createFilterFactoryFromProto(*message, stats_prefix_, context_);
+  callback = factory.createPrivateProtoFilterFactoryFromProto(*message, stats_prefix_, context_);
   filter_factories.push_back(callback);
 }
 
@@ -417,8 +416,8 @@ void HttpConnectionManagerConfig::createFilterChain(Http::FilterChainFactoryCall
   }
 }
 
-void HttpConnectionManagerConfig::createPreSrvFilterChain(Http::FilterChainFactoryCallbacks& callbacks) {
-  for (const Http::FilterFactoryCb& factory : pre_srv_filter_factories_) {
+void HttpConnectionManagerConfig::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {
+  for (const Http::PrivateProtoFilterFactoryCb& factory : pre_srv_filter_factories_) {
       factory(callbacks);
   }
 }

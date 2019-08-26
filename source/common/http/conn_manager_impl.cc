@@ -113,10 +113,10 @@ ConnectionManagerImpl::ConnectionManagerImpl(ConnectionManagerConfig& config,
       time_source_(time_source) {
 
    // create pre srv filter
-   config_.filterFactory().createPreSrvFilterChain(*this);
+   config_.privateProtoFilterFactory().createPreSrvFilterChain(*this);
 }
 
-void ConnectionManagerImpl::addPreSrvDecodeFilter(Http::StreamDecoderFilterSharedPtr filter) {
+void ConnectionManagerImpl::addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) {
     // wrapper and add to list
     PreSrvStreamDecoderFilterPtr wrapper(new PreSrvStreamDecoderFilter(*this, filter));
     wrapper->moveIntoListBack(std::move(wrapper), pre_srv_decoder_filters_);
@@ -268,8 +268,7 @@ StreamDecoder& ConnectionManagerImpl::newStream(StreamEncoder& response_encoder,
 }
 
 Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool) {
-  // create pre srv filter
-  //  config_.filterFactory().createPreSrvFilterChain(*this);
+  // loop pre srv filter
 
   if (!codec_) {
     codec_ = config_.createCodec(read_callbacks_->connection(), data, *this);

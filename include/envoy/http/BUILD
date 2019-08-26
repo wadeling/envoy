@@ -56,7 +56,7 @@ envoy_cc_library(
 
 envoy_cc_library(
     name = "filter_interface",
-    hdrs = ["filter.h"],
+    hdrs = ["filter.h","private_proto_filter.h"],
     external_deps = ["abseil_optional"],
     deps = [
         ":codec_interface",

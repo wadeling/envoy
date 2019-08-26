@@ -8,6 +8,7 @@
 #include "envoy/http/codes.h"
 #include "envoy/http/context.h"
 #include "envoy/http/filter.h"
+#include "envoy/http/private_proto_filter.h"
 #include "envoy/init/manager.h"
 #include "envoy/json/json_object.h"
 #include "envoy/network/drain_decision.h"
@@ -360,6 +361,14 @@ public:
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 
+  virtual Http::PrivateProtoFilterFactoryCb createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config,
+                                                               const std::string& stat_prefix,
+                                                               FactoryContext& context) {
+        UNREFERENCED_PARAMETER(config);
+        UNREFERENCED_PARAMETER(stat_prefix);
+        UNREFERENCED_PARAMETER(context);
+        NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+    }
   /**
    * @return ProtobufTypes::MessagePtr create empty config proto message for v2. The filter
    *         config, which arrives in an opaque google.protobuf.Struct message, will be converted to
