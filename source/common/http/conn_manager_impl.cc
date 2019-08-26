@@ -122,6 +122,16 @@ void ConnectionManagerImpl::addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilte
     wrapper->moveIntoListBack(std::move(wrapper), pre_srv_decoder_filters_);
 }
 
+void ConnectionManagerImpl::decodePrivateProtoData(Buffer::Instance& data, bool end_stream) {
+    std::list<PreSrvStreamDecoderFilterPtr>::iterator entry = pre_srv_decoder_filters_.begin();
+
+    for (; entry != pre_srv_decoder_filters_.end(); entry++) {
+        PrivateProtoFilterDataStatus status = (*entry)->handle_->decodeData(data, end_stream);
+        ENVOY_LOG(debug, "decode private proto data called: filter={} status={}",
+                         static_cast<const void*>((*entry).get()), static_cast<uint64_t>(status));
+    }
+}
+
 const HeaderMapImpl& ConnectionManagerImpl::continueHeader() {
   CONSTRUCT_ON_FIRST_USE(HeaderMapImpl,
                          {Http::Headers::get().Status, std::to_string(enumToInt(Code::Continue))});
@@ -267,8 +277,9 @@ StreamDecoder& ConnectionManagerImpl::newStream(StreamEncoder& response_encoder,
   return **streams_.begin();
 }
 
-Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool) {
-  // loop pre srv filter
+Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool end_stream) {
+  // decode private proto data
+  decodePrivateProtoData(data,end_stream);
 
   if (!codec_) {
     codec_ = config_.createCodec(read_callbacks_->connection(), data, *this);
