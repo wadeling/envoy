@@ -361,14 +361,6 @@ public:
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 
-  virtual Http::PrivateProtoFilterFactoryCb createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config,
-                                                               const std::string& stat_prefix,
-                                                               FactoryContext& context) {
-        UNREFERENCED_PARAMETER(config);
-        UNREFERENCED_PARAMETER(stat_prefix);
-        UNREFERENCED_PARAMETER(context);
-        NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
-    }
   /**
    * @return ProtobufTypes::MessagePtr create empty config proto message for v2. The filter
    *         config, which arrives in an opaque google.protobuf.Struct message, will be converted to
@@ -401,6 +393,25 @@ public:
    * @return std::string the identifying name for a particular implementation of an http filter
    * produced by the factory.
    */
+  virtual std::string name() PURE;
+};
+
+// private proto filter
+class PrivateProtoNamedHttpFilterConfigFactory : public ProtocolOptionsFactory {
+public:
+    virtual ~PrivateProtoNamedHttpFilterConfigFactory() {}
+
+    virtual Http::PrivateProtoFilterFactoryCb createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config,
+                                                                       const std::string& stat_prefix,
+                                                                       FactoryContext& context) {
+    UNREFERENCED_PARAMETER(config);
+    UNREFERENCED_PARAMETER(stat_prefix);
+    UNREFERENCED_PARAMETER(context);
+    NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
+  }
+
+  ProtobufTypes::MessagePtr createEmptyConfigProto() { return ProtobufTypes::MessagePtr{new Envoy::ProtobufWkt::Empty()}; }
+
   virtual std::string name() PURE;
 };
 

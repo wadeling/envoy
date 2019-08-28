@@ -747,6 +747,10 @@ add_executable(envoy
     source/extensions/filters/http/grpc_http1_bridge/config.h
     source/extensions/filters/http/grpc_http1_bridge/http1_bridge_filter.cc
     source/extensions/filters/http/grpc_http1_bridge/http1_bridge_filter.h
+    source/extensions/filters/http/private_proto_test/config.h
+    source/extensions/filters/http/private_proto_test/config.cc
+    source/extensions/filters/http/private_proto_test/private_proto_test.cc
+    source/extensions/filters/http/private_proto_test/private_proto_test.h
     source/extensions/filters/http/grpc_http1_reverse_bridge/config.cc
     source/extensions/filters/http/grpc_http1_reverse_bridge/config.h
     source/extensions/filters/http/grpc_http1_reverse_bridge/filter.cc

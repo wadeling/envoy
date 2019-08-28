@@ -57,6 +57,9 @@ public:
   // Original Src Filter
   const std::string OriginalSrc = "envoy.filters.http.original_src";
 
+  // private proto filter test
+  const std::string PrivateProtoTest = "envoy.filters.http.ppt";
+
   // Converts names from v1 to v2
   const Config::V1Converter v1_converter_;
 

@@ -115,7 +115,7 @@ public:
    * Called by the filter manager once to initialize the filter decoder callbacks that the
    * filter should use. Callbacks will not be invoked by the filter after onDestroy() is called.
    */
-  virtual void setDecoderFilterCallbacks(PrivateProtoDecoderFilterCallbacks& callbacks) PURE;
+//  virtual void setDecoderFilterCallbacks(PrivateProtoDecoderFilterCallbacks& callbacks) {}
 
   /**
    * Called at the end of the stream, when all data has been decoded.

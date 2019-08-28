@@ -380,7 +380,7 @@ void HttpConnectionManagerConfig::processPreSrvFilter(
   ENVOY_LOG(debug, "    config: {}", filter_config->asJsonString());
 
   // Now see if there is a factory that will accept the config.
-  auto& factory = Config::Utility::getAndCheckFactory<Server::Configuration::NamedHttpFilterConfigFactory>(string_name);
+  auto& factory = Config::Utility::getAndCheckFactory<Server::Configuration::PrivateProtoNamedHttpFilterConfigFactory>(string_name);
   Http::PrivateProtoFilterFactoryCb callback;
   ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
               proto_config, context_.messageValidationVisitor(), factory);
