@@ -334,6 +334,8 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
     return Http::FilterHeadersStatus::StopIteration;
   }
 
+  ENVOY_STREAM_LOG(debug, "find route,route entry name {}", *callbacks_, route_->routeEntry()->routeName());
+
   // Determine if there is a direct response for the request.
   const auto* direct_response = route_->directResponseEntry();
   if (direct_response != nullptr) {

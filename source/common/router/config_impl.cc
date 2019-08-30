@@ -839,14 +839,14 @@ void PrefixRouteEntryImpl::rewritePathHeader(Http::HeaderMap& headers,
 
 RouteConstSharedPtr PrefixRouteEntryImpl::matches(const Http::HeaderMap& headers,
                                                   uint64_t random_value) const {
-    ENVOY_LOG_MISC(debug,"prefix route matches start");
+  ENVOY_LOG_MISC(debug,"prefix route matches start");
   if (RouteEntryImplBase::matchRoute(headers, random_value) &&
       (case_sensitive_
            ? absl::StartsWith(headers.Path()->value().getStringView(), prefix_)
            : absl::StartsWithIgnoreCase(headers.Path()->value().getStringView(), prefix_))) {
     return clusterEntry(headers, random_value);
   }
-    ENVOY_LOG_MISC(debug,"prefix route matches null");
+  ENVOY_LOG_MISC(debug,"prefix route matches null");
   return nullptr;
 }
 
