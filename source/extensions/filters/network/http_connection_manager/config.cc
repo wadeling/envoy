@@ -313,6 +313,7 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
     processPreSrvFilter(pre_srv_filters[i], i, "http", pre_srv_filter_factories_);
   }
   // todo: add pre client filter cb
+//  config.route_config().virtual_hosts(0).routes(0).http_pre_client_filters()
 
   for (auto upgrade_config : config.upgrade_configs()) {
     const std::string& name = upgrade_config.upgrade_type();
