@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <common/router/router.h>
 
 #include "envoy/common/pure.h"
 #include "envoy/event/deferred_deletable.h"
@@ -63,6 +64,9 @@ public:
                            Upstream::HostDescriptionConstSharedPtr host) PURE;
 };
 
+//class Filter;
+typedef std::shared_ptr<Envoy::Router::Filter> RouterFilterPtr;
+
 /**
  * An instance of a generic connection pool.
  */
@@ -121,9 +125,13 @@ public:
    * @return Upstream::HostDescriptionConstSharedPtr the host for which connections are pooled.
    */
   virtual Upstream::HostDescriptionConstSharedPtr host() const PURE;
+
+  RouterFilterPtr router_callbacks_;
+  void SetRouterCallbacks(RouterFilterPtr r) {router_callbacks_=r;}
 };
 
 typedef std::unique_ptr<Instance> InstancePtr;
+
 
 } // namespace ConnectionPool
 } // namespace Http

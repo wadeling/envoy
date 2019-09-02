@@ -14,11 +14,13 @@
 #include "envoy/type/percent.pb.validate.h"
 #include "envoy/upstream/cluster_manager.h"
 #include "envoy/upstream/upstream.h"
+#include "envoy/server/filter_config.h"
 
 #include "common/common/assert.h"
 #include "common/common/empty_string.h"
 #include "common/common/fmt.h"
 #include "common/common/hash.h"
+#include "common/config/utility.h"
 //#include "common/common/logger.h"
 #include "common/common/utility.h"
 #include "common/config/metadata.h"
@@ -362,7 +364,7 @@ const envoy::type::FractionalPercent& RouteTracingImpl::getOverallSampling() con
 RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
                                        const envoy::api::v2::route::Route& route,
                                        Server::Configuration::FactoryContext& factory_context)
-    : case_sensitive_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(route.match(), case_sensitive, true)),
+    : context_(factory_context), case_sensitive_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(route.match(), case_sensitive, true)),
       prefix_rewrite_(route.route().prefix_rewrite()), host_rewrite_(route.route().host_rewrite()),
       vhost_(vhost),
       auto_host_rewrite_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(route.route(), auto_host_rewrite, false)),
@@ -403,6 +405,7 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
                           factory_context),
       route_name_(route.name()), time_source_(factory_context.dispatcher().timeSource()),
       internal_redirect_action_(convertInternalRedirectAction(route.route())) {
+
   if (route.route().has_metadata_match()) {
     const auto filter_it = route.route().metadata_match().filter_metadata().find(
         Envoy::Config::MetadataFilters::get().ENVOY_LB);
@@ -436,8 +439,11 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
     }
   }
 
-//  route.http_pre_client_filters()
-// todo: add pre client cb
+  // add client filter for route entry
+  const auto& pre_client_filters = route.http_pre_client_filters();
+  for (int32_t i = 0; i < pre_client_filters.size(); i++) {
+      processPreClientFilter(pre_client_filters[i], pre_client_filter_factories_);
+  }
 
   for (const auto& header_map : route.match().headers()) {
     config_headers_.push_back(header_map);
@@ -479,6 +485,25 @@ bool RouteEntryImplBase::evaluateRuntimeMatch(const uint64_t random_value) const
                    : loader_.snapshot().featureEnabled(runtime_->fractional_runtime_key_,
                                                        runtime_->fractional_runtime_default_,
                                                        random_value);
+}
+
+void RouteEntryImplBase::processPreClientFilter(const envoy::api::v2::route::HttpPreClientFilter& proto_config,
+        PrivateProtoFilterFactoriesList& filter_factories) {
+    const std::string& string_name = proto_config.name();
+
+    ENVOY_LOG(debug, "  pre client filter  name: {}", string_name);
+
+    const Json::ObjectSharedPtr filter_config =
+            MessageUtil::getJsonObjectFromMessage(proto_config.config());
+    ENVOY_LOG(debug, "    config: {}", filter_config->asJsonString());
+
+    // Now see if there is a factory that will accept the config.
+    auto& factory = Envoy::Config::Utility::getAndCheckFactory<Server::Configuration::PrivateProtoNamedHttpFilterConfigFactory>(string_name);
+    Http::PrivateProtoFilterFactoryCb callback;
+    ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
+            proto_config, context_.messageValidationVisitor(), factory);
+    callback = factory.createPrivateProtoFilterFactoryFromProto(*message);
+    filter_factories.push_back(callback);
 }
 
 bool RouteEntryImplBase::matchRoute(const Http::HeaderMap& headers, uint64_t random_value) const {

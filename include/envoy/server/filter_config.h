@@ -401,12 +401,10 @@ class PrivateProtoNamedHttpFilterConfigFactory : public ProtocolOptionsFactory {
 public:
     virtual ~PrivateProtoNamedHttpFilterConfigFactory() {}
 
-    virtual Http::PrivateProtoFilterFactoryCb createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config,
-                                                                       const std::string& stat_prefix,
-                                                                       FactoryContext& context) {
+    virtual Http::PrivateProtoFilterFactoryCb createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config) {
     UNREFERENCED_PARAMETER(config);
-    UNREFERENCED_PARAMETER(stat_prefix);
-    UNREFERENCED_PARAMETER(context);
+//    UNREFERENCED_PARAMETER(stat_prefix);
+//    UNREFERENCED_PARAMETER(context);
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 

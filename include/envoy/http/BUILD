@@ -42,6 +42,7 @@ envoy_cc_library(
         ":codec_interface",
         "//include/envoy/event:deferred_deletable",
         "//include/envoy/upstream:upstream_interface",
+        "//source/common/router:router_h_lib",
     ],
 )
 
@@ -70,6 +71,13 @@ envoy_cc_library(
     ],
 )
 
+envoy_cc_library(
+    name = "private_proto_filter_interface",
+    hdrs = ["private_proto_filter.h"],
+    deps = [
+         "//include/envoy/network:connection_interface",
+     ],
+)
 envoy_cc_library(
     name = "header_map_interface",
     hdrs = ["header_map.h"],

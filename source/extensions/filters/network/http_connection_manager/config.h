@@ -156,7 +156,7 @@ private:
       int i, absl::string_view prefix, FilterFactoriesList& filter_factories);
   void processPreSrvFilter(
       const envoy::config::filter::network::http_connection_manager::v2::HttpPreSrvFilter& proto_config,
-      int i, absl::string_view prefix, PrivateProtoFilterFactoriesList& filter_factories);
+      PrivateProtoFilterFactoriesList& filter_factories);
 
   Server::Configuration::FactoryContext& context_;
   FilterFactoriesList filter_factories_;

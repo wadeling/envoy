@@ -4,16 +4,7 @@
 #include <functional>
 #include <memory>
 #include <string>
-
-#include "envoy/event/dispatcher.h"
-#include "envoy/http/codec.h"
-#include "envoy/http/header_map.h"
-#include "envoy/router/router.h"
-#include "envoy/ssl/connection.h"
-#include "envoy/tracing/http_tracer.h"
-#include "envoy/upstream/upstream.h"
-
-#include "absl/types/optional.h"
+#include "envoy/network/connection.h"
 
 namespace Envoy {
 namespace Http {

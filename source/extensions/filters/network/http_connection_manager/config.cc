@@ -310,7 +310,7 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
   // add pre srv filter cb
   const auto& pre_srv_filters = config.http_pre_srv_filters();
   for (int32_t i = 0; i < pre_srv_filters.size(); i++) {
-    processPreSrvFilter(pre_srv_filters[i], i, "http", pre_srv_filter_factories_);
+    processPreSrvFilter(pre_srv_filters[i], pre_srv_filter_factories_);
   }
   // todo: add pre client filter cb
 //  config.route_config().virtual_hosts(0).routes(0).http_pre_client_filters()
@@ -370,14 +370,12 @@ void HttpConnectionManagerConfig::processFilter(
 
 void HttpConnectionManagerConfig::processPreSrvFilter(
       const envoy::config::filter::network::http_connection_manager::v2::HttpPreSrvFilter& proto_config,
-      int i, absl::string_view prefix, std::list<Http::PrivateProtoFilterFactoryCb>& filter_factories) {
+      std::list<Http::PrivateProtoFilterFactoryCb>& filter_factories) {
   const std::string& string_name = proto_config.name();
 
-  ENVOY_LOG(debug, "    {} pre srv filter #{}", prefix, i);
-  ENVOY_LOG(debug, "      name: {}", string_name);
+  ENVOY_LOG(debug, "   pre srv filter name: {}", string_name);
 
-  const Json::ObjectSharedPtr filter_config =
-            MessageUtil::getJsonObjectFromMessage(proto_config.config());
+  const Json::ObjectSharedPtr filter_config = MessageUtil::getJsonObjectFromMessage(proto_config.config());
   ENVOY_LOG(debug, "    config: {}", filter_config->asJsonString());
 
   // Now see if there is a factory that will accept the config.
@@ -385,7 +383,7 @@ void HttpConnectionManagerConfig::processPreSrvFilter(
   Http::PrivateProtoFilterFactoryCb callback;
   ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
               proto_config, context_.messageValidationVisitor(), factory);
-  callback = factory.createPrivateProtoFilterFactoryFromProto(*message, stats_prefix_, context_);
+  callback = factory.createPrivateProtoFilterFactoryFromProto(*message);
   filter_factories.push_back(callback);
 }
 

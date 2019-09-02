@@ -10,10 +10,12 @@
 
 #include "envoy/access_log/access_log.h"
 #include "envoy/api/v2/core/base.pb.h"
+#include "envoy/api/v2/route/route.pb.h"
 #include "envoy/config/typed_metadata.h"
 #include "envoy/http/codec.h"
 #include "envoy/http/codes.h"
 #include "envoy/http/header_map.h"
+#include "envoy/http/private_proto_filter.h"
 #include "envoy/tracing/http_tracer.h"
 #include "envoy/upstream/resource_manager.h"
 #include "envoy/upstream/retry.h"
@@ -744,6 +746,15 @@ public:
    * @return std::string& the name of the route.
    */
   virtual const std::string& routeName() const PURE;
+
+  // pre client filters
+  virtual void createPreClientFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks ABSL_ATTRIBUTE_UNUSED) {}
+
+  typedef std::list<Http::PrivateProtoFilterFactoryCb> PrivateProtoFilterFactoriesList;
+  PrivateProtoFilterFactoriesList pre_client_filter_factories_;
+  virtual void processPreClientFilter(
+            const envoy::api::v2::route::HttpPreClientFilter& proto_config ABSL_ATTRIBUTE_UNUSED,
+            PrivateProtoFilterFactoriesList& filter_factories ABSL_ATTRIBUTE_UNUSED)  {}
 };
 
 /**

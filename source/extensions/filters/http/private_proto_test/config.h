@@ -12,9 +12,7 @@ namespace PrivateProto {
 class PrivateProtoTestConfig : public Server::Configuration::PrivateProtoNamedHttpFilterConfigFactory, Logger::Loggable<Logger::Id::filter> {
 public:
 
-  Http::PrivateProtoFilterFactoryCb createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config ,
-                                                                             const std::string& stats_prefix ,
-                                                                             Server::Configuration::FactoryContext& factoryContext ) override;
+  Http::PrivateProtoFilterFactoryCb createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config) override;
   std::string name() override { return HttpFilterNames::get().PrivateProtoTest; }
 };
 

@@ -122,6 +122,7 @@ envoy_cc_library(
         ":date_provider_lib",
         "//include/envoy/config:config_provider_interface",
         "//include/envoy/http:filter_interface",
+        "//include/envoy/http:private_proto_filter_interface",
         "//include/envoy/router:rds_interface",
         "//source/common/network:utility_lib",
     ],
