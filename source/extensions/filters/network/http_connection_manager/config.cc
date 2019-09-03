@@ -312,8 +312,6 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
   for (int32_t i = 0; i < pre_srv_filters.size(); i++) {
     processPreSrvFilter(pre_srv_filters[i], pre_srv_filter_factories_);
   }
-  // todo: add pre client filter cb
-//  config.route_config().virtual_hosts(0).routes(0).http_pre_client_filters()
 
   for (auto upgrade_config : config.upgrade_configs()) {
     const std::string& name = upgrade_config.upgrade_type();

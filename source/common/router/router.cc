@@ -415,6 +415,9 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
     return Http::FilterHeadersStatus::StopIteration;
   }
 
+  //test
+  ENVOY_STREAM_LOG(debug, "router entry pre client filter size {}", *callbacks_,route_entry_->pre_client_filter_factories_.size());
+
   // Fetch a connection pool for the upstream cluster.
   ENVOY_STREAM_LOG(debug, "ready to get conn pool", *callbacks_);
   // this will create different pool by protocal type.
@@ -490,7 +493,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
 
   UpstreamRequestPtr upstream_request = std::make_unique<UpstreamRequest>(*this, *conn_pool);
   upstream_request->moveIntoList(std::move(upstream_request), upstream_requests_);
-  upstream_requests_.front()->encodeHeaders(end_stream);
+  upstream_requests_.front()->encodeHeaders(end_stream,route_entry_->pre_client_filter_factories_);
   if (end_stream) {
     onRequestComplete();
   }
@@ -1238,7 +1241,7 @@ void Filter::doRetry() {
   UpstreamRequestPtr upstream_request = std::make_unique<UpstreamRequest>(*this, *conn_pool);
   UpstreamRequest* upstream_request_tmp = upstream_request.get();
   upstream_request->moveIntoList(std::move(upstream_request), upstream_requests_);
-  upstream_requests_.front()->encodeHeaders(!callbacks_->decodingBuffer() && !downstream_trailers_);
+  upstream_requests_.front()->encodeHeaders(!callbacks_->decodingBuffer() && !downstream_trailers_,route_entry_->pre_client_filter_factories_);
   // It's possible we got immediately reset which means the upstream request we just
   // added to the front of the list might have been removed, so we need to check to make
   // sure we don't encodeData on the wrong request.
@@ -1342,7 +1345,7 @@ void Filter::UpstreamRequest::maybeEndDecode(bool end_stream) {
   }
 }
 
-void Filter::UpstreamRequest::encodeHeaders(bool end_stream) {
+void Filter::UpstreamRequest::encodeHeaders(bool end_stream,const Http::PrivateProtoFilterFactoriesList& pre_client_factory_list)  {
   ASSERT(!encode_complete_);
   encode_complete_ = end_stream;
 

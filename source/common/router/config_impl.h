@@ -400,7 +400,7 @@ public:
   Server::Configuration::FactoryContext& context_;
   void processPreClientFilter(
             const envoy::api::v2::route::HttpPreClientFilter& proto_config,
-            PrivateProtoFilterFactoriesList& filter_factories) override ;
+            Http::PrivateProtoFilterFactoriesList& filter_factories) override ;
 
   bool matchRoute(const Http::HeaderMap& headers, uint64_t random_value) const;
   void validateClusters(Upstream::ClusterManager& cm) const;

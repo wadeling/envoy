@@ -45,5 +45,9 @@ void ConnPoolImplBase::onPendingRequestCancel(PendingRequest& request) {
   checkForDrained();
 }
 
+void ConnPoolImplBase::setPreClientFactoriesList(PrivateProtoFilterFactoriesListPtr pre_client_factory_list) {
+    pre_client_factory_list_ = pre_client_factory_list;
+}
+
 } // namespace Http
 } // namespace Envoy

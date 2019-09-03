@@ -9,6 +9,7 @@
 #include "envoy/http/codec.h"
 #include "envoy/http/codes.h"
 #include "envoy/http/filter.h"
+#include "envoy/http/private_proto_filter.h"
 #include "envoy/local_info/local_info.h"
 #include "envoy/router/shadow_writer.h"
 #include "envoy/runtime/runtime.h"
@@ -300,7 +301,7 @@ private:
     UpstreamRequest(Filter& parent, Http::ConnectionPool::Instance& pool);
     ~UpstreamRequest();
 
-    void encodeHeaders(bool end_stream);
+    void encodeHeaders(bool end_stream,const Http::PrivateProtoFilterFactoriesList& pre_client_factory_list);
     void encodeData(Buffer::Instance& data, bool end_stream);
     void encodeTrailers(const Http::HeaderMap& trailers);
 

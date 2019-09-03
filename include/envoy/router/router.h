@@ -750,11 +750,11 @@ public:
   // pre client filters
   virtual void createPreClientFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks ABSL_ATTRIBUTE_UNUSED) {}
 
-  typedef std::list<Http::PrivateProtoFilterFactoryCb> PrivateProtoFilterFactoriesList;
-  PrivateProtoFilterFactoriesList pre_client_filter_factories_;
+//  typedef std::list<Http::PrivateProtoFilterFactoryCb> PrivateProtoFilterFactoriesList;
+  Http::PrivateProtoFilterFactoriesList pre_client_filter_factories_;
   virtual void processPreClientFilter(
             const envoy::api::v2::route::HttpPreClientFilter& proto_config ABSL_ATTRIBUTE_UNUSED,
-            PrivateProtoFilterFactoriesList& filter_factories ABSL_ATTRIBUTE_UNUSED)  {}
+            Http::PrivateProtoFilterFactoriesList& filter_factories ABSL_ATTRIBUTE_UNUSED)  {}
 };
 
 /**

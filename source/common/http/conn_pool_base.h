@@ -1,6 +1,7 @@
 #pragma once
 
 #include "envoy/http/conn_pool.h"
+#include "envoy/http/private_proto_filter.h"
 
 #include "common/common/linked_object.h"
 
@@ -8,7 +9,6 @@
 
 namespace Envoy {
 namespace Http {
-
 // Base class that handles request queueing logic shared between connection pool implementations.
 class ConnPoolImplBase : protected Logger::Loggable<Logger::Id::pool> {
 protected:
@@ -48,6 +48,13 @@ protected:
   const Upstream::HostConstSharedPtr host_;
   const Upstream::ResourcePriority priority_;
   std::list<PendingRequestPtr> pending_requests_;
+
+  // private proto pre client filter
+  PrivateProtoFilterFactoriesListPtr pre_client_factory_list_;
+
+public:
+  void setPreClientFactoriesList(PrivateProtoFilterFactoriesListPtr pre_client_factory_list);
+
 };
 } // namespace Http
 } // namespace Envoy

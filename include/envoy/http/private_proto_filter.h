@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <list>
 #include "envoy/network/connection.h"
 
 namespace Envoy {
@@ -164,5 +165,7 @@ public:
 
 };
 
+typedef std::list<Http::PrivateProtoFilterFactoryCb> PrivateProtoFilterFactoriesList;
+typedef std::shared_ptr<Http::PrivateProtoFilterFactoriesList> PrivateProtoFilterFactoriesListPtr;
 } // namespace Http
 } // namespace Envoy

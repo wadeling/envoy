@@ -441,6 +441,7 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
 
   // add client filter for route entry
   const auto& pre_client_filters = route.http_pre_client_filters();
+  ENVOY_LOG(debug,"pre client filters size {}",pre_client_filters.size());
   for (int32_t i = 0; i < pre_client_filters.size(); i++) {
       processPreClientFilter(pre_client_filters[i], pre_client_filter_factories_);
   }
@@ -488,7 +489,7 @@ bool RouteEntryImplBase::evaluateRuntimeMatch(const uint64_t random_value) const
 }
 
 void RouteEntryImplBase::processPreClientFilter(const envoy::api::v2::route::HttpPreClientFilter& proto_config,
-        PrivateProtoFilterFactoriesList& filter_factories) {
+        Http::PrivateProtoFilterFactoriesList& filter_factories) {
     const std::string& string_name = proto_config.name();
 
     ENVOY_LOG(debug, "  pre client filter  name: {}", string_name);

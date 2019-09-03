@@ -112,6 +112,7 @@ envoy_cc_library(
     deps = [
         "//include/envoy/http:conn_pool_interface",
         "//source/common/common:linked_object",
+        "//include/envoy/http:private_proto_filter_interface",
     ],
 )
 

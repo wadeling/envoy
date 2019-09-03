@@ -211,16 +211,6 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "router_h_lib",
-    hdrs = ["router.h"],
-    deps = [
-        "//include/envoy/router:shadow_writer_interface",
-        "//include/envoy/server:filter_config_interface",
-        "@envoy_api//envoy/config/filter/http/router/v2:router_cc",
-    ],
-)
-
-envoy_cc_library(
     name = "router_lib",
     srcs = ["router.cc"],
     hdrs = ["router.h"],
