@@ -39,6 +39,21 @@ CodecClient::CodecClient(Type type, Network::ClientConnectionPtr&& connection,
 
 CodecClient::~CodecClient() {}
 
+void CodecClient::setPrivateProtoFilterFactoriesList(const PrivateProtoFilterFactoriesList pre_client_factories_list) {
+   pre_client_factories_list_ = pre_client_factories_list;
+}
+
+void CodecClient::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {
+    for (const Http::PrivateProtoFilterFactoryCb& factory : pre_client_factories_list_) {
+        factory(callbacks);
+    }
+}
+
+void CodecClient::addClientDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) {
+    ClientStreamDecoderFilterPtr wrapper(new ClientStreamDecoderFilter(*this, filter));
+    wrapper->moveIntoListBack(std::move(wrapper), pre_client_filters_);
+}
+
 void CodecClient::close() { connection_->close(Network::ConnectionCloseType::NoFlush); }
 
 void CodecClient::deleteRequest(ActiveRequest& request) {

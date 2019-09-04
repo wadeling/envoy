@@ -93,8 +93,12 @@ void ConnPoolImpl::createNewConnection() {
 }
 
 ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_decoder,
-                                                     ConnectionPool::Callbacks& callbacks) {
+                                                     ConnectionPool::Callbacks& callbacks,
+                                                     const Http::PrivateProtoFilterFactoriesList& factory_list) {
   ENVOY_LOG(debug, "ConnPoolImpl newstream");
+
+  // set factory list
+  setPreClientFactoriesList(factory_list);
 
   if (!ready_clients_.empty()) {
     ready_clients_.front()->moveBetweenLists(ready_clients_, busy_clients_);
@@ -315,6 +319,12 @@ ConnPoolImpl::ActiveClient::ActiveClient(ConnPoolImpl& parent)
   real_host_description_ = data.host_description_;
   codec_client_ = parent_.createCodecClient(data);
   codec_client_->addConnectionCallbacks(*this);
+
+  // set private proto filters
+  codec_client_->setPrivateProtoFilterFactoriesList(parent.pre_client_factory_list_);
+  // init private filters
+  codec_client_->createPreSrvFilterChain(*codec_client_);
+  ENVOY_LOG(debug,"codec client filter size {}",codec_client_->pre_client_filters_.size());
 
   parent_.host_->cluster().stats().upstream_cx_total_.inc();
   parent_.host_->cluster().stats().upstream_cx_active_.inc();

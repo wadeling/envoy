@@ -103,6 +103,8 @@ public:
    */
   virtual PrivateProtoFilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) PURE;
 
+  virtual PrivateProtoFilterDataStatus decodeClientData(Buffer::Instance& data, bool end_stream) PURE;
+
   /**
    * Called by the filter manager once to initialize the filter decoder callbacks that the
    * filter should use. Callbacks will not be invoked by the filter after onDestroy() is called.
@@ -153,6 +155,8 @@ public:
 
   virtual void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) PURE;
 
+  virtual void addClientDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) PURE;
+
 };
 
 typedef std::function<void(PrivateProtoFilterChainFactoryCallbacks& callbacks)> PrivateProtoFilterFactoryCb;
@@ -161,6 +165,7 @@ class PrivateProtoFilterChainFactory {
 public:
   virtual ~PrivateProtoFilterChainFactory() {}
 
+  // todo: change name
   virtual void createPreSrvFilterChain(PrivateProtoFilterChainFactoryCallbacks& callbacks) PURE;
 
 };

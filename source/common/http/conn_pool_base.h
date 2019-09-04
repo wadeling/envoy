@@ -50,10 +50,10 @@ protected:
   std::list<PendingRequestPtr> pending_requests_;
 
   // private proto pre client filter
-  PrivateProtoFilterFactoriesListPtr pre_client_factory_list_;
+  PrivateProtoFilterFactoriesList pre_client_factory_list_;
 
 public:
-  void setPreClientFactoriesList(PrivateProtoFilterFactoriesListPtr pre_client_factory_list);
+  void setPreClientFactoriesList(const PrivateProtoFilterFactoriesList pre_client_factory_list);
 
 };
 } // namespace Http

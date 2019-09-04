@@ -15,6 +15,8 @@ public:
 
   Http::PrivateProtoFilterDataStatus decodeData(Buffer::Instance&, bool) override ;
 
+  Http::PrivateProtoFilterDataStatus decodeClientData(Buffer::Instance&, bool) override ;
+
 };
 
 } // namespace PrivateProto

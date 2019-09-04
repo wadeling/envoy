@@ -35,7 +35,8 @@ public:
   void drainConnections() override;
   bool hasActiveConnections() const override;
   ConnectionPool::Cancellable* newStream(Http::StreamDecoder& response_decoder,
-                                         ConnectionPool::Callbacks& callbacks) override;
+                                         ConnectionPool::Callbacks& callbacks,
+                                         const Http::PrivateProtoFilterFactoriesList& factory_list) override;
   Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
 
 protected:

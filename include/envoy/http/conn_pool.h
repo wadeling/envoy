@@ -5,6 +5,7 @@
 #include "envoy/common/pure.h"
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/http/codec.h"
+#include "envoy/http/private_proto_filter.h"
 #include "envoy/upstream/upstream.h"
 
 namespace Envoy {
@@ -117,7 +118,7 @@ public:
    *                      is called, the handle is no longer valid and any further cancellation
    *                      should be done by resetting the stream.
    */
-  virtual Cancellable* newStream(Http::StreamDecoder& response_decoder, Callbacks& callbacks) PURE;
+  virtual Cancellable* newStream(Http::StreamDecoder& response_decoder, Callbacks& callbacks,const Http::PrivateProtoFilterFactoriesList& factory_list) PURE;
 
   /**
    * @return Upstream::HostDescriptionConstSharedPtr the host for which connections are pooled.

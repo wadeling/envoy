@@ -7,6 +7,7 @@
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/event/timer.h"
 #include "envoy/http/codec.h"
+#include "envoy/http/private_proto_filter.h"
 #include "envoy/network/connection.h"
 #include "envoy/network/filter.h"
 #include "envoy/upstream/upstream.h"
@@ -45,9 +46,36 @@ public:
  */
 class CodecClient : public Logger::Loggable<Logger::Id::client>,
                     public Http::ConnectionCallbacks,
+                    public Http::PrivateProtoFilterChainFactory,
+                    public Http::PrivateProtoFilterChainFactoryCallbacks,
                     public Network::ConnectionCallbacks,
                     public Event::DeferredDeletable {
 public:
+  // private proto filter list
+  struct ClientStreamDecoderFilter : LinkedObject<ClientStreamDecoderFilter> {
+      ClientStreamDecoderFilter(CodecClient& codec_client, PrivateProtoDecoderFilterSharedPtr filter)
+              : codec_client_(codec_client), handle_(filter) {}
+      CodecClient& codec_client_;
+      PrivateProtoDecoderFilterSharedPtr handle_;
+
+      PrivateProtoFilterDataStatus decodeClientData(Buffer::Instance& data, bool end_stream) {
+          PrivateProtoFilterDataStatus status = handle_->decodeClientData(data, end_stream);
+          return status;
+      }
+  };
+  typedef std::unique_ptr<ClientStreamDecoderFilter> ClientStreamDecoderFilterPtr;
+  std::list<ClientStreamDecoderFilterPtr> pre_client_filters_;
+  Http::PrivateProtoFilterFactoriesList pre_client_factories_list_;
+
+  void setPrivateProtoFilterFactoriesList(const PrivateProtoFilterFactoriesList);
+
+  // init all registerd filters
+  void createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) override;
+
+  // add filter to filter list
+  void addClientDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) override ;
+  void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
+
   /**
    * Type of HTTP codec to use.
    */

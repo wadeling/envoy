@@ -45,7 +45,7 @@ void ConnPoolImplBase::onPendingRequestCancel(PendingRequest& request) {
   checkForDrained();
 }
 
-void ConnPoolImplBase::setPreClientFactoriesList(PrivateProtoFilterFactoriesListPtr pre_client_factory_list) {
+void ConnPoolImplBase::setPreClientFactoriesList(const PrivateProtoFilterFactoriesList pre_client_factory_list) {
     pre_client_factory_list_ = pre_client_factory_list;
 }
 

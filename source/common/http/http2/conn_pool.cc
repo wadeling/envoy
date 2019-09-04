@@ -106,10 +106,14 @@ void ConnPoolImpl::newClientStream(Http::StreamDecoder& response_decoder,
 }
 
 ConnectionPool::Cancellable* ConnPoolImpl::newStream(Http::StreamDecoder& response_decoder,
-                                                     ConnectionPool::Callbacks& callbacks) {
+                                                     ConnectionPool::Callbacks& callbacks,
+                                                     const Http::PrivateProtoFilterFactoriesList& factory_list) {
   ASSERT(drained_callbacks_.empty());
 
   ENVOY_LOG(trace,"http2 connpool new stream");
+
+  // set factory list
+  setPreClientFactoriesList(factory_list);
 
   // First see if we need to handle max streams rollover.
   uint64_t max_streams = host_->cluster().maxRequestsPerConnection();

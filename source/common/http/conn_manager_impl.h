@@ -81,6 +81,7 @@ public:
   // add pre srv filter
   void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) override;
   void decodePrivateProtoData(Buffer::Instance& data, bool end_stream);
+  void addClientDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
 
   // Network::ConnectionCallbacks
   void onEvent(Network::ConnectionEvent event) override;

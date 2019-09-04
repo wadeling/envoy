@@ -14,7 +14,10 @@ PrivateProtoTestConfig::createPrivateProtoFilterFactoryFromProto(const Protobuf:
 
   return [](Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {
     ENVOY_LOG(debug,"PrivateProto add to filter");
+    // add to server filter
     callbacks.addPreSrvDecodeFilter(std::make_shared<PrivateProtoTest>());
+    // add client filter
+    callbacks.addClientDecodeFilter(std::make_shared<PrivateProtoTest>());
   };
 }
 

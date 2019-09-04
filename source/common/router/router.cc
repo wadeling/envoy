@@ -1354,7 +1354,7 @@ void Filter::UpstreamRequest::encodeHeaders(bool end_stream,const Http::PrivateP
   // It's possible for a reset to happen inline within the newStream() call. In this case, we might
   // get deleted inline as well. Only write the returned handle out if it is not nullptr to deal
   // with this case.
-  Http::ConnectionPool::Cancellable* handle = conn_pool_.newStream(*this, *this);
+  Http::ConnectionPool::Cancellable* handle = conn_pool_.newStream(*this, *this, pre_client_factory_list);
   if (handle) {
     conn_pool_stream_handle_ = handle;
   }
