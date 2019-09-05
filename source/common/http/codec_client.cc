@@ -133,11 +133,28 @@ void CodecClient::onReset(ActiveRequest& request, StreamResetReason reason) {
   deleteRequest(request);
 }
 
+void CodecClient::decodePrivateProtoData(Buffer::Instance& data, bool end_stream) {
+    std::list<ClientStreamDecoderFilterPtr>::iterator entry = pre_client_filters_.begin();
+
+    for (; entry != pre_client_filters_.end(); entry++) {
+        PrivateProtoFilterDataStatus status = (*entry)->handle_->decodeClientData(data, end_stream);
+        ENVOY_LOG(debug, "decode private proto client data called: filter={} status={}",
+                  static_cast<const void*>((*entry).get()), static_cast<uint64_t>(status));
+        if (status == PrivateProtoFilterDataStatus::StopIteration) {
+            return;
+        }
+    }
+}
+
 void CodecClient::onData(Buffer::Instance& data) {
   Network::Address::InstanceConstSharedPtr addr = connection_->localAddress();
   Network::Address::InstanceConstSharedPtr remoteAddr = connection_->remoteAddress();
 
   ENVOY_CONN_LOG(trace, "CodeClient onData,local addr {},remote {} ",*connection_,addr->asString(),remoteAddr->asString());
+
+  // private proto data
+  decodePrivateProtoData(data, false);
+
   bool protocol_error = false;
   try {
     codec_->dispatch(data);

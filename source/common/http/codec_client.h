@@ -76,6 +76,8 @@ public:
   void addClientDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) override ;
   void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
 
+  void decodePrivateProtoData(Buffer::Instance& data, bool end_stream) ;
+
   /**
    * Type of HTTP codec to use.
    */
