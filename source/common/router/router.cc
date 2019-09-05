@@ -334,7 +334,6 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
     return Http::FilterHeadersStatus::StopIteration;
   }
 
-  ENVOY_STREAM_LOG(debug, "find route,route entry name {}", *callbacks_, route_->routeEntry()->routeName());
 
   // Determine if there is a direct response for the request.
   const auto* direct_response = route_->directResponseEntry();
@@ -358,6 +357,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
     return Http::FilterHeadersStatus::StopIteration;
   }
 
+  ENVOY_STREAM_LOG(debug, "find route,route entry name {}", *callbacks_, route_->routeEntry()->routeName());
   // A route entry matches for the request.
   route_entry_ = route_->routeEntry();
   callbacks_->streamInfo().setRouteName(route_entry_->routeName());

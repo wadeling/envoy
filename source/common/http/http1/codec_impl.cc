@@ -23,6 +23,11 @@ namespace Http1 {
 const std::string StreamEncoderImpl::CRLF = "\r\n";
 const std::string StreamEncoderImpl::LAST_CHUNK = "0\r\n\r\n";
 
+bool isPrivateProtoHeader(const HeaderMap& headers) {
+    const Http::HeaderEntry* entry = headers.get(PrivateProtoKey);
+    return entry != nullptr;
+}
+
 StreamEncoderImpl::StreamEncoderImpl(ConnectionImpl& connection) : connection_(connection) {
   if (connection_.connection().aboveHighWatermark()) {
     runHighWatermarkCallbacks();
@@ -233,6 +238,12 @@ static const char HTTP_10_RESPONSE_PREFIX[] = "HTTP/1.0 ";
 
 void ResponseStreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
   ENVOY_LOG(trace, "ResponseStreamEncoderImpl::encodeHeaders");
+
+  if (isPrivateProtoHeader(headers)) {
+    ENVOY_LOG(trace, "http header has private proto key,ignore encode headers");
+    return;
+  }
+  
   started_response_ = true;
   uint64_t numeric_status = Utility::getResponseStatus(headers);
 
@@ -268,6 +279,12 @@ static const char REQUEST_POSTFIX[] = " HTTP/1.1\r\n";
 
 void RequestStreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
   ENVOY_LOG(trace, "RequestStreamEncoderImpl::encodeHeaders");
+
+  if (isPrivateProtoHeader(headers)) {
+      ENVOY_LOG(trace, "http header has private proto key,ignore encode headers");
+      return;
+  }
+
   const HeaderEntry* method = headers.Method();
   const HeaderEntry* path = headers.Path();
   if (!method || !path) {
@@ -526,6 +543,8 @@ void ServerConnectionImpl::handlePath(HeaderMapImpl& headers, unsigned int metho
     return;
   }
 
+  ENVOY_CONN_LOG(trace, "all absolute url {}", connection_,codec_settings_.allow_absolute_url_);
+
   // If absolute_urls and/or connect are not going be handled, copy the url and return.
   // This forces the behavior to be backwards compatible with the old codec behavior.
   if (!codec_settings_.allow_absolute_url_) {
@@ -534,7 +553,9 @@ void ServerConnectionImpl::handlePath(HeaderMapImpl& headers, unsigned int metho
   }
 
   if (is_connect) {
-    headers.addViaMove(std::move(path), std::move(active_request_->request_url_));
+      ENVOY_CONN_LOG(trace, "is connect {}", connection_);
+
+      headers.addViaMove(std::move(path), std::move(active_request_->request_url_));
     return;
   }
 
@@ -543,6 +564,9 @@ void ServerConnectionImpl::handlePath(HeaderMapImpl& headers, unsigned int metho
     sendProtocolError();
     throw CodecProtocolException("http/1.1 protocol error: invalid url in request line");
   }
+
+  ENVOY_CONN_LOG(trace, "headers xxx {} {}", connection_,std::string(absolute_url.host_and_port()),std::string(absolute_url.path_and_query_params()) );
+
   // RFC7230#5.7
   // When a proxy receives a request with an absolute-form of
   // request-target, the proxy MUST ignore the received Host header field
