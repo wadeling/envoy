@@ -395,6 +395,8 @@ getMergedPerFilterConfig(const std::string& filter_name, const Router::RouteCons
   return merged;
 }
 
+bool isPrivateProtoHeader(const HeaderMap& headers);
+
 } // namespace Utility
 } // namespace Http
 } // namespace Envoy

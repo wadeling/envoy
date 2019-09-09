@@ -599,5 +599,10 @@ std::string Utility::PercentEncoding::decode(absl::string_view encoded) {
   return decoded;
 }
 
+bool Utility::isPrivateProtoHeader(const HeaderMap& headers) {
+    const Http::HeaderEntry* entry = headers.get(PrivateProtoKey);
+    return entry != nullptr;
+}
+
 } // namespace Http
 } // namespace Envoy

@@ -150,7 +150,7 @@ void CodecClient::onData(Buffer::Instance& data) {
   Network::Address::InstanceConstSharedPtr addr = connection_->localAddress();
   Network::Address::InstanceConstSharedPtr remoteAddr = connection_->remoteAddress();
 
-  ENVOY_CONN_LOG(trace, "CodeClient onData,local addr {},remote {} ",*connection_,addr->asString(),remoteAddr->asString());
+  ENVOY_CONN_LOG(debug, "CodeClient onData,local addr {},remote {} ",*connection_,addr->asString(),remoteAddr->asString());
 
   // private proto data
   decodePrivateProtoData(data, false);

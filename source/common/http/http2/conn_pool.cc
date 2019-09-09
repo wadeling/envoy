@@ -110,7 +110,7 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(Http::StreamDecoder& respon
                                                      const Http::PrivateProtoFilterFactoriesList& factory_list) {
   ASSERT(drained_callbacks_.empty());
 
-  ENVOY_LOG(trace,"http2 connpool new stream");
+  ENVOY_LOG(debug,"http2 connpool new stream");
 
   // set factory list
   setPreClientFactoriesList(factory_list);
@@ -285,6 +285,11 @@ ConnPoolImpl::ActiveClient::ActiveClient(ConnPoolImpl& parent)
       parent_.host_->createConnection(parent_.dispatcher_, parent_.socket_options_, nullptr);
   real_host_description_ = data.host_description_;
   client_ = parent_.createCodecClient(data);
+
+  // set private proto filters
+  client_->setPrivateProtoFilterFactoriesList(parent.pre_client_factory_list_);
+  // init private filters
+  client_->createPreSrvFilterChain(*client_);
 
   client_->addConnectionCallbacks(*this);
   client_->setCodecClientCallbacks(*this);

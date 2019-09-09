@@ -23,11 +23,6 @@ namespace Http1 {
 const std::string StreamEncoderImpl::CRLF = "\r\n";
 const std::string StreamEncoderImpl::LAST_CHUNK = "0\r\n\r\n";
 
-bool isPrivateProtoHeader(const HeaderMap& headers) {
-    const Http::HeaderEntry* entry = headers.get(PrivateProtoKey);
-    return entry != nullptr;
-}
-
 StreamEncoderImpl::StreamEncoderImpl(ConnectionImpl& connection) : connection_(connection) {
   if (connection_.connection().aboveHighWatermark()) {
     runHighWatermarkCallbacks();
@@ -239,11 +234,6 @@ static const char HTTP_10_RESPONSE_PREFIX[] = "HTTP/1.0 ";
 void ResponseStreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
   ENVOY_LOG(trace, "ResponseStreamEncoderImpl::encodeHeaders");
 
-  if (isPrivateProtoHeader(headers)) {
-    ENVOY_LOG(trace, "http header has private proto key,ignore encode headers");
-    return;
-  }
-  
   started_response_ = true;
   uint64_t numeric_status = Utility::getResponseStatus(headers);
 
@@ -279,12 +269,6 @@ static const char REQUEST_POSTFIX[] = " HTTP/1.1\r\n";
 
 void RequestStreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end_stream) {
   ENVOY_LOG(trace, "RequestStreamEncoderImpl::encodeHeaders");
-
-  if (isPrivateProtoHeader(headers)) {
-      ENVOY_LOG(trace, "http header has private proto key,ignore encode headers");
-      return;
-  }
-
   const HeaderEntry* method = headers.Method();
   const HeaderEntry* path = headers.Path();
   if (!method || !path) {

@@ -1504,9 +1504,14 @@ void Filter::UpstreamRequest::onPoolReady(Http::StreamEncoder& request_encoder,
 
   // this will encode headers and send http2 frams and invoke callback like onSend to send headers
   // also will invoke OnDataSourceRead to read data that will be send
-  ENVOY_STREAM_LOG(debug, "request_encoder.encodeHeader", *parent_.callbacks_);
-  request_encoder.encodeHeaders(*parent_.downstream_headers_,
-                                !buffered_request_body_ && encode_complete_ && !encode_trailers_);
+  if (Http::Utility::isPrivateProtoHeader(*parent_.downstream_headers_)) {
+      ENVOY_STREAM_LOG(debug, "data has private proto header,ignore encode headers", *parent_.callbacks_);
+  } else {
+      ENVOY_STREAM_LOG(debug, "request_encoder.encodeHeader", *parent_.callbacks_);
+      request_encoder.encodeHeaders(*parent_.downstream_headers_,
+                                    !buffered_request_body_ && encode_complete_ && !encode_trailers_);
+  }
+
   calling_encode_headers_ = false;
   ENVOY_STREAM_LOG(debug, "request_encoder.encodeHeader end", *parent_.callbacks_);
 
