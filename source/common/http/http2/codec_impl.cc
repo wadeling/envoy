@@ -315,6 +315,10 @@ void ConnectionImpl::StreamImpl::encodeData(Buffer::Instance& data, bool end_str
   parent_.sendPendingFrames();
 }
 
+void ConnectionImpl::StreamImpl::encodeRawData(Buffer::Instance& data, bool end_stream) {
+   encodeData(data,end_stream);
+}
+
 void ConnectionImpl::StreamImpl::resetStream(StreamResetReason reason) {
   // Higher layers expect calling resetStream() to immediately raise reset callbacks.
   runResetCallbacks(reason);

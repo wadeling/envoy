@@ -144,6 +144,7 @@ void StreamEncoderImpl::encodeHeaders(const HeaderMap& headers, bool end_stream)
 void StreamEncoderImpl::encodeData(Buffer::Instance& data, bool end_stream) {
   // end_stream may be indicated with a zero length data buffer. If that is the case, so not
   // actually write the zero length buffer out.
+  ENVOY_LOG(debug,"stream encoder impl,encode data");
   if (data.length() > 0) {
     if (chunk_encoding_) {
       connection_.buffer().add(fmt::format("{:x}\r\n", data.length()));
@@ -161,6 +162,17 @@ void StreamEncoderImpl::encodeData(Buffer::Instance& data, bool end_stream) {
   } else {
     connection_.flushOutput();
   }
+}
+
+void StreamEncoderImpl::encodeRawData(Buffer::Instance& data, bool end_stream) {
+    if (data.length() > 0) {
+        connection_.buffer().move(data);
+    }
+
+    connection_.flushOutput();
+    if (end_stream) {
+        connection_.onEncodeComplete();
+    }
 }
 
 void StreamEncoderImpl::encodeTrailers(const HeaderMap&) { endEncode(); }

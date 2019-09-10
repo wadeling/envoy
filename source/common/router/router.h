@@ -301,7 +301,7 @@ private:
     UpstreamRequest(Filter& parent, Http::ConnectionPool::Instance& pool);
     ~UpstreamRequest();
 
-    void encodeHeaders(bool end_stream,const Http::PrivateProtoFilterFactoriesList& pre_client_factory_list);
+    void encodeHeaders(bool end_stream);
     void encodeData(Buffer::Instance& data, bool end_stream);
     void encodeTrailers(const Http::HeaderMap& trailers);
 
@@ -383,6 +383,9 @@ private:
     };
 
     void readEnable();
+
+    // private proto
+
 
     Filter& parent_;
     Http::ConnectionPool::Instance& conn_pool_;

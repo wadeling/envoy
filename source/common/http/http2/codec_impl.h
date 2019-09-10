@@ -160,6 +160,7 @@ protected:
     void encode100ContinueHeaders(const HeaderMap& headers) override;
     void encodeHeaders(const HeaderMap& headers, bool end_stream) override;
     void encodeData(Buffer::Instance& data, bool end_stream) override;
+    void encodeRawData(Buffer::Instance& data, bool end_stream) override;
     void encodeTrailers(const HeaderMap& trailers) override;
     Stream& getStream() override { return *this; }
     void encodeMetadata(const MetadataMapVector& metadata_map_vector) override;

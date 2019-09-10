@@ -40,6 +40,7 @@ ConnPoolImpl::~ConnPoolImpl() {
 
   // Make sure all clients are destroyed before we are destroyed.
   dispatcher_.clearDeferredDeleteList();
+  ENVOY_LOG(debug,"conn pool defer,clear defer delete list,ready clients size {}",ready_clients_.size());
 }
 
 void ConnPoolImpl::drainConnections() {
@@ -77,12 +78,13 @@ void ConnPoolImpl::attachRequestToClient(ActiveClient& client, StreamDecoder& re
 }
 
 void ConnPoolImpl::checkForDrained() {
-  ENVOY_LOG(debug, "check for drained,callback size {},pending req size {},busy client size {}",
-          drained_callbacks_.size(),pending_requests_.size(),busy_clients_.size());
+  ENVOY_LOG(debug, "check for drained,darined callback size {},pending req size {},busy client size {},ready clients size {}",
+          drained_callbacks_.size(),pending_requests_.size(),busy_clients_.size(),ready_clients_.size());
   if (!drained_callbacks_.empty() && pending_requests_.empty() && busy_clients_.empty()) {
     while (!ready_clients_.empty()) {
       ready_clients_.front()->codec_client_->close();
     }
+    ENVOY_LOG(debug,"after close ,ready clients size {}",ready_clients_.size());
 
     for (const DrainedCb& cb : drained_callbacks_) {
       cb();
@@ -134,7 +136,8 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_dec
 }
 
 void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEvent event) {
-  ENVOY_LOG(debug, "ConnPoolImpl::onConnectionEvent {}",int(event));
+  ENVOY_LOG(debug, "ConnPoolImpl::onConnectionEvent {},client host name {},cluster name {}",
+          int(event),client.real_host_description_->hostname(),client.real_host_description_->cluster().name());
 
   if (event == Network::ConnectionEvent::RemoteClose ||
       event == Network::ConnectionEvent::LocalClose) {
@@ -182,7 +185,7 @@ void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEv
 
     // If we have pending requests and we just lost a connection we should make a new one.
     if (pending_requests_.size() > (ready_clients_.size() + busy_clients_.size())) {
-      ENVOY_LOG(debug,"onConnEvent,create new conn,{},{}",ready_clients_.size(),busy_clients_.size());
+      ENVOY_LOG(debug,"onConnEvent,create new conn,ready clients size {},busy clients size {}",ready_clients_.size(),busy_clients_.size());
       createNewConnection();
     }
 
@@ -202,6 +205,7 @@ void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEv
   // whether the client is in the ready list (connected) or the busy list (failed to connect).
   if (event == Network::ConnectionEvent::Connected) {
     conn_connect_ms_->complete();
+    ENVOY_LOG(debug,"onConnEvent,process idle client,ready clients size {},busy clients size {}",ready_clients_.size(),busy_clients_.size());
     processIdleClient(client, false);
   }
 }
@@ -227,6 +231,7 @@ void ConnPoolImpl::onResponseComplete(ActiveClient& client) {
     // Upstream connection might be closed right after response is complete. Setting delay=true
     // here to attach pending requests in next dispatcher loop to handle that case.
     // https://github.com/envoyproxy/envoy/issues/2715
+    ENVOY_CONN_LOG(debug, "on response complete,process id client", *client.codec_client_);
     processIdleClient(client, true);
   }
 }
@@ -242,7 +247,8 @@ void ConnPoolImpl::onUpstreamReady() {
                           pending_requests_.back()->callbacks_);
     pending_requests_.pop_back();
     client.moveBetweenLists(ready_clients_, busy_clients_);
-    ENVOY_CONN_LOG(debug, "move ready clients to busy clients,{},{}", *client.codec_client_,ready_clients_.size(),busy_clients_.size());
+    ENVOY_CONN_LOG(debug, "move ready clients to busy clients,ready clients size {},busy clients size {}",
+            *client.codec_client_,ready_clients_.size(),busy_clients_.size());
   }
 }
 

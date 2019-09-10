@@ -493,7 +493,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
 
   UpstreamRequestPtr upstream_request = std::make_unique<UpstreamRequest>(*this, *conn_pool);
   upstream_request->moveIntoList(std::move(upstream_request), upstream_requests_);
-  upstream_requests_.front()->encodeHeaders(end_stream,route_entry_->pre_client_filter_factories_);
+  upstream_requests_.front()->encodeHeaders(end_stream);
   if (end_stream) {
     onRequestComplete();
   }
@@ -1241,7 +1241,7 @@ void Filter::doRetry() {
   UpstreamRequestPtr upstream_request = std::make_unique<UpstreamRequest>(*this, *conn_pool);
   UpstreamRequest* upstream_request_tmp = upstream_request.get();
   upstream_request->moveIntoList(std::move(upstream_request), upstream_requests_);
-  upstream_requests_.front()->encodeHeaders(!callbacks_->decodingBuffer() && !downstream_trailers_,route_entry_->pre_client_filter_factories_);
+  upstream_requests_.front()->encodeHeaders(!callbacks_->decodingBuffer() && !downstream_trailers_);
   // It's possible we got immediately reset which means the upstream request we just
   // added to the front of the list might have been removed, so we need to check to make
   // sure we don't encodeData on the wrong request.
@@ -1345,16 +1345,16 @@ void Filter::UpstreamRequest::maybeEndDecode(bool end_stream) {
   }
 }
 
-void Filter::UpstreamRequest::encodeHeaders(bool end_stream,const Http::PrivateProtoFilterFactoriesList& pre_client_factory_list)  {
+void Filter::UpstreamRequest::encodeHeaders(bool end_stream)  {
   ASSERT(!encode_complete_);
   encode_complete_ = end_stream;
 
-  ENVOY_LOG(trace,"encode headers,router new stream");
+  ENVOY_LOG(trace,"encode headers,conn pool new stream");
 
   // It's possible for a reset to happen inline within the newStream() call. In this case, we might
   // get deleted inline as well. Only write the returned handle out if it is not nullptr to deal
   // with this case.
-  Http::ConnectionPool::Cancellable* handle = conn_pool_.newStream(*this, *this, pre_client_factory_list);
+  Http::ConnectionPool::Cancellable* handle = conn_pool_.newStream(*this, *this, parent_.route_entry_->pre_client_filter_factories_);
   if (handle) {
     conn_pool_stream_handle_ = handle;
   }

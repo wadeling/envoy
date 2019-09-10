@@ -46,6 +46,8 @@ public:
    */
   virtual void encodeData(Buffer::Instance& data, bool end_stream) PURE;
 
+  virtual void encodeRawData(Buffer::Instance& data, bool end_stream) PURE;
+
   /**
    * Encode trailers. This implicitly ends the stream.
    * @param trailers supplies the trailers to encode.
