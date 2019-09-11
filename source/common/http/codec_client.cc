@@ -49,8 +49,8 @@ void CodecClient::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCa
     }
 }
 
-void CodecClient::addClientDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) {
-    ClientStreamDecoderFilterPtr wrapper(new ClientStreamDecoderFilter(*this, filter));
+void CodecClient::addClientFilter(Http::PrivateProtoFilterSharedPtr filter) {
+    ClientStreamFilterPtr wrapper(new ClientStreamFilter(*this, filter));
     wrapper->moveIntoListBack(std::move(wrapper), pre_client_filters_);
 }
 
@@ -134,7 +134,7 @@ void CodecClient::onReset(ActiveRequest& request, StreamResetReason reason) {
 }
 
 void CodecClient::decodePrivateProtoData(Buffer::Instance& data, bool end_stream) {
-    std::list<ClientStreamDecoderFilterPtr>::iterator entry = pre_client_filters_.begin();
+    std::list<ClientStreamFilterPtr>::iterator entry = pre_client_filters_.begin();
 
     for (; entry != pre_client_filters_.end(); entry++) {
         PrivateProtoFilterDataStatus status = (*entry)->handle_->decodeClientData(data, end_stream);

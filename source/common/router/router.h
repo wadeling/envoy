@@ -26,6 +26,7 @@
 #include "common/common/logger.h"
 #include "common/config/well_known_names.h"
 #include "common/http/utility.h"
+#include "common/http/codec_client.h"
 #include "common/router/config_impl.h"
 #include "common/stats/symbol_table_impl.h"
 #include "common/stream_info/stream_info_impl.h"
@@ -301,6 +302,9 @@ private:
     UpstreamRequest(Filter& parent, Http::ConnectionPool::Instance& pool);
     ~UpstreamRequest();
 
+    // private proto filter encode data
+    void encodeDataWithFilter(Buffer::Instance& data, bool end_stream,Http::CodecClient& codec_client,Http::StreamEncoder& request_encoder);
+
     void encodeHeaders(bool end_stream);
     void encodeData(Buffer::Instance& data, bool end_stream);
     void encodeTrailers(const Http::HeaderMap& trailers);
@@ -367,7 +371,8 @@ private:
                        absl::string_view transport_failure_reason,
                        Upstream::HostDescriptionConstSharedPtr host) override;
     void onPoolReady(Http::StreamEncoder& request_encoder,
-                     Upstream::HostDescriptionConstSharedPtr host) override;
+                     Upstream::HostDescriptionConstSharedPtr host,
+                     Http::CodecClient& codec_client) override;
 
     void setRequestEncoder(Http::StreamEncoder& request_encoder);
     void clearRequestEncoder();

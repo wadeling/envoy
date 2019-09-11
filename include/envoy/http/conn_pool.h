@@ -7,6 +7,7 @@
 #include "envoy/http/codec.h"
 #include "envoy/http/private_proto_filter.h"
 #include "envoy/upstream/upstream.h"
+#include "common/http/codec_client.h"
 
 namespace Envoy {
 namespace Http {
@@ -60,7 +61,8 @@ public:
    *             connection pools the description may be different each time this is called.
    */
   virtual void onPoolReady(Http::StreamEncoder& encoder,
-                           Upstream::HostDescriptionConstSharedPtr host) PURE;
+                           Upstream::HostDescriptionConstSharedPtr host,
+                           Http::CodecClient& codec_client) PURE;
 };
 
 //class Filter;

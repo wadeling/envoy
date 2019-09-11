@@ -42,6 +42,7 @@ envoy_cc_library(
         ":codec_interface",
         "//include/envoy/event:deferred_deletable",
         "//include/envoy/upstream:upstream_interface",
+        "//source/common/http:codec_client_lib",
     ],
 )
 

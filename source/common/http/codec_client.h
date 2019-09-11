@@ -52,19 +52,24 @@ class CodecClient : public Logger::Loggable<Logger::Id::client>,
                     public Event::DeferredDeletable {
 public:
   // private proto filter list
-  struct ClientStreamDecoderFilter : LinkedObject<ClientStreamDecoderFilter> {
-      ClientStreamDecoderFilter(CodecClient& codec_client, PrivateProtoDecoderFilterSharedPtr filter)
+  struct ClientStreamFilter : LinkedObject<ClientStreamFilter> {
+      ClientStreamFilter(CodecClient& codec_client, PrivateProtoFilterSharedPtr filter)
               : codec_client_(codec_client), handle_(filter) {}
       CodecClient& codec_client_;
-      PrivateProtoDecoderFilterSharedPtr handle_;
+      PrivateProtoFilterSharedPtr handle_;
 
       PrivateProtoFilterDataStatus decodeClientData(Buffer::Instance& data, bool end_stream) {
           PrivateProtoFilterDataStatus status = handle_->decodeClientData(data, end_stream);
           return status;
       }
+
+      PrivateProtoFilterDataStatus encodeClientData(Buffer::Instance& data ABSL_ATTRIBUTE_UNUSED, bool end_stream ABSL_ATTRIBUTE_UNUSED) {
+          PrivateProtoFilterDataStatus status = handle_->encodeClientData(data, end_stream);
+          return status;
+      }
   };
-  typedef std::unique_ptr<ClientStreamDecoderFilter> ClientStreamDecoderFilterPtr;
-  std::list<ClientStreamDecoderFilterPtr> pre_client_filters_;
+  typedef std::unique_ptr<ClientStreamFilter> ClientStreamFilterPtr;
+  std::list<ClientStreamFilterPtr> pre_client_filters_;
   Http::PrivateProtoFilterFactoriesList pre_client_factories_list_;
 
   void setPrivateProtoFilterFactoriesList(const PrivateProtoFilterFactoriesList);
@@ -73,7 +78,7 @@ public:
   void createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) override;
 
   // add filter to filter list
-  void addClientDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) override ;
+  void addClientFilter(Http::PrivateProtoFilterSharedPtr filter) override ;
   void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
 
   void decodePrivateProtoData(Buffer::Instance& data, bool end_stream) ;

@@ -1473,8 +1473,25 @@ void Filter::UpstreamRequest::onPoolFailure(Http::ConnectionPool::PoolFailureRea
   onResetStream(reset_reason, transport_failure_reason);
 }
 
+void Filter::UpstreamRequest::encodeDataWithFilter(Buffer::Instance& data,
+                                                    bool end_stream,
+                                                    Http::CodecClient& codec_client,
+                                                    Http::StreamEncoder& request_encoder) {
+//    std::list<Http::CodecClient::ClientStreamFilterPtr>::iterator iter = codec_client.pre_client_filters_.begin();
+    auto iter = codec_client.pre_client_filters_.begin();
+    for (; iter != codec_client.pre_client_filters_.end(); iter++) {
+        Http::PrivateProtoFilterDataStatus  status = (*iter)->encodeClientData(data,end_stream);
+        if (status == Http::PrivateProtoFilterDataStatus::StopIteration) {
+            break;
+        }
+    }
+    // encode raw data will ignore http1-chunk char
+    request_encoder.encodeRawData(data,end_stream);
+}
+
 void Filter::UpstreamRequest::onPoolReady(Http::StreamEncoder& request_encoder,
-                                          Upstream::HostDescriptionConstSharedPtr host) {
+                                          Upstream::HostDescriptionConstSharedPtr host,
+                                          Http::CodecClient& codec_client) {
   ENVOY_STREAM_LOG(debug, "pool ready", *parent_.callbacks_);
 
   // TODO(ggreenway): set upstream local address in the StreamInfo.
@@ -1526,8 +1543,13 @@ void Filter::UpstreamRequest::onPoolReady(Http::StreamEncoder& request_encoder,
   } else {
     if (buffered_request_body_) {
       stream_info_.addBytesSent(buffered_request_body_->length());
-      ENVOY_STREAM_LOG(debug, "request_encoder.encodeData", *parent_.callbacks_);
-      request_encoder.encodeData(*buffered_request_body_, encode_complete_ && !encode_trailers_);
+      if (!codec_client.pre_client_filters_.empty()) {
+          ENVOY_STREAM_LOG(debug, "encode client data", *parent_.callbacks_);
+          encodeDataWithFilter(*buffered_request_body_,encode_complete_ && !encode_trailers_,codec_client,request_encoder);
+      } else {
+          ENVOY_STREAM_LOG(debug, "request_encoder.encodeData", *parent_.callbacks_);
+          request_encoder.encodeData(*buffered_request_body_, encode_complete_ && !encode_trailers_);
+      }
     }
 
     if (encode_trailers_) {

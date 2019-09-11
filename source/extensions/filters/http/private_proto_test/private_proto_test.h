@@ -10,12 +10,16 @@ namespace HttpFilters {
 namespace PrivateProto {
 
 class PrivateProtoTest: public Logger::Loggable<Logger::Id::filter>,
-                        public Http::PrivateProtoDecoderFilter {
+                        public Http::PrivateProtoFilter {
 public:
 
   Http::PrivateProtoFilterDataStatus decodeData(Buffer::Instance&, bool) override ;
 
   Http::PrivateProtoFilterDataStatus decodeClientData(Buffer::Instance&, bool) override ;
+
+  Http::PrivateProtoFilterDataStatus encodeClientData(Buffer::Instance&, bool) override ;
+
+  Http::PrivateProtoFilterDataStatus encodeData(Buffer::Instance&, bool) override ;
 
 };
 

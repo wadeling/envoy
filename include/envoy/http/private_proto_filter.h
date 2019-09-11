@@ -92,10 +92,6 @@ public:
    */
 //  virtual void setDecoderFilterCallbacks(PrivateProtoDecoderFilterCallbacks& callbacks) {}
 
-  /**
-   * Called at the end of the stream, when all data has been decoded.
-   */
-  virtual void decodeComplete() {}
 };
 
 typedef std::shared_ptr<PrivateProtoDecoderFilter> PrivateProtoDecoderFilterSharedPtr;
@@ -107,7 +103,6 @@ typedef std::shared_ptr<PrivateProtoDecoderFilter> PrivateProtoDecoderFilterShar
 class PrivateProtoEncoderFilterCallbacks : public virtual PrivateProtoFilterCallbacks {
 public:
 
-
 };
 
 /**
@@ -117,6 +112,9 @@ class PrivateProtoEncoderFilter : public PrivateProtoFilterBase {
 public:
 
   virtual PrivateProtoFilterDataStatus encodeData(Buffer::Instance& data, bool end_stream) PURE;
+
+  // encode data which will send to upstream
+  virtual PrivateProtoFilterDataStatus encodeClientData(Buffer::Instance& data, bool end_stream) PURE;
 
 };
 
@@ -136,7 +134,7 @@ public:
 
   virtual void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) PURE;
 
-  virtual void addClientDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) PURE;
+  virtual void addClientFilter(Http::PrivateProtoFilterSharedPtr filter) PURE;
 
 };
 
