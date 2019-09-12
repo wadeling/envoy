@@ -604,5 +604,51 @@ bool Utility::isPrivateProtoHeader(const HeaderMap& headers) {
     return entry != nullptr;
 }
 
+bool Utility::encapHttpRequest(std::string path,std::string host,HeaderMap& headers,
+                                Buffer::Instance& body,Buffer::Instance& request) {
+    std::stringstream stream;
+    stream << "POST " << path;
+    stream << " HTTP/1.1\r\n";
+    stream << "Host: "<< host << "\r\n";
+    stream << "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
+    headers.iterate(
+        [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+            *static_cast<std::stringstream*>(context) << header.key().getStringView() << ": " << header.value().getStringView() << "\r\n";
+            return HeaderMap::Iterate::Continue;
+        },
+    &stream);
+    stream << "Content-Type:application/octet-stream\n";
+    stream << "Content-Length:" << body.length()<<"\r\n";
+    stream << "Connection:close\r\n\r\n";
+    if (body.length() != 0) {
+        stream << body.toString();
+    }
+
+    request.prepend(stream.str());
+    return true;
+}
+
+bool Utility::encapHttpResponse(HeaderMap& headers,Buffer::Instance& body,Buffer::Instance& response) {
+    std::stringstream stream;
+    stream << "HTTP/1.1 200 OK\r\n";
+    stream << "Server: envoy\r\n";
+    stream << "Content-Type:application/octet-stream\r\n";
+    stream << "Connection: close\r\n";
+    stream << "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
+    headers.iterate(
+        [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+            *static_cast<std::stringstream*>(context) << header.key().getStringView() << ": " << header.value().getStringView() << "\r\n";
+            return HeaderMap::Iterate::Continue;
+        },
+    &stream);
+    stream << "Content-Length:" << body.length()<<"\r\n";
+    stream << "Connection: close\r\n\r\n";
+    if (body.length() != 0) {
+        stream << body.toString();
+    }
+    response.prepend(stream.str());
+    return true;
+}
+
 } // namespace Http
 } // namespace Envoy
