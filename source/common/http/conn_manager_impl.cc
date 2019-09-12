@@ -116,14 +116,14 @@ ConnectionManagerImpl::ConnectionManagerImpl(ConnectionManagerConfig& config,
    config_.privateProtoFilterFactory().createPreSrvFilterChain(*this);
 }
 
-void ConnectionManagerImpl::addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) {
+void ConnectionManagerImpl::addPreSrvDecodeFilter(Http::PrivateProtoFilterSharedPtr filter) {
     // wrapper and add to list
-    PreSrvStreamDecoderFilterPtr wrapper(new PreSrvStreamDecoderFilter(*this, filter));
+    PreSrvStreamFilterPtr wrapper(new PreSrvStreamFilter(*this, filter));
     wrapper->moveIntoListBack(std::move(wrapper), pre_srv_decoder_filters_);
 }
 
 void ConnectionManagerImpl::decodePrivateProtoData(Buffer::Instance& data, bool end_stream) {
-    std::list<PreSrvStreamDecoderFilterPtr>::iterator entry = pre_srv_decoder_filters_.begin();
+    std::list<PreSrvStreamFilterPtr>::iterator entry = pre_srv_decoder_filters_.begin();
 
     for (; entry != pre_srv_decoder_filters_.end(); entry++) {
         PrivateProtoFilterDataStatus status = (*entry)->handle_->decodeData(data, end_stream);
@@ -131,7 +131,15 @@ void ConnectionManagerImpl::decodePrivateProtoData(Buffer::Instance& data, bool 
                          static_cast<const void*>((*entry).get()), static_cast<uint64_t>(status));
     }
 }
+void ConnectionManagerImpl::encodePrivateProtoData(Buffer::Instance& data, bool end_stream) {
+    std::list<PreSrvStreamFilterPtr>::iterator entry = pre_srv_decoder_filters_.begin();
 
+    for (; entry != pre_srv_decoder_filters_.end(); entry++) {
+        PrivateProtoFilterDataStatus status = (*entry)->encodeData(data, end_stream);
+        ENVOY_LOG(debug, "encode private proto data called: filter={} status={}",
+                  static_cast<const void*>((*entry).get()), static_cast<uint64_t>(status));
+    }
+}
 const HeaderMapImpl& ConnectionManagerImpl::continueHeader() {
   CONSTRUCT_ON_FIRST_USE(HeaderMapImpl,
                          {Http::Headers::get().Status, std::to_string(enumToInt(Code::Continue))});
@@ -1526,7 +1534,14 @@ void ConnectionManagerImpl::ActiveStream::encodeData(
     response_encoder_->encodeData(data, false);
     encodeTrailers(trailers_added_entry->get(), *response_trailers_);
   } else {
-    response_encoder_->encodeData(data, end_stream);
+    if (!connection_manager_.pre_srv_decoder_filters_.empty()) {
+        ENVOY_STREAM_LOG(debug, "private proto filter", *this);
+        connection_manager_.encodePrivateProtoData(data,end_stream);
+        response_encoder_->encodeRawData(data,end_stream);
+    } else {
+        ENVOY_STREAM_LOG(debug, "response encode data", *this);
+        response_encoder_->encodeData(data, end_stream);
+    }
     maybeEndEncode(end_stream);
   }
   ENVOY_STREAM_LOG(trace, "encoding data end", *this);

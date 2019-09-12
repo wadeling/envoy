@@ -617,6 +617,8 @@ bool Utility::encapHttpRequest(std::string path,std::string host,HeaderMap& head
             return HeaderMap::Iterate::Continue;
         },
     &stream);
+    // add special key to indicate this inner encap pkg
+    stream << PrivateProtoKey.get() << ": true\r\n";
     stream << "Content-Type:application/octet-stream\n";
     stream << "Content-Length:" << body.length()<<"\r\n";
     stream << "Connection:close\r\n\r\n";
@@ -641,6 +643,7 @@ bool Utility::encapHttpResponse(HeaderMap& headers,Buffer::Instance& body,Buffer
             return HeaderMap::Iterate::Continue;
         },
     &stream);
+    stream << PrivateProtoKey.get() << ": true\r\n";
     stream << "Content-Length:" << body.length()<<"\r\n";
     stream << "Connection: close\r\n\r\n";
     if (body.length() != 0) {

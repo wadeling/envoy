@@ -79,7 +79,7 @@ public:
 
   // add filter to filter list
   void addClientFilter(Http::PrivateProtoFilterSharedPtr filter) override ;
-  void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
+  void addPreSrvDecodeFilter(Http::PrivateProtoFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
 
   void decodePrivateProtoData(Buffer::Instance& data, bool end_stream) ;
 

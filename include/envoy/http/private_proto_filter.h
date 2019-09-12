@@ -132,7 +132,7 @@ class PrivateProtoFilterChainFactoryCallbacks {
 public:
   virtual ~PrivateProtoFilterChainFactoryCallbacks() {}
 
-  virtual void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) PURE;
+  virtual void addPreSrvDecodeFilter(Http::PrivateProtoFilterSharedPtr filter) PURE;
 
   virtual void addClientFilter(Http::PrivateProtoFilterSharedPtr filter) PURE;
 

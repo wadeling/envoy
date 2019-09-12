@@ -79,8 +79,9 @@ public:
 
   // implement private proto chain callbacks
   // add pre srv filter
-  void addPreSrvDecodeFilter(Http::PrivateProtoDecoderFilterSharedPtr filter) override;
+  void addPreSrvDecodeFilter(Http::PrivateProtoFilterSharedPtr filter) override;
   void decodePrivateProtoData(Buffer::Instance& data, bool end_stream);
+  void encodePrivateProtoData(Buffer::Instance& data, bool end_stream);
   void addClientFilter(Http::PrivateProtoFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
 
   // Network::ConnectionCallbacks
@@ -544,19 +545,25 @@ private:
   /**
    * Wrapper for a pre srv stream decoder filter.
    */
-  struct PreSrvStreamDecoderFilter : LinkedObject<PreSrvStreamDecoderFilter> {
-      PreSrvStreamDecoderFilter(ConnectionManagerImpl& connection_manager, PrivateProtoDecoderFilterSharedPtr filter)
+  struct PreSrvStreamFilter : LinkedObject<PreSrvStreamFilter> {
+      PreSrvStreamFilter(ConnectionManagerImpl& connection_manager, PrivateProtoFilterSharedPtr filter)
               : connection_manager_(connection_manager), handle_(filter) {}
       ConnectionManagerImpl& connection_manager_;
-      PrivateProtoDecoderFilterSharedPtr handle_;
+      PrivateProtoFilterSharedPtr handle_;
 
       PrivateProtoFilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) {
           PrivateProtoFilterDataStatus status = handle_->decodeData(data, end_stream);
           return status;
       }
+
+      // encode data for rsp pkg
+      PrivateProtoFilterDataStatus encodeData(Buffer::Instance& data, bool end_stream) {
+          PrivateProtoFilterDataStatus status = handle_->encodeData(data, end_stream);
+          return status;
+      }
   };
 
-  typedef std::unique_ptr<PreSrvStreamDecoderFilter> PreSrvStreamDecoderFilterPtr;
+  typedef std::unique_ptr<PreSrvStreamFilter> PreSrvStreamFilterPtr;
 
   /**
    * Check to see if the connection can be closed after gracefully waiting to send pending codec
@@ -611,7 +618,7 @@ private:
   TimeSource& time_source_;
 
   // pre srv filter
-  std::list<PreSrvStreamDecoderFilterPtr> pre_srv_decoder_filters_;
+  std::list<PreSrvStreamFilterPtr> pre_srv_decoder_filters_;
 };
 
 } // namespace Http
