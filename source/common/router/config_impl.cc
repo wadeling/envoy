@@ -503,7 +503,7 @@ void RouteEntryImplBase::processPreClientFilter(const envoy::api::v2::route::Htt
     Http::PrivateProtoFilterFactoryCb callback;
     ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
             proto_config, context_.messageValidationVisitor(), factory);
-    callback = factory.createPrivateProtoFilterFactoryFromProto(*message);
+    callback = factory.createPrivateProtoFilterFactoryFromProto(*message,context_);
     filter_factories.push_back(callback);
 }
 

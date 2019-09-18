@@ -9,7 +9,8 @@ namespace HttpFilters {
 namespace PrivateProto {
 
 Http::PrivateProtoFilterFactoryCb
-PrivateProtoTestConfig::createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config ABSL_ATTRIBUTE_UNUSED) {
+PrivateProtoTestConfig::createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config ABSL_ATTRIBUTE_UNUSED,
+                                                                 Server::Configuration::FactoryContext& context ABSL_ATTRIBUTE_UNUSED) {
   ENVOY_LOG(debug,"PrivateProtoTestConfig::createFilter");
 
   return [](Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {

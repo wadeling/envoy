@@ -381,7 +381,7 @@ void HttpConnectionManagerConfig::processPreSrvFilter(
   Http::PrivateProtoFilterFactoryCb callback;
   ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
               proto_config, context_.messageValidationVisitor(), factory);
-  callback = factory.createPrivateProtoFilterFactoryFromProto(*message);
+  callback = factory.createPrivateProtoFilterFactoryFromProto(*message,context_);
   filter_factories.push_back(callback);
 }
 
