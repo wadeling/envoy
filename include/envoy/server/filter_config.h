@@ -8,7 +8,6 @@
 #include "envoy/http/codes.h"
 #include "envoy/http/context.h"
 #include "envoy/http/filter.h"
-#include "envoy/http/private_proto_filter.h"
 #include "envoy/init/manager.h"
 #include "envoy/json/json_object.h"
 #include "envoy/network/drain_decision.h"

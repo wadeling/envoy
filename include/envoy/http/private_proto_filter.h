@@ -140,6 +140,7 @@ public:
 
 typedef std::function<void(PrivateProtoFilterChainFactoryCallbacks& callbacks)> PrivateProtoFilterFactoryCb;
 
+
 class PrivateProtoFilterChainFactory {
 public:
   virtual ~PrivateProtoFilterChainFactory() {}
@@ -150,9 +151,6 @@ public:
 };
 
 typedef std::list<Http::PrivateProtoFilterFactoryCb> PrivateProtoFilterFactoriesList;
-typedef std::shared_ptr<Http::PrivateProtoFilterFactoriesList> PrivateProtoFilterFactoriesListPtr;
-
-
 
 } // namespace Http
 } // namespace Envoy
