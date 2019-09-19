@@ -1,10 +1,10 @@
 #pragma once
 
-#include "extensions/filters/network/dubbo_proxy/message.h"
+#include "extensions/filters/http/dubbo_proxy/message.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 class ContextBase : public Context {
@@ -60,6 +60,6 @@ protected:
 };
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

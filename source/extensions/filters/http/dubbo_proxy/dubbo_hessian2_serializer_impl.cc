@@ -1,18 +1,18 @@
-#include "extensions/filters/network/dubbo_proxy/dubbo_hessian2_serializer_impl.h"
+#include "extensions/filters/http/dubbo_proxy/dubbo_hessian2_serializer_impl.h"
 
 #include "envoy/common/exception.h"
 
 #include "common/common/assert.h"
 #include "common/common/macros.h"
 
-#include "extensions/filters/network/dubbo_proxy/hessian_utils.h"
-#include "extensions/filters/network/dubbo_proxy/message_impl.h"
-#include "extensions/filters/network/dubbo_proxy/serializer.h"
-#include "extensions/filters/network/dubbo_proxy/serializer_impl.h"
+#include "extensions/filters/http/dubbo_proxy/hessian_utils.h"
+#include "extensions/filters/http/dubbo_proxy/message_impl.h"
+#include "extensions/filters/http/dubbo_proxy/serializer.h"
+#include "extensions/filters/http/dubbo_proxy/serializer_impl.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 std::pair<RpcInvocationSharedPtr, bool>
@@ -113,6 +113,6 @@ public:
 REGISTER_FACTORY(DubboHessian2SerializerConfigFactory, NamedSerializerConfigFactory);
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

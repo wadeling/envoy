@@ -1,15 +1,15 @@
-#include "extensions/filters/network/dubbo_proxy/router/route_matcher.h"
+#include "extensions/filters/http/dubbo_proxy/router/route_matcher.h"
 
 #include "envoy/config/filter/network/dubbo_proxy/v2alpha1/dubbo_proxy.pb.h"
 #include "envoy/config/filter/network/dubbo_proxy/v2alpha1/route.pb.validate.h"
 
 #include "common/protobuf/utility.h"
 
-#include "extensions/filters/network/dubbo_proxy/serializer_impl.h"
+#include "extensions/filters/http/dubbo_proxy/serializer_impl.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace Router {
 
@@ -234,6 +234,6 @@ REGISTER_FACTORY(DefaultRouteMatcherConfigFactory, NamedRouteMatcherConfigFactor
 
 } // namespace Router
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

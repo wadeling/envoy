@@ -2,14 +2,14 @@
 
 #include "envoy/common/exception.h"
 
-#include "extensions/filters/network/dubbo_proxy/filters/filter.h"
-#include "extensions/filters/network/dubbo_proxy/metadata.h"
-#include "extensions/filters/network/dubbo_proxy/protocol.h"
-#include "extensions/filters/network/dubbo_proxy/serializer.h"
+#include "extensions/filters/http/dubbo_proxy/filters/filter.h"
+#include "extensions/filters/http/dubbo_proxy/metadata.h"
+#include "extensions/filters/http/dubbo_proxy/protocol.h"
+#include "extensions/filters/http/dubbo_proxy/serializer.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 using ResponseType = DubboFilters::DirectResponse::ResponseType;
@@ -49,6 +49,6 @@ struct DownstreamConnectionCloseException : public EnvoyException {
 };
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

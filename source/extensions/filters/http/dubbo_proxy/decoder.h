@@ -5,13 +5,13 @@
 #include "common/buffer/buffer_impl.h"
 #include "common/common/logger.h"
 
-#include "extensions/filters/network/dubbo_proxy/decoder_event_handler.h"
-#include "extensions/filters/network/dubbo_proxy/protocol.h"
-#include "extensions/filters/network/dubbo_proxy/serializer.h"
+#include "extensions/filters/http/dubbo_proxy/decoder_event_handler.h"
+#include "extensions/filters/http/dubbo_proxy/protocol.h"
+#include "extensions/filters/http/dubbo_proxy/serializer.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 #define ALL_PROTOCOL_STATES(FUNCTION)                                                              \
@@ -192,6 +192,6 @@ public:
 using ResponseDecoderPtr = std::unique_ptr<ResponseDecoder>;
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

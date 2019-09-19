@@ -8,13 +8,13 @@
 #include "common/common/empty_string.h"
 #include "common/http/header_map_impl.h"
 
-#include "extensions/filters/network/dubbo_proxy/message.h"
+#include "extensions/filters/http/dubbo_proxy/message.h"
 
 #include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 class MessageMetadata {
@@ -81,6 +81,6 @@ private:
 using MessageMetadataSharedPtr = std::shared_ptr<MessageMetadata>;
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

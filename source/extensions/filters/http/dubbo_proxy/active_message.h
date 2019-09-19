@@ -10,18 +10,18 @@
 #include "common/common/logger.h"
 #include "common/stream_info/stream_info_impl.h"
 
-#include "extensions/filters/network/dubbo_proxy/decoder.h"
-#include "extensions/filters/network/dubbo_proxy/decoder_event_handler.h"
-#include "extensions/filters/network/dubbo_proxy/filters/filter.h"
-#include "extensions/filters/network/dubbo_proxy/metadata.h"
-#include "extensions/filters/network/dubbo_proxy/router/router.h"
-#include "extensions/filters/network/dubbo_proxy/stats.h"
+#include "extensions/filters/http/dubbo_proxy/decoder.h"
+#include "extensions/filters/http/dubbo_proxy/decoder_event_handler.h"
+#include "extensions/filters/http/dubbo_proxy/filters/filter.h"
+#include "extensions/filters/http/dubbo_proxy/metadata.h"
+#include "extensions/filters/http/dubbo_proxy/router/router.h"
+#include "extensions/filters/http/dubbo_proxy/stats.h"
 
 #include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 class ConnectionManager;
@@ -223,6 +223,6 @@ private:
 using ActiveMessagePtr = std::unique_ptr<ActiveMessage>;
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

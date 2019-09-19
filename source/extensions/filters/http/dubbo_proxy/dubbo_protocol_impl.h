@@ -1,10 +1,10 @@
 #pragma once
 
-#include "extensions/filters/network/dubbo_proxy/protocol.h"
+#include "extensions/filters/http/dubbo_proxy/protocol.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 class DubboProtocolImpl : public Protocol {
@@ -28,6 +28,6 @@ public:
 };
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

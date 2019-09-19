@@ -7,11 +7,11 @@
 
 #include "common/protobuf/utility.h"
 
-#include "extensions/filters/network/dubbo_proxy/filters/filter_config.h"
+#include "extensions/filters/http/dubbo_proxy/filters/filter_config.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace DubboFilters {
 
@@ -46,6 +46,6 @@ private:
 
 } // namespace DubboFilters
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

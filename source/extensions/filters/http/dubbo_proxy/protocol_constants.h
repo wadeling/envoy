@@ -6,11 +6,11 @@
 #include "common/common/fmt.h"
 #include "common/singleton/const_singleton.h"
 
-#include "extensions/filters/network/dubbo_proxy/message.h"
+#include "extensions/filters/http/dubbo_proxy/message.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 /**
@@ -93,6 +93,6 @@ public:
 using ProtocolSerializerNames = ConstSingleton<ProtocolSerializerNameValues>;
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

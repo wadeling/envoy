@@ -12,15 +12,15 @@
 #include "common/http/header_utility.h"
 #include "common/protobuf/protobuf.h"
 
-#include "extensions/filters/network/dubbo_proxy/metadata.h"
-#include "extensions/filters/network/dubbo_proxy/router/route.h"
-#include "extensions/filters/network/dubbo_proxy/router/router.h"
+#include "extensions/filters/http/dubbo_proxy/metadata.h"
+#include "extensions/filters/http/dubbo_proxy/router/route.h"
+#include "extensions/filters/http/dubbo_proxy/router/router.h"
 
 #include "absl/types/optional.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace Router {
 
@@ -123,7 +123,8 @@ public:
                               uint64_t random_value) const override;
 
 private:
-  const Matchers::StringMatcherImpl method_name_;
+//  const Matchers::StringMatcherImpl method_name_;
+  const Matchers::StringMatcher method_name_;
   std::shared_ptr<ParameterRouteEntryImpl> parameter_route_;
 };
 
@@ -156,6 +157,6 @@ private:
 
 } // namespace Router
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

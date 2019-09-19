@@ -1,4 +1,4 @@
-#include "extensions/filters/network/dubbo_proxy/conn_manager.h"
+#include "extensions/filters/http/dubbo_proxy/conn_manager.h"
 
 #include <cstdint>
 
@@ -6,14 +6,14 @@
 
 #include "common/common/fmt.h"
 
-#include "extensions/filters/network/dubbo_proxy/app_exception.h"
-#include "extensions/filters/network/dubbo_proxy/dubbo_hessian2_serializer_impl.h"
-#include "extensions/filters/network/dubbo_proxy/dubbo_protocol_impl.h"
-#include "extensions/filters/network/dubbo_proxy/heartbeat_response.h"
+#include "extensions/filters/http/dubbo_proxy/app_exception.h"
+#include "extensions/filters/http/dubbo_proxy/dubbo_hessian2_serializer_impl.h"
+#include "extensions/filters/http/dubbo_proxy/dubbo_protocol_impl.h"
+#include "extensions/filters/http/dubbo_proxy/heartbeat_response.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 constexpr uint32_t BufferLimit = UINT32_MAX;
@@ -23,6 +23,26 @@ ConnectionManager::ConnectionManager(Config& config, Runtime::RandomGenerator& r
     : config_(config), time_system_(time_system), stats_(config_.stats()),
       random_generator_(random_generator), protocol_(config.createProtocol()),
       decoder_(std::make_unique<RequestDecoder>(*protocol_, *this)) {}
+
+Http::PrivateProtoFilterDataStatus ConnectionManager::decodeData(Buffer::Instance& data, bool end_stream) {
+  Network::FilterStatus  status = onData(data,end_stream);
+  if (status == Network::FilterStatus::StopIteration) {
+      return Http::PrivateProtoFilterDataStatus::StopIteration;
+  }
+  return Http::PrivateProtoFilterDataStatus::Continue;
+}
+
+Http::PrivateProtoFilterDataStatus ConnectionManager::encodeClientData(Buffer::Instance& buff, bool end_stream) {
+    ENVOY_LOG(debug,"Private Proto dubbo encode Client Data length {},end_stream {}",buff.length(),end_stream);
+
+    return Http::PrivateProtoFilterDataStatus ::Continue;
+}
+
+Http::PrivateProtoFilterDataStatus ConnectionManager::encodeData(Buffer::Instance& buff, bool end_stream) {
+    ENVOY_LOG(debug,"Private Proto dubbo encode Data length {},end_stream {}",buff.length(),end_stream);
+
+    return Http::PrivateProtoFilterDataStatus ::Continue;
+}
 
 Network::FilterStatus ConnectionManager::onData(Buffer::Instance& data, bool end_stream) {
   ENVOY_LOG(trace, "dubbo: read {} bytes", data.length());
@@ -203,6 +223,6 @@ void ConnectionManager::resetAllMessages(bool local_reset) {
 }
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

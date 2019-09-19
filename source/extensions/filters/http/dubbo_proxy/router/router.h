@@ -5,11 +5,11 @@
 
 #include "envoy/router/router.h"
 
-#include "extensions/filters/network/dubbo_proxy/metadata.h"
+#include "extensions/filters/http/dubbo_proxy/metadata.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace Router {
 
@@ -72,6 +72,6 @@ using ConfigConstSharedPtr = std::shared_ptr<const Config>;
 
 } // namespace Router
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

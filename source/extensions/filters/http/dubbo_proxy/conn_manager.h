@@ -12,17 +12,17 @@
 
 #include "common/common/logger.h"
 
-#include "extensions/filters/network/dubbo_proxy/active_message.h"
-#include "extensions/filters/network/dubbo_proxy/decoder.h"
-#include "extensions/filters/network/dubbo_proxy/decoder_event_handler.h"
-#include "extensions/filters/network/dubbo_proxy/filters/filter.h"
-#include "extensions/filters/network/dubbo_proxy/protocol.h"
-#include "extensions/filters/network/dubbo_proxy/serializer.h"
-#include "extensions/filters/network/dubbo_proxy/stats.h"
+#include "extensions/filters/http/dubbo_proxy/active_message.h"
+#include "extensions/filters/http/dubbo_proxy/decoder.h"
+#include "extensions/filters/http/dubbo_proxy/decoder_event_handler.h"
+#include "extensions/filters/http/dubbo_proxy/filters/filter.h"
+#include "extensions/filters/http/dubbo_proxy/protocol.h"
+#include "extensions/filters/http/dubbo_proxy/serializer.h"
+#include "extensions/filters/http/dubbo_proxy/stats.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 /**
@@ -42,6 +42,7 @@ public:
 class ConnectionManager : public Network::ReadFilter,
                           public Network::ConnectionCallbacks,
                           public RequestDecoderCallbacks,
+                          public Http::PrivateProtoFilter,
                           Logger::Loggable<Logger::Id::dubbo> {
 public:
   using ConfigProtocolType = envoy::config::filter::network::dubbo_proxy::v2alpha1::ProtocolType;
@@ -51,6 +52,20 @@ public:
   ConnectionManager(Config& config, Runtime::RandomGenerator& random_generator,
                     TimeSource& time_system);
   ~ConnectionManager() override = default;
+
+  // http filter
+  // server recv data
+  Http::PrivateProtoFilterDataStatus decodeData(Buffer::Instance&, bool) override ;
+
+  // server rsp data
+  Http::PrivateProtoFilterDataStatus encodeData(Buffer::Instance&, bool) override ;
+
+  // client recv data
+  Http::PrivateProtoFilterDataStatus decodeClientData(Buffer::Instance&, bool) override ;
+
+  // client send data
+  Http::PrivateProtoFilterDataStatus encodeClientData(Buffer::Instance&, bool) override ;
+
 
   // Network::ReadFilter
   Network::FilterStatus onData(Buffer::Instance& data, bool end_stream) override;
@@ -104,6 +119,6 @@ private:
 };
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

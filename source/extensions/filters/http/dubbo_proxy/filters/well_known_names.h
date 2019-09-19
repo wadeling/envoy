@@ -6,7 +6,7 @@
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace DubboFilters {
 
@@ -24,6 +24,6 @@ using DubboFilterNames = ConstSingleton<DubboFilterNameValues>;
 
 } // namespace DubboFilters
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

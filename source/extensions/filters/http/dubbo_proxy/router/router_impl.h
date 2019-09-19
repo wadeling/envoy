@@ -9,12 +9,12 @@
 #include "common/common/logger.h"
 #include "common/upstream/load_balancer_impl.h"
 
-#include "extensions/filters/network/dubbo_proxy/filters/filter.h"
-#include "extensions/filters/network/dubbo_proxy/router/router.h"
+#include "extensions/filters/http/dubbo_proxy/filters/filter.h"
+#include "extensions/filters/http/dubbo_proxy/router/router.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace Router {
 
@@ -98,6 +98,6 @@ private:
 
 } // namespace Router
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

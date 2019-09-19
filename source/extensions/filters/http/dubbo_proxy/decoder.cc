@@ -1,10 +1,10 @@
-#include "extensions/filters/network/dubbo_proxy/decoder.h"
+#include "extensions/filters/http/dubbo_proxy/decoder.h"
 
 #include "common/common/macros.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 DecoderStateMachine::DecoderStatus
@@ -136,6 +136,6 @@ void DecoderBase::complete() {
 void DecoderBase::reset() { complete(); }
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

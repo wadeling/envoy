@@ -1,8 +1,8 @@
-#include "extensions/filters/network/dubbo_proxy/buffer_helper.h"
+#include "extensions/filters/http/dubbo_proxy/buffer_helper.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 double BufferHelper::peekDouble(Buffer::Instance& buffer, uint64_t offset) {
@@ -25,6 +25,6 @@ float BufferHelper::peekFloat(Buffer::Instance& buffer, uint64_t offset) {
   return i;
 }
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

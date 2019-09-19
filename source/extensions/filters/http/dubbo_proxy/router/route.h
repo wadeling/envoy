@@ -10,12 +10,12 @@
 #include "common/config/utility.h"
 #include "common/singleton/const_singleton.h"
 
-#include "extensions/filters/network/dubbo_proxy/metadata.h"
-#include "extensions/filters/network/dubbo_proxy/router/router.h"
+#include "extensions/filters/http/dubbo_proxy/metadata.h"
+#include "extensions/filters/http/dubbo_proxy/router/router.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace Router {
 
@@ -116,6 +116,6 @@ private:
 
 } // namespace Router
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

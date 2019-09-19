@@ -3,12 +3,12 @@
 #include "envoy/config/filter/dubbo/router/v2alpha1/router.pb.h"
 #include "envoy/config/filter/dubbo/router/v2alpha1/router.pb.validate.h"
 
-#include "extensions/filters/network/dubbo_proxy/filters/factory_base.h"
-#include "extensions/filters/network/dubbo_proxy/filters/well_known_names.h"
+#include "extensions/filters/http/dubbo_proxy/filters/factory_base.h"
+#include "extensions/filters/http/dubbo_proxy/filters/well_known_names.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace Router {
 
@@ -25,6 +25,6 @@ private:
 
 } // namespace Router
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

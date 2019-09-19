@@ -1,11 +1,11 @@
-#include "extensions/filters/network/dubbo_proxy/active_message.h"
+#include "extensions/filters/http/dubbo_proxy/active_message.h"
 
-#include "extensions/filters/network/dubbo_proxy/app_exception.h"
-#include "extensions/filters/network/dubbo_proxy/conn_manager.h"
+#include "extensions/filters/http/dubbo_proxy/app_exception.h"
+#include "extensions/filters/http/dubbo_proxy/conn_manager.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 // class ActiveResponseDecoder
@@ -247,16 +247,19 @@ void ActiveMessage::onStreamDecoded(MessageMetadataSharedPtr metadata, ContextSh
 
   metadata_ = metadata;
   context_ = ctx;
-  filter_action_ = [metadata, ctx](DubboFilters::DecoderFilter* filter) -> FilterStatus {
-    return filter->onMessageDecoded(metadata, ctx);
-  };
+//  filter_action_ = [metadata, ctx](DubboFilters::DecoderFilter* filter) -> FilterStatus {
+//    return filter->onMessageDecoded(metadata, ctx);
+//  };
 
-  auto status = applyDecoderFilters(nullptr, FilterIterationStartState::CanStartFromCurrent);
-  if (status == FilterStatus::StopIteration) {
-    ENVOY_LOG(debug, "dubbo request: stop calling decoder filter, id is {}",
-              metadata->request_id());
-    pending_stream_decoded_ = true;
-    return;
+  // change: ignore dubbo filter chains
+  if (false) {
+   auto status = applyDecoderFilters(nullptr, FilterIterationStartState::CanStartFromCurrent);
+      if (status == FilterStatus::StopIteration) {
+          ENVOY_LOG(debug, "dubbo request: stop calling decoder filter, id is {}",
+                    metadata->request_id());
+          pending_stream_decoded_ = true;
+          return;
+      }
   }
 
   finalizeRequest();
@@ -432,7 +435,10 @@ Event::Dispatcher& ActiveMessage::dispatcher() { return parent_.connection().dis
 const Network::Connection* ActiveMessage::connection() const { return &parent_.connection(); }
 
 void ActiveMessage::addDecoderFilter(DubboFilters::DecoderFilterSharedPtr filter) {
-  addDecoderFilterWorker(filter, false);
+    //change: ignore dubbo route filter
+    if (false) {
+        addDecoderFilterWorker(filter, false);
+    }
 }
 
 void ActiveMessage::addEncoderFilter(DubboFilters::EncoderFilterSharedPtr filter) {
@@ -475,6 +481,6 @@ void ActiveMessage::onError(const std::string& what) {
 }
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

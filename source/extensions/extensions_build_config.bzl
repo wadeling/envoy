@@ -51,6 +51,7 @@ EXTENSIONS = {
     "envoy.filters.http.squash":                        "//source/extensions/filters/http/squash:config",
     "envoy.filters.http.tap":                           "//source/extensions/filters/http/tap:config",
     "envoy.filters.http.ppt":                           "//source/extensions/filters/http/private_proto_test:config",
+    "envoy.filters.http.dubbo_proxy":                   "//source/extensions/filters/http/dubbo_proxy:config",
 
     #
     # Listener filters

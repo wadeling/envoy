@@ -1,14 +1,14 @@
-#include "extensions/filters/network/dubbo_proxy/router/router_impl.h"
+#include "extensions/filters/http/dubbo_proxy/router/router_impl.h"
 
 #include "envoy/config/filter/network/dubbo_proxy/v2alpha1/dubbo_proxy.pb.h"
 #include "envoy/upstream/cluster_manager.h"
 #include "envoy/upstream/thread_local_cluster.h"
 
-#include "extensions/filters/network/dubbo_proxy/app_exception.h"
+#include "extensions/filters/http/dubbo_proxy/app_exception.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace Router {
 
@@ -320,6 +320,6 @@ void Router::UpstreamRequest::onResetStream(Tcp::ConnectionPool::PoolFailureReas
 
 } // namespace Router
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "extensions/filters/network/dubbo_proxy/serializer.h"
+#include "extensions/filters/http/dubbo_proxy/serializer.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 class DubboHessian2SerializerImpl : public Serializer {
 public:
@@ -25,6 +25,6 @@ public:
 };
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

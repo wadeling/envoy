@@ -246,6 +246,18 @@ public:
   }
 
   template <class MessageType>
+  static void validate(const MessageType& message,
+                       ProtobufMessage::ValidationVisitor& validation_visitor) {
+      // Log warnings or throw errors if deprecated fields or unknown fields are in use.
+      checkForUnexpectedFields(message, validation_visitor);
+
+      std::string err;
+      if (!Validate(message, &err)) {
+          throw ProtoValidationException(err, message);
+      }
+  }
+
+  template <class MessageType>
   static void loadFromFileAndValidate(const std::string& path, MessageType& message,
                                       ProtobufMessage::ValidationVisitor& validation_visitor) {
     loadFromFile(path, message, validation_visitor);
@@ -274,6 +286,14 @@ public:
     return typed_config;
   }
 
+  template <class MessageType>
+  static const MessageType&
+  downcastAndValidate(const Protobuf::Message& config,
+                      ProtobufMessage::ValidationVisitor& validation_visitor) {
+      const auto& typed_config = dynamic_cast<MessageType>(config);
+      validate(typed_config, validation_visitor);
+      return typed_config;
+  }
   /**
    * Convert from google.protobuf.Any to a typed message.
    * @param message source google.protobuf.Any message.

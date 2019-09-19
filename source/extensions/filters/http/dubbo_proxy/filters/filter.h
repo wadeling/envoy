@@ -8,16 +8,16 @@
 #include "envoy/network/connection.h"
 #include "envoy/stream_info/stream_info.h"
 
-#include "extensions/filters/network/dubbo_proxy/decoder_event_handler.h"
-#include "extensions/filters/network/dubbo_proxy/message.h"
-#include "extensions/filters/network/dubbo_proxy/metadata.h"
-#include "extensions/filters/network/dubbo_proxy/protocol.h"
-#include "extensions/filters/network/dubbo_proxy/router/router.h"
-#include "extensions/filters/network/dubbo_proxy/serializer.h"
+#include "extensions/filters/http/dubbo_proxy/decoder_event_handler.h"
+#include "extensions/filters/http/dubbo_proxy/message.h"
+#include "extensions/filters/http/dubbo_proxy/metadata.h"
+#include "extensions/filters/http/dubbo_proxy/protocol.h"
+#include "extensions/filters/http/dubbo_proxy/router/router.h"
+#include "extensions/filters/http/dubbo_proxy/serializer.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace DubboFilters {
 
@@ -285,6 +285,6 @@ public:
 
 } // namespace DubboFilters
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

@@ -716,6 +716,7 @@ add_executable(envoy
     source/extensions/filters/http/common/aws/utility.h
     source/extensions/filters/http/common/empty_http_filter_config.h
     source/extensions/filters/http/common/factory_base.h
+    source/extensions/filters/http/common/private_proto_factory_base.h
     source/extensions/filters/http/common/jwks_fetcher.cc
     source/extensions/filters/http/common/jwks_fetcher.h
     source/extensions/filters/http/common/pass_through_filter.h
@@ -819,6 +820,48 @@ add_executable(envoy
     source/extensions/filters/http/tap/tap_config_impl.h
     source/extensions/filters/http/tap/tap_filter.cc
     source/extensions/filters/http/tap/tap_filter.h
+    source/extensions/filters/http/dubbo_proxy/filters/BUILD
+    source/extensions/filters/http/dubbo_proxy/filters/factory_base.h
+    source/extensions/filters/http/dubbo_proxy/filters/filter.h
+    source/extensions/filters/http/dubbo_proxy/filters/filter_config.h
+    source/extensions/filters/http/dubbo_proxy/filters/well_known_names.h
+    source/extensions/filters/http/dubbo_proxy/router/BUILD
+    source/extensions/filters/http/dubbo_proxy/router/config.cc
+    source/extensions/filters/http/dubbo_proxy/router/config.h
+    source/extensions/filters/http/dubbo_proxy/router/route_matcher.cc
+    source/extensions/filters/http/dubbo_proxy/router/route_matcher.h
+    source/extensions/filters/http/dubbo_proxy/router/router.h
+    source/extensions/filters/http/dubbo_proxy/router/router_impl.cc
+    source/extensions/filters/http/dubbo_proxy/router/router_impl.h
+    source/extensions/filters/http/dubbo_proxy/active_message.cc
+    source/extensions/filters/http/dubbo_proxy/active_message.h
+    source/extensions/filters/http/dubbo_proxy/app_exception.cc
+    source/extensions/filters/http/dubbo_proxy/app_exception.h
+    source/extensions/filters/http/dubbo_proxy/buffer_helper.cc
+    source/extensions/filters/http/dubbo_proxy/buffer_helper.h
+    source/extensions/filters/http/dubbo_proxy/BUILD
+    source/extensions/filters/http/dubbo_proxy/config.cc
+    source/extensions/filters/http/dubbo_proxy/config.h
+    source/extensions/filters/http/dubbo_proxy/conn_manager.cc
+    source/extensions/filters/http/dubbo_proxy/conn_manager.h
+    source/extensions/filters/http/dubbo_proxy/decoder.cc
+    source/extensions/filters/http/dubbo_proxy/decoder.h
+    source/extensions/filters/http/dubbo_proxy/decoder_event_handler.h
+    source/extensions/filters/http/dubbo_proxy/deserializer.h
+    source/extensions/filters/http/dubbo_proxy/dubbo_protocol_impl.cc
+    source/extensions/filters/http/dubbo_proxy/dubbo_protocol_impl.h
+    source/extensions/filters/http/dubbo_proxy/heartbeat_response.cc
+    source/extensions/filters/http/dubbo_proxy/heartbeat_response.h
+    source/extensions/filters/http/dubbo_proxy/hessian_utils.cc
+    source/extensions/filters/http/dubbo_proxy/hessian_utils.h
+    source/extensions/filters/http/dubbo_proxy/message.h
+    source/extensions/filters/http/dubbo_proxy/metadata.h
+    source/extensions/filters/http/dubbo_proxy/protocol.h
+    source/extensions/filters/http/dubbo_proxy/stats.h
+    source/extensions/filters/http/dubbo_proxy/serializer_impl.cc
+    source/extensions/filters/http/dubbo_proxy/serializer_impl.h
+    source/extensions/filters/http/dubbo_proxy/dubbo_hessian2_serializer_impl.cc
+    source/extensions/filters/http/dubbo_proxy/dubbo_hessian2_serializer_impl.h
     source/extensions/filters/http/well_known_names.h
     source/extensions/filters/listener/original_dst/config.cc
     source/extensions/filters/listener/original_dst/original_dst.cc

@@ -1,15 +1,15 @@
-#include "extensions/filters/network/dubbo_proxy/dubbo_protocol_impl.h"
+#include "extensions/filters/http/dubbo_proxy/dubbo_protocol_impl.h"
 
 #include "envoy/registry/registry.h"
 
 #include "common/common/assert.h"
 
-#include "extensions/filters/network/dubbo_proxy/message_impl.h"
-#include "extensions/filters/network/dubbo_proxy/serializer_impl.h"
+#include "extensions/filters/http/dubbo_proxy/message_impl.h"
+#include "extensions/filters/http/dubbo_proxy/serializer_impl.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace {
 
@@ -223,6 +223,6 @@ public:
 REGISTER_FACTORY(DubboProtocolConfigFactory, NamedProtocolConfigFactory);
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

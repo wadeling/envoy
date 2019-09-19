@@ -1,15 +1,15 @@
-#include "extensions/filters/network/dubbo_proxy/hessian_utils.h"
+#include "extensions/filters/http/dubbo_proxy/hessian_utils.h"
 
 #include <type_traits>
 
 #include "common/common/assert.h"
 #include "common/common/fmt.h"
 
-#include "extensions/filters/network/dubbo_proxy/buffer_helper.h"
+#include "extensions/filters/http/dubbo_proxy/buffer_helper.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 namespace {
@@ -574,6 +574,6 @@ size_t HessianUtils::writeInt(Buffer::Instance& buffer, uint8_t value) {
 }
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

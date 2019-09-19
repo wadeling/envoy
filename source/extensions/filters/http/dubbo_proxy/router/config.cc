@@ -1,12 +1,12 @@
-#include "extensions/filters/network/dubbo_proxy/router/config.h"
+#include "extensions/filters/http/dubbo_proxy/router/config.h"
 
 #include "envoy/registry/registry.h"
 
-#include "extensions/filters/network/dubbo_proxy/router/router_impl.h"
+#include "extensions/filters/http/dubbo_proxy/router/router_impl.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace Router {
 
@@ -25,6 +25,6 @@ REGISTER_FACTORY(RouterFilterConfig, DubboFilters::NamedDubboFilterConfigFactory
 
 } // namespace Router
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

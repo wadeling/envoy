@@ -8,6 +8,8 @@
 #include "envoy/json/json_object.h"
 #include "envoy/type/range.pb.h"
 
+#include "common/protobuf/protobuf.h"
+
 namespace Envoy {
 namespace Http {
 
@@ -33,6 +35,8 @@ public:
     const bool invert_match_;
   };
 
+  using HeaderDataPtr = std::unique_ptr<HeaderData>;
+
   /**
    * See if the headers specified in the config are present in a request.
    * @param request_headers supplies the headers from the request.
@@ -43,6 +47,9 @@ public:
   static bool matchHeaders(const Http::HeaderMap& request_headers,
                            const std::vector<HeaderData>& config_headers);
 
+  static bool matchHeaders(const HeaderMap& request_headers,
+                             const std::vector<HeaderDataPtr>& config_headers);
+
   static bool matchHeaders(const Http::HeaderMap& request_headers, const HeaderData& config_header);
 
   /**
@@ -51,6 +58,19 @@ public:
    * @param headers_to_add supplies the headers to be added
    */
   static void addHeaders(Http::HeaderMap& headers, const Http::HeaderMap& headers_to_add);
+
+  /**
+  * Build a vector of HeaderData given input config.
+  */
+  static std::vector<HeaderUtility::HeaderDataPtr> buildHeaderDataVector(
+          const Protobuf::RepeatedPtrField<envoy::api::v2::route::HeaderMatcher>& header_matchers) {
+      std::vector<HeaderUtility::HeaderDataPtr> ret;
+      for (const auto& header_match : header_matchers) {
+          ret.emplace_back(std::make_unique<HeaderUtility::HeaderData>(header_match));
+      }
+      return ret;
+  }
+
 };
 } // namespace Http
 } // namespace Envoy

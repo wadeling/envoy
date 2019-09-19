@@ -8,11 +8,11 @@
 #include "common/common/macros.h"
 #include "common/protobuf/protobuf.h"
 
-#include "extensions/filters/network/dubbo_proxy/filters/filter.h"
+#include "extensions/filters/http/dubbo_proxy/filters/filter.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 namespace DubboFilters {
 
@@ -53,6 +53,6 @@ public:
 
 } // namespace DubboFilters
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

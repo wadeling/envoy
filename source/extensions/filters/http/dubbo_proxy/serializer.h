@@ -9,13 +9,13 @@
 #include "common/config/utility.h"
 #include "common/singleton/const_singleton.h"
 
-#include "extensions/filters/network/dubbo_proxy/message.h"
-#include "extensions/filters/network/dubbo_proxy/metadata.h"
-#include "extensions/filters/network/dubbo_proxy/protocol_constants.h"
+#include "extensions/filters/http/dubbo_proxy/message.h"
+#include "extensions/filters/http/dubbo_proxy/metadata.h"
+#include "extensions/filters/http/dubbo_proxy/protocol_constants.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 class Serializer {
@@ -123,6 +123,6 @@ private:
 };
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

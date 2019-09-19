@@ -1,11 +1,11 @@
 #pragma once
 
-#include "extensions/filters/network/dubbo_proxy/message_impl.h"
-#include "extensions/filters/network/dubbo_proxy/serializer.h"
+#include "extensions/filters/http/dubbo_proxy/message_impl.h"
+#include "extensions/filters/http/dubbo_proxy/serializer.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 class RpcInvocationImpl : public RpcInvocationBase {
@@ -59,6 +59,6 @@ private:
 };
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

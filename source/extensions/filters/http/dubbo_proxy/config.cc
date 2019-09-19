@@ -1,28 +1,29 @@
-#include "extensions/filters/network/dubbo_proxy/config.h"
+#include "extensions/filters/http/dubbo_proxy/config.h"
 
 #include "envoy/registry/registry.h"
 
 #include "common/config/utility.h"
 
-#include "extensions/filters/network/dubbo_proxy/conn_manager.h"
-#include "extensions/filters/network/dubbo_proxy/filters/factory_base.h"
-#include "extensions/filters/network/dubbo_proxy/filters/well_known_names.h"
-#include "extensions/filters/network/dubbo_proxy/stats.h"
+#include "extensions/filters/http/dubbo_proxy/conn_manager.h"
+#include "extensions/filters/http/dubbo_proxy/filters/factory_base.h"
+#include "extensions/filters/http/dubbo_proxy/filters/well_known_names.h"
+#include "extensions/filters/http/dubbo_proxy/stats.h"
 
 #include "absl/container/flat_hash_map.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
-Network::FilterFactoryCb DubboProxyFilterConfigFactory::createFilterFactoryFromProtoTyped(
+Http::PrivateProtoFilterFactoryCb DubboProxyFilterConfigFactory::createFilterFactoryFromProtoTyped(
     const envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy& proto_config,
     Server::Configuration::FactoryContext& context) {
+
   std::shared_ptr<Config> filter_config(std::make_shared<ConfigImpl>(proto_config, context));
 
-  return [filter_config, &context](Network::FilterManager& filter_manager) -> void {
-    filter_manager.addReadFilter(std::make_shared<ConnectionManager>(
+  return [filter_config, &context](Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) -> void {
+    callbacks.addPreSrvDecodeFilter(std::make_shared<ConnectionManager>(
         *filter_config, context.random(), context.dispatcher().timeSource()));
   };
 }
@@ -31,7 +32,7 @@ Network::FilterFactoryCb DubboProxyFilterConfigFactory::createFilterFactoryFromP
  * Static registration for the dubbo filter. @see RegisterFactory.
  */
 REGISTER_FACTORY(DubboProxyFilterConfigFactory,
-                 Server::Configuration::NamedNetworkFilterConfigFactory);
+                 Server::Configuration::PrivateProtoNamedHttpFilterConfigFactory);
 
 class ProtocolTypeMapper {
 public:
@@ -156,6 +157,6 @@ void ConfigImpl::registerFilter(const DubboFilterConfig& proto_config) {
 }
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

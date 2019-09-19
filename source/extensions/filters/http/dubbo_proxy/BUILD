@@ -112,12 +112,12 @@ envoy_cc_library(
         "//source/common/config:filter_json_lib",
         "//source/common/config:utility_lib",
         "//source/extensions/filters/network:well_known_names",
-        "//source/extensions/filters/network/common:factory_base_lib",
-        "//source/extensions/filters/network/dubbo_proxy/filters:factory_base_lib",
-        "//source/extensions/filters/network/dubbo_proxy/filters:well_known_names",
-        "//source/extensions/filters/network/dubbo_proxy/router:config",
-        "//source/extensions/filters/network/dubbo_proxy/router:route_matcher",
-        "//source/extensions/filters/network/dubbo_proxy/router:router_lib",
+        "//source/extensions/filters/http/common:factory_base_lib",
+        "//source/extensions/filters/http/dubbo_proxy/filters:factory_base_lib",
+        "//source/extensions/filters/http/dubbo_proxy/filters:well_known_names",
+        "//source/extensions/filters/http/dubbo_proxy/router:config",
+        "//source/extensions/filters/http/dubbo_proxy/router:route_matcher",
+        "//source/extensions/filters/http/dubbo_proxy/router:router_lib",
         "@envoy_api//envoy/config/filter/network/dubbo_proxy/v2alpha1:dubbo_proxy_cc",
     ],
 )
@@ -175,7 +175,7 @@ envoy_cc_library(
         ":serializer_interface",
         "//include/envoy/buffer:buffer_interface",
         "//source/common/buffer:buffer_lib",
-        "//source/extensions/filters/network/dubbo_proxy/filters:filter_interface",
+        "//source/extensions/filters/http/dubbo_proxy/filters:filter_interface",
     ],
 )
 
@@ -188,7 +188,7 @@ envoy_cc_library(
         ":protocol_interface",
         ":serializer_interface",
         "//include/envoy/buffer:buffer_interface",
-        "//source/extensions/filters/network/dubbo_proxy/filters:filter_interface",
+        "//source/extensions/filters/http/dubbo_proxy/filters:filter_interface",
     ],
 )
 
@@ -223,8 +223,8 @@ envoy_cc_library(
         "//source/common/common:logger_lib",
         "//source/common/network:filter_lib",
         "//source/common/stream_info:stream_info_lib",
-        "//source/extensions/filters/network/dubbo_proxy/filters:filter_interface",
-        "//source/extensions/filters/network/dubbo_proxy/router:router_interface",
+        "//source/extensions/filters/http/dubbo_proxy/filters:filter_interface",
+        "//source/extensions/filters/http/dubbo_proxy/router:router_interface",
         "@envoy_api//envoy/config/filter/network/dubbo_proxy/v2alpha1:dubbo_proxy_cc",
     ],
 )

@@ -5,31 +5,31 @@
 #include "envoy/config/filter/network/dubbo_proxy/v2alpha1/dubbo_proxy.pb.h"
 #include "envoy/config/filter/network/dubbo_proxy/v2alpha1/dubbo_proxy.pb.validate.h"
 
-#include "extensions/filters/network/common/factory_base.h"
-#include "extensions/filters/network/dubbo_proxy/conn_manager.h"
-#include "extensions/filters/network/dubbo_proxy/filters/filter.h"
-#include "extensions/filters/network/dubbo_proxy/router/route_matcher.h"
-#include "extensions/filters/network/dubbo_proxy/router/router_impl.h"
-#include "extensions/filters/network/well_known_names.h"
+//#include "extensions/filters/network/common/factory_base.h"
+#include "extensions/filters/http/common/private_proto_factory_base.h"
+#include "extensions/filters/http/dubbo_proxy/conn_manager.h"
+#include "extensions/filters/http/dubbo_proxy/filters/filter.h"
+#include "extensions/filters/http/dubbo_proxy/router/route_matcher.h"
+#include "extensions/filters/http/dubbo_proxy/router/router_impl.h"
+#include "extensions/filters/http/well_known_names.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 /**
  * Config registration for the dubbo proxy filter. @see NamedNetworkFilterConfigFactory.
  */
 class DubboProxyFilterConfigFactory
-    : public Common::FactoryBase<
-          envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy> {
+    : public Common::PrivateProtoFactoryBase<envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy>,
+            Logger::Loggable<Logger::Id::filter>{
 public:
-  DubboProxyFilterConfigFactory() : FactoryBase(NetworkFilterNames::get().DubboProxy, true) {}
+  DubboProxyFilterConfigFactory() : PrivateProtoFactoryBase(HttpFilterNames::get().DubboProxy) {}
 
-private:
-  Network::FilterFactoryCb createFilterFactoryFromProtoTyped(
-      const envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy& proto_config,
-      Server::Configuration::FactoryContext& context) override;
+ Http::PrivateProtoFilterFactoryCb  createFilterFactoryFromProtoTyped(
+            const envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy& proto_config,
+            Server::Configuration::FactoryContext& context) override;
 };
 
 class ConfigImpl : public Config,
@@ -70,6 +70,6 @@ private:
 };
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy

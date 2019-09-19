@@ -13,7 +13,7 @@ envoy_cc_library(
     hdrs = ["router.h"],
     deps = [
         "//include/envoy/router:router_interface",
-        "//source/extensions/filters/network/dubbo_proxy:metadata_lib",
+        "//source/extensions/filters/http/dubbo_proxy:metadata_lib",
     ],
 )
 
@@ -25,7 +25,7 @@ envoy_cc_library(
         "//include/envoy/server:filter_config_interface",
         "//source/common/config:utility_lib",
         "//source/common/singleton:const_singleton",
-        "//source/extensions/filters/network/dubbo_proxy:metadata_lib",
+        "//source/extensions/filters/http/dubbo_proxy:metadata_lib",
         "@envoy_api//envoy/config/filter/network/dubbo_proxy/v2alpha1:dubbo_proxy_cc",
     ],
 )
@@ -42,8 +42,8 @@ envoy_cc_library(
         "//source/common/common:matchers_lib",
         "//source/common/http:header_utility_lib",
         "//source/common/protobuf:utility_lib",
-        "//source/extensions/filters/network/dubbo_proxy:metadata_lib",
-        "//source/extensions/filters/network/dubbo_proxy:serializer_interface",
+        "//source/extensions/filters/http/dubbo_proxy:metadata_lib",
+        "//source/extensions/filters/http/dubbo_proxy:serializer_interface",
         "@envoy_api//envoy/config/filter/network/dubbo_proxy/v2alpha1:dubbo_proxy_cc",
     ],
 )
@@ -55,9 +55,9 @@ envoy_cc_library(
     deps = [
         ":router_lib",
         "//include/envoy/registry",
-        "//source/extensions/filters/network/dubbo_proxy/filters:factory_base_lib",
-        "//source/extensions/filters/network/dubbo_proxy/filters:filter_config_interface",
-        "//source/extensions/filters/network/dubbo_proxy/filters:well_known_names",
+        "//source/extensions/filters/http/dubbo_proxy/filters:factory_base_lib",
+        "//source/extensions/filters/http/dubbo_proxy/filters:filter_config_interface",
+        "//source/extensions/filters/http/dubbo_proxy/filters:well_known_names",
         "@envoy_api//envoy/config/filter/dubbo/router/v2alpha1:router_cc",
     ],
 )
@@ -76,10 +76,10 @@ envoy_cc_library(
         "//source/common/http:header_utility_lib",
         "//source/common/router:metadatamatchcriteria_lib",
         "//source/common/upstream:load_balancer_lib",
-        "//source/extensions/filters/network/dubbo_proxy:app_exception_lib",
-        "//source/extensions/filters/network/dubbo_proxy:protocol_interface",
-        "//source/extensions/filters/network/dubbo_proxy:serializer_interface",
-        "//source/extensions/filters/network/dubbo_proxy/filters:filter_interface",
+        "//source/extensions/filters/http/dubbo_proxy:app_exception_lib",
+        "//source/extensions/filters/http/dubbo_proxy:protocol_interface",
+        "//source/extensions/filters/http/dubbo_proxy:serializer_interface",
+        "//source/extensions/filters/http/dubbo_proxy/filters:filter_interface",
         "@envoy_api//envoy/config/filter/network/dubbo_proxy/v2alpha1:dubbo_proxy_cc",
     ],
 )

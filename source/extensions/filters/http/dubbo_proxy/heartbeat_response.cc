@@ -1,8 +1,8 @@
-#include "extensions/filters/network/dubbo_proxy/heartbeat_response.h"
+#include "extensions/filters/http/dubbo_proxy/heartbeat_response.h"
 
 namespace Envoy {
 namespace Extensions {
-namespace NetworkFilters {
+namespace HttpFilters {
 namespace DubboProxy {
 
 DubboFilters::DirectResponse::ResponseType
@@ -20,6 +20,6 @@ HeartbeatResponse::encode(MessageMetadata& metadata, DubboProxy::Protocol& proto
 }
 
 } // namespace DubboProxy
-} // namespace NetworkFilters
+} // namespace HttpFilters
 } // namespace Extensions
 } // namespace Envoy
