@@ -13,6 +13,7 @@ class PrivateProtoTest: public Logger::Loggable<Logger::Id::filter>,
                         public Http::PrivateProtoFilter {
 public:
 
+
   Http::PrivateProtoFilterDataStatus decodeData(Buffer::Instance&, bool) override ;
 
   Http::PrivateProtoFilterDataStatus decodeClientData(Buffer::Instance&, bool) override ;
@@ -21,6 +22,12 @@ public:
 
   Http::PrivateProtoFilterDataStatus encodeData(Buffer::Instance&, bool) override ;
 
+  void setDecoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) override;
+  void setEncoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) override;
+
+private:
+    Http::PrivateProtoFilterCallbacks* callbacks_{};
+    Http::PrivateProtoFilterCallbacks* encode_callbacks_{};
 };
 
 } // namespace PrivateProto

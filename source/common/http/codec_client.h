@@ -80,8 +80,15 @@ public:
   // add filter to filter list
   void addClientFilter(Http::PrivateProtoFilterSharedPtr filter) override ;
   void addPreSrvDecodeFilter(Http::PrivateProtoFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
-
   void decodePrivateProtoData(Buffer::Instance& data, bool end_stream) ;
+  //wrapper for filter callbacks
+  struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
+      privateProtoFilterCallbacks(CodecClient& codec_client)
+              : codec_client_(codec_client) {}
+      const Network::Connection* connection();
+      CodecClient& codec_client_;
+  };
+  typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;
 
   /**
    * Type of HTTP codec to use.

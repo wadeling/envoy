@@ -66,6 +66,9 @@ public:
   // client send data
   Http::PrivateProtoFilterDataStatus encodeClientData(Buffer::Instance&, bool) override ;
 
+  void setEncoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) override;
+  void setDecoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) override;
+
 
   // Network::ReadFilter
   Network::FilterStatus onData(Buffer::Instance& data, bool end_stream) override;
@@ -116,6 +119,9 @@ private:
   ProtocolPtr protocol_;
   RequestDecoderPtr decoder_;
   Network::ReadFilterCallbacks* read_callbacks_{};
+
+  Http::PrivateProtoFilterCallbacks* private_proto_decoder_filter_callbacks_{};
+  Http::PrivateProtoFilterCallbacks* private_proto_encoder_filter_callbacks_{};
 };
 
 } // namespace DubboProxy

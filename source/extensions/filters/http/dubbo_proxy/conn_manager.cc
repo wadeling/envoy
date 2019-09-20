@@ -52,6 +52,14 @@ Http::PrivateProtoFilterDataStatus ConnectionManager::encodeData(Buffer::Instanc
     return Http::PrivateProtoFilterDataStatus ::Continue;
 }
 
+void ConnectionManager::setDecoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) {
+   private_proto_decoder_filter_callbacks_ = &callbacks;
+}
+
+void ConnectionManager::setEncoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) {
+    private_proto_encoder_filter_callbacks_ = &callbacks;
+}
+
 Network::FilterStatus ConnectionManager::onData(Buffer::Instance& data, bool end_stream) {
   ENVOY_LOG(trace, "dubbo: read {} bytes", data.length());
   request_buffer_.move(data);

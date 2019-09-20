@@ -45,21 +45,21 @@ public:
   virtual const Network::Connection* connection() PURE;
 };
 
-/**
- * Stream decoder filter callbacks add additional callbacks that allow a decoding filter to restart
- * decoding if they decide to hold data (e.g. for buffering or rate limiting).
- */
-class PrivateProtoDecoderFilterCallbacks : public virtual PrivateProtoFilterCallbacks {
-public:
-
-  /**
-   * Called with data to be encoded, optionally indicating end of stream.
-   * @param data supplies the data to be encoded.
-   * @param end_stream supplies whether this is the last data frame.
-   */
-  virtual void encodeData(Buffer::Instance& data, bool end_stream) PURE;
-
-};
+///**
+// * Stream decoder filter callbacks add additional callbacks that allow a decoding filter to restart
+// * decoding if they decide to hold data (e.g. for buffering or rate limiting).
+// */
+//class PrivateProtoDecoderFilterCallbacks : public virtual PrivateProtoFilterCallbacks {
+//public:
+//
+//  /**
+//   * Called with data to be encoded, optionally indicating end of stream.
+//   * @param data supplies the data to be encoded.
+//   * @param end_stream supplies whether this is the last data frame.
+//   */
+//  virtual void encodeData(Buffer::Instance& data, bool end_stream) PURE;
+//
+//};
 
 /**
  * Common base class for both decoder and encoder filters.
@@ -68,6 +68,7 @@ class PrivateProtoFilterBase {
 public:
   virtual ~PrivateProtoFilterBase() {}
 
+//  virtual void initializePrivateProtoFilterCallbacks(PrivateProtoFilterCallbacks& callbacks) PURE;
 };
 
 /**
@@ -90,20 +91,20 @@ public:
    * Called by the filter manager once to initialize the filter decoder callbacks that the
    * filter should use. Callbacks will not be invoked by the filter after onDestroy() is called.
    */
-//  virtual void setDecoderFilterCallbacks(PrivateProtoDecoderFilterCallbacks& callbacks) {}
+  virtual void setDecoderFilterCallbacks(PrivateProtoFilterCallbacks& callbacks) PURE;
 
 };
 
 typedef std::shared_ptr<PrivateProtoDecoderFilter> PrivateProtoDecoderFilterSharedPtr;
 
-/**
- * Stream encoder filter callbacks add additional callbacks that allow a encoding filter to restart
- * encoding if they decide to hold data (e.g. for buffering or rate limiting).
- */
-class PrivateProtoEncoderFilterCallbacks : public virtual PrivateProtoFilterCallbacks {
-public:
-
-};
+///**
+// * Stream encoder filter callbacks add additional callbacks that allow a encoding filter to restart
+// * encoding if they decide to hold data (e.g. for buffering or rate limiting).
+// */
+//class PrivateProtoEncoderFilterCallbacks : public virtual PrivateProtoFilterCallbacks {
+//public:
+//
+//};
 
 /**
  * Stream encoder filter interface.
@@ -116,6 +117,7 @@ public:
   // encode data which will send to upstream
   virtual PrivateProtoFilterDataStatus encodeClientData(Buffer::Instance& data, bool end_stream) PURE;
 
+  virtual void setEncoderFilterCallbacks(PrivateProtoFilterCallbacks& callbacks) PURE;
 };
 
 typedef std::shared_ptr<PrivateProtoEncoderFilter> PrivateProtoEncoderFilterSharedPtr;

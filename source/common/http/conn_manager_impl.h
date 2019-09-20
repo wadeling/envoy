@@ -83,6 +83,14 @@ public:
   void decodePrivateProtoData(Buffer::Instance& data, bool end_stream);
   void encodePrivateProtoData(Buffer::Instance& data, bool end_stream);
   void addClientFilter(Http::PrivateProtoFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
+  // wrapper of private proto callbacks
+  struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
+      privateProtoFilterCallbacks(ConnectionManagerImpl& connection_manager)
+        : connection_manager_(connection_manager) {}
+      const Network::Connection* connection();
+      ConnectionManagerImpl& connection_manager_;
+  };
+  typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;
 
   // Network::ConnectionCallbacks
   void onEvent(Network::ConnectionEvent event) override;
