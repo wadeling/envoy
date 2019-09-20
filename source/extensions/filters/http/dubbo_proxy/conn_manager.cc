@@ -32,6 +32,14 @@ Http::PrivateProtoFilterDataStatus ConnectionManager::decodeData(Buffer::Instanc
   return Http::PrivateProtoFilterDataStatus::Continue;
 }
 
+Http::PrivateProtoFilterDataStatus ConnectionManager::decodeClientData(Buffer::Instance& data, bool end_stream) {
+    Network::FilterStatus  status = onData(data,end_stream);
+    if (status == Network::FilterStatus::StopIteration) {
+        return Http::PrivateProtoFilterDataStatus::StopIteration;
+    }
+    return Http::PrivateProtoFilterDataStatus::Continue;
+}
+
 Http::PrivateProtoFilterDataStatus ConnectionManager::encodeClientData(Buffer::Instance& buff, bool end_stream) {
     ENVOY_LOG(debug,"Private Proto dubbo encode Client Data length {},end_stream {}",buff.length(),end_stream);
 

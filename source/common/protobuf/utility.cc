@@ -221,6 +221,84 @@ void MessageUtil::checkForDeprecation(const Protobuf::Message& message, Runtime:
   }
 }
 
+void MessageUtil::checkForUnexpectedFields(const Protobuf::Message& message,
+                                           ProtobufMessage::ValidationVisitor& validation_visitor,
+                                           Runtime::Loader* runtime) {
+    // Reject unknown fields.
+    const auto& unknown_fields = message.GetReflection()->GetUnknownFields(message);
+    if (!unknown_fields.empty()) {
+        std::string error_msg;
+        for (int n = 0; n < unknown_fields.field_count(); ++n) {
+            error_msg += absl::StrCat(n > 0 ? ", " : "", unknown_fields.field(n).number());
+        }
+        // We use the validation visitor but have hard coded behavior below for deprecated fields.
+        // TODO(htuch): Unify the deprecated and unknown visitor handling behind the validation
+        // visitor pattern. https://github.com/envoyproxy/envoy/issues/8092.
+        validation_visitor.onUnknownField("type " + message.GetTypeName() +
+                                          " with unknown field set {" + error_msg + "}");
+    }
+
+    const Protobuf::Descriptor* descriptor = message.GetDescriptor();
+    const Protobuf::Reflection* reflection = message.GetReflection();
+    for (int i = 0; i < descriptor->field_count(); ++i) {
+        const auto* field = descriptor->field(i);
+
+        // If this field is not in use, continue.
+        if ((field->is_repeated() && reflection->FieldSize(message, field) == 0) ||
+            (!field->is_repeated() && !reflection->HasField(message, field))) {
+            continue;
+        }
+
+#ifdef ENVOY_DISABLE_DEPRECATED_FEATURES
+        bool warn_only = false;
+#else
+        bool warn_only = true;
+#endif
+        absl::string_view filename = filenameFromPath(field->file()->name());
+        // Allow runtime to be null both to not crash if this is called before server initialization,
+        // and so proto validation works in context where runtime singleton is not set up (e.g.
+        // standalone config validation utilities)
+        if (runtime && field->options().deprecated() &&
+            !runtime->snapshot().deprecatedFeatureEnabled(
+                    absl::StrCat("envoy.deprecated_features.", filename, ":", field->name()))) {
+            warn_only = false;
+        }
+
+        // If this field is deprecated, warn or throw an error.
+        if (field->options().deprecated()) {
+            std::string err = fmt::format(
+                    "Using deprecated option '{}' from file {}. This configuration will be removed from "
+                    "Envoy soon. Please see https://www.envoyproxy.io/docs/envoy/latest/intro/deprecated "
+                    "for details.",
+                    field->full_name(), filename);
+            if (warn_only) {
+                ENVOY_LOG_MISC(warn, "{}", err);
+            } else {
+                const char fatal_error[] =
+                        " If continued use of this field is absolutely necessary, see "
+                        "https://www.envoyproxy.io/docs/envoy/latest/configuration/operations/runtime"
+                        "#using-runtime-overrides-for-deprecated-features for how to apply a temporary and "
+                        "highly discouraged override.";
+                throw ProtoValidationException(err + fatal_error, message);
+            }
+        }
+
+        // If this is a message, recurse to check for deprecated fields in the sub-message.
+        if (field->cpp_type() == Protobuf::FieldDescriptor::CPPTYPE_MESSAGE) {
+            if (field->is_repeated()) {
+                const int size = reflection->FieldSize(message, field);
+                for (int j = 0; j < size; ++j) {
+                    checkForUnexpectedFields(reflection->GetRepeatedMessage(message, field, j),
+                                             validation_visitor, runtime);
+                }
+            } else {
+                checkForUnexpectedFields(reflection->GetMessage(message, field), validation_visitor,
+                                         runtime);
+            }
+        }
+    }
+}
+
 std::string MessageUtil::getYamlStringFromMessage(const Protobuf::Message& message,
                                                   const bool block_print,
                                                   const bool always_print_primitive_fields) {

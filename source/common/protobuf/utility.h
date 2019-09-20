@@ -228,6 +228,10 @@ public:
   checkForDeprecation(const Protobuf::Message& message,
                       Runtime::Loader* loader = Runtime::LoaderSingleton::getExisting());
 
+  static void
+  checkForUnexpectedFields(const Protobuf::Message& message,
+                           ProtobufMessage::ValidationVisitor& validation_visitor,
+                           Runtime::Loader* loader = Runtime::LoaderSingleton::getExisting());
   /**
    * Validate protoc-gen-validate constraints on a given protobuf.
    * Note the corresponding `.pb.validate.h` for the message has to be included in the source file
