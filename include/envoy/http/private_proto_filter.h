@@ -42,7 +42,7 @@ public:
   /**
    * @return const Network::Connection* the originating connection, or nullptr if there is none.
    */
-  virtual const Network::Connection* connection() PURE;
+  virtual  Network::Connection& connection() PURE;
 };
 
 ///**

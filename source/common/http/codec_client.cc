@@ -58,8 +58,8 @@ void CodecClient::addClientFilter(Http::PrivateProtoFilterSharedPtr filter) {
     ClientStreamFilterPtr wrapper(new ClientStreamFilter(*this, filter));
     wrapper->moveIntoListBack(std::move(wrapper), pre_client_filters_);
 }
-const Network::Connection* CodecClient::privateProtoFilterCallbacks::connection() {
-   return &(*codec_client_.connection_);
+Network::Connection& CodecClient::privateProtoFilterCallbacks::connection() {
+   return *codec_client_.connection_;
 }
 
 void CodecClient::close() { connection_->close(Network::ConnectionCloseType::NoFlush); }

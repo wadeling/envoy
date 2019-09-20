@@ -87,7 +87,7 @@ public:
   struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
       privateProtoFilterCallbacks(ConnectionManagerImpl& connection_manager)
         : connection_manager_(connection_manager) {}
-      const Network::Connection* connection();
+      Network::Connection& connection() override;
       ConnectionManagerImpl& connection_manager_;
   };
   typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;

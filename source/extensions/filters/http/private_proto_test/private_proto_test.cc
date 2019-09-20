@@ -9,7 +9,7 @@ namespace PrivateProto {
 
 Http::PrivateProtoFilterDataStatus PrivateProtoTest::decodeData(Buffer::Instance& buff, bool end_stream) {
   ENVOY_LOG(debug,"Private Proto Test decode Data length {},end_stream {},addr {}",
-          buff.length(),end_stream,callbacks_->connection()->localAddress()->asString());
+          buff.length(),end_stream,callbacks_->connection().localAddress()->asString());
 
   return Http::PrivateProtoFilterDataStatus ::Continue;
 }

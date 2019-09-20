@@ -85,7 +85,7 @@ public:
   struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
       privateProtoFilterCallbacks(CodecClient& codec_client)
               : codec_client_(codec_client) {}
-      const Network::Connection* connection();
+      Network::Connection& connection() override ;
       CodecClient& codec_client_;
   };
   typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;

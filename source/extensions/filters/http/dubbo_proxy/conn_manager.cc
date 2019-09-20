@@ -66,7 +66,7 @@ Network::FilterStatus ConnectionManager::onData(Buffer::Instance& data, bool end
   dispatch();
 
   if (end_stream) {
-    ENVOY_CONN_LOG(trace, "downstream half-closed", read_callbacks_->connection());
+    ENVOY_CONN_LOG(trace, "downstream half-closed", private_proto_decoder_filter_callbacks_->connection());
 
     // Downstream has closed. Unless we're waiting for an upstream connection to complete a oneway
     // request, close. The special case for oneway requests allows them to complete before the
@@ -75,7 +75,7 @@ Network::FilterStatus ConnectionManager::onData(Buffer::Instance& data, bool end
       ASSERT(!active_message_list_.empty());
       auto metadata = (*active_message_list_.begin())->metadata();
       if (metadata && metadata->message_type() == MessageType::Oneway) {
-        ENVOY_CONN_LOG(trace, "waiting for one-way completion", read_callbacks_->connection());
+        ENVOY_CONN_LOG(trace, "waiting for one-way completion", private_proto_decoder_filter_callbacks_->connection());
         half_closed_ = true;
         return Network::FilterStatus::StopIteration;
       }
@@ -83,7 +83,7 @@ Network::FilterStatus ConnectionManager::onData(Buffer::Instance& data, bool end
 
     ENVOY_LOG(debug, "dubbo: end data processing");
     resetAllMessages(false);
-    read_callbacks_->connection().close(Network::ConnectionCloseType::FlushWrite);
+    private_proto_decoder_filter_callbacks_->connection().close(Network::ConnectionCloseType::FlushWrite);
   }
 
   return Network::FilterStatus::StopIteration;
@@ -148,7 +148,7 @@ void ConnectionManager::dispatch() {
   }
 
   if (stopped_) {
-    ENVOY_CONN_LOG(debug, "dubbo: dubbo filter stopped", read_callbacks_->connection());
+    ENVOY_CONN_LOG(debug, "dubbo: dubbo filter stopped", private_proto_decoder_filter_callbacks_->connection());
     return;
   }
 
@@ -159,8 +159,8 @@ void ConnectionManager::dispatch() {
     }
     return;
   } catch (const EnvoyException& ex) {
-    ENVOY_CONN_LOG(error, "dubbo error: {}", read_callbacks_->connection(), ex.what());
-    read_callbacks_->connection().close(Network::ConnectionCloseType::NoFlush);
+    ENVOY_CONN_LOG(error, "dubbo error: {}", private_proto_decoder_filter_callbacks_->connection(), ex.what());
+    private_proto_decoder_filter_callbacks_->connection().close(Network::ConnectionCloseType::NoFlush);
     stats_.request_decoding_error_.inc();
   }
   resetAllMessages(true);
@@ -227,10 +227,10 @@ void ConnectionManager::deferredMessage(ActiveMessage& message) {
 void ConnectionManager::resetAllMessages(bool local_reset) {
   while (!active_message_list_.empty()) {
     if (local_reset) {
-      ENVOY_CONN_LOG(debug, "local close with active request", read_callbacks_->connection());
+      ENVOY_CONN_LOG(debug, "local close with active request", private_proto_decoder_filter_callbacks_->connection());
       stats_.cx_destroy_local_with_active_rq_.inc();
     } else {
-      ENVOY_CONN_LOG(debug, "remote close with active request", read_callbacks_->connection());
+      ENVOY_CONN_LOG(debug, "remote close with active request", private_proto_decoder_filter_callbacks_->connection());
       stats_.cx_destroy_remote_with_active_rq_.inc();
     }
 

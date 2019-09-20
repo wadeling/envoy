@@ -125,8 +125,8 @@ void ConnectionManagerImpl::addPreSrvDecodeFilter(Http::PrivateProtoFilterShared
     wrapper->moveIntoListBack(std::move(wrapper), pre_srv_decoder_filters_);
 }
 
-const Network::Connection* ConnectionManagerImpl::privateProtoFilterCallbacks::connection()  {
-    return &(connection_manager_.read_callbacks_->connection());
+Network::Connection& ConnectionManagerImpl::privateProtoFilterCallbacks::connection()  {
+    return connection_manager_.read_callbacks_->connection();
 }
 
 void ConnectionManagerImpl::decodePrivateProtoData(Buffer::Instance& data, bool end_stream) {
