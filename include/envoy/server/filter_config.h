@@ -403,12 +403,11 @@ public:
     virtual Http::PrivateProtoFilterFactoryCb createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& config,
                                                                     Server::Configuration::FactoryContext& context) {
     UNREFERENCED_PARAMETER(config);
-//    UNREFERENCED_PARAMETER(stat_prefix);
     UNREFERENCED_PARAMETER(context);
     NOT_IMPLEMENTED_GCOVR_EXCL_LINE;
   }
 
-  ProtobufTypes::MessagePtr createEmptyConfigProto() { return ProtobufTypes::MessagePtr{new Envoy::ProtobufWkt::Empty()}; }
+  virtual ProtobufTypes::MessagePtr createEmptyConfigProto() { return nullptr; }
 
   virtual std::string name() PURE;
 };

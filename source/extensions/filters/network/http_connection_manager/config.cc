@@ -361,6 +361,7 @@ void HttpConnectionManagerConfig::processFilter(
     ENVOY_LOG(debug, "protobuf config: createFilterFactoryFromProto");
     ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
         proto_config, context_.messageValidationVisitor(), factory);
+    ENVOY_LOG(debug, "protobuf config: message {}",message->DebugString());
     callback = factory.createFilterFactoryFromProto(*message, stats_prefix_, context_);
   }
   filter_factories.push_back(callback);
@@ -378,10 +379,12 @@ void HttpConnectionManagerConfig::processPreSrvFilter(
 
   // Now see if there is a factory that will accept the config.
   auto& factory = Config::Utility::getAndCheckFactory<Server::Configuration::PrivateProtoNamedHttpFilterConfigFactory>(string_name);
+  ENVOY_LOG(debug, "    facotory name: {}", factory.name());
   Http::PrivateProtoFilterFactoryCb callback;
   ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
               proto_config, context_.messageValidationVisitor(), factory);
   callback = factory.createPrivateProtoFilterFactoryFromProto(*message,context_);
+  ENVOY_LOG(debug, "   pre srv  config msg : {}", message->DebugString());
   filter_factories.push_back(callback);
 }
 

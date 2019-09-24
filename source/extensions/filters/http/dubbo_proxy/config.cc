@@ -17,9 +17,9 @@ namespace HttpFilters {
 namespace DubboProxy {
 
 Http::PrivateProtoFilterFactoryCb DubboProxyFilterConfigFactory::createFilterFactoryFromProtoTyped(
-    const envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy& proto_config,
-    Server::Configuration::FactoryContext& context) {
-
+    const envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboProxy& proto_config ABSL_ATTRIBUTE_UNUSED,
+    Server::Configuration::FactoryContext& context ABSL_ATTRIBUTE_UNUSED) {
+  ENVOY_LOG(debug,"dubbo: proxy create filter factory");
   std::shared_ptr<Config> filter_config(std::make_shared<ConfigImpl>(proto_config, context));
 
   return [filter_config, &context](Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) -> void {
@@ -102,20 +102,21 @@ ConfigImpl::ConfigImpl(const DubboProxyConfig& config,
       serialization_type_(
           SerializationTypeMapper::lookupSerializationType(config.serialization_type())),
       protocol_type_(ProtocolTypeMapper::lookupProtocolType(config.protocol_type())) {
-  auto type = RouteMatcherTypeMapper::lookupRouteMatcherType(config.protocol_type());
-  route_matcher_ = Router::NamedRouteMatcherConfigFactory::getFactory(type).createRouteMatcher(
-      config.route_config(), context);
-  if (config.dubbo_filters().empty()) {
-    ENVOY_LOG(debug, "using default router filter");
-
-    envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboFilter router_config;
-    router_config.set_name(DubboFilters::DubboFilterNames::get().ROUTER);
-    registerFilter(router_config);
-  } else {
-    for (const auto& filter_config : config.dubbo_filters()) {
-      registerFilter(filter_config);
-    }
-  }
+  ENVOY_LOG(debug,"dubbo config impl create");
+//  auto type = RouteMatcherTypeMapper::lookupRouteMatcherType(config.protocol_type());
+//  route_matcher_ = Router::NamedRouteMatcherConfigFactory::getFactory(type).createRouteMatcher(
+//      config.route_config(), context);
+//  if (config.dubbo_filters().empty()) {
+//    ENVOY_LOG(debug, "using default router filter");
+//
+//    envoy::config::filter::network::dubbo_proxy::v2alpha1::DubboFilter router_config;
+//    router_config.set_name(DubboFilters::DubboFilterNames::get().ROUTER);
+//    registerFilter(router_config);
+//  } else {
+//    for (const auto& filter_config : config.dubbo_filters()) {
+//      registerFilter(filter_config);
+//    }
+//  }
 }
 
 void ConfigImpl::createFilterChain(DubboFilters::FilterChainFactoryCallbacks& callbacks) {

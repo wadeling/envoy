@@ -479,6 +479,7 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
       throw EnvoyException(fmt::format("Duplicate upgrade {}", upgrade_config.upgrade_type()));
     }
   }
+  ENVOY_LOG(debug,"route entry impl base end");
 }
 
 bool RouteEntryImplBase::evaluateRuntimeMatch(const uint64_t random_value) const {
@@ -500,11 +501,14 @@ void RouteEntryImplBase::processPreClientFilter(const envoy::api::v2::route::Htt
 
     // Now see if there is a factory that will accept the config.
     auto& factory = Envoy::Config::Utility::getAndCheckFactory<Server::Configuration::PrivateProtoNamedHttpFilterConfigFactory>(string_name);
+    ENVOY_LOG(debug, "check factory {}",factory.name());
+
     Http::PrivateProtoFilterFactoryCb callback;
     ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
             proto_config, context_.messageValidationVisitor(), factory);
     callback = factory.createPrivateProtoFilterFactoryFromProto(*message,context_);
     filter_factories.push_back(callback);
+    ENVOY_LOG(debug, "filter factory size : {}", filter_factories.size());
 }
 
 bool RouteEntryImplBase::matchRoute(const Http::HeaderMap& headers, uint64_t random_value) const {

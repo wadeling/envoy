@@ -1,6 +1,7 @@
 #include "extensions/filters/http/dubbo_proxy/decoder.h"
 
 #include "common/common/macros.h"
+#include "common/http/utility.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -118,6 +119,8 @@ FilterStatus DecoderBase::onData(Buffer::Instance& data, bool& buffer_underflow)
 
   complete();
   buffer_underflow = (data.length() == 0);
+
+
   ENVOY_LOG(debug, "dubbo decoder: data length {}", data.length());
   return FilterStatus::Continue;
 }

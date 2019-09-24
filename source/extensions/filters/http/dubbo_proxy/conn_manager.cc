@@ -1,15 +1,18 @@
 #include "extensions/filters/http/dubbo_proxy/conn_manager.h"
 
 #include <cstdint>
+//#include <tclDecls.h>
 
 #include "envoy/common/exception.h"
 
-#include "common/common/fmt.h"
+//#include "common/common/fmt.h"
+#include "common/http/utility.h"
 
 #include "extensions/filters/http/dubbo_proxy/app_exception.h"
 #include "extensions/filters/http/dubbo_proxy/dubbo_hessian2_serializer_impl.h"
-#include "extensions/filters/http/dubbo_proxy/dubbo_protocol_impl.h"
+//#include "extensions/filters/http/dubbo_proxy/dubbo_protocol_impl.h"
 #include "extensions/filters/http/dubbo_proxy/heartbeat_response.h"
+#include "extensions/filters/http/dubbo_proxy/serializer_impl.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -63,7 +66,14 @@ void ConnectionManager::setEncoderFilterCallbacks(Http::PrivateProtoFilterCallba
 Network::FilterStatus ConnectionManager::onData(Buffer::Instance& data, bool end_stream) {
   ENVOY_LOG(trace, "dubbo: read {} bytes", data.length());
   request_buffer_.move(data);
+  ENVOY_LOG(trace, "dubbo: after move data length {} ", data.length());
+
   dispatch();
+
+  //after dispath,put http buff to data
+  data.prepend(http_buffer_);
+  http_buffer_.drain(http_buffer_.length());
+  ENVOY_LOG(trace, "dubbo: after encap to http,data length {} ", data.length());
 
   if (end_stream) {
     ENVOY_CONN_LOG(trace, "downstream half-closed", private_proto_decoder_filter_callbacks_->connection());
@@ -126,7 +136,8 @@ StreamHandler& ConnectionManager::newStream() {
 void ConnectionManager::onHeartbeat(MessageMetadataSharedPtr metadata) {
   stats_.request_event_.inc();
 
-  if (read_callbacks_->connection().state() != Network::Connection::State::Open) {
+//  if (read_callbacks_->connection().state() != Network::Connection::State::Open) {
+  if (private_proto_decoder_filter_callbacks_->connection().state() != Network::Connection::State::Open) {
     ENVOY_LOG(warn, "dubbo: downstream connection is closed or closing");
     return;
   }
@@ -138,7 +149,28 @@ void ConnectionManager::onHeartbeat(MessageMetadataSharedPtr metadata) {
   Buffer::OwnedImpl response_buffer;
   heartbeat.encode(*metadata, *protocol_, response_buffer);
 
-  read_callbacks_->connection().write(response_buffer, false);
+//  read_callbacks_->connection().write(response_buffer, false);
+  private_proto_decoder_filter_callbacks_->connection().write(response_buffer, false);
+}
+
+void ConnectionManager::encapHttpPkg() {
+    ActiveStream* as = decoder_->stateMachine().getActiveStream();
+    const auto invocation = dynamic_cast<const RpcInvocationImpl*>(&(as->metadata_->invocation_info()));
+    if (invocation->hasHeaders()) {
+        Http::Utility::encapHttpRequest("/",
+                                        read_callbacks_->connection().remoteAddress()->asString(),
+                                        const_cast<Http::HeaderMap &>(invocation->headers()),
+                                        as->context_->message_origin_data(),
+                                        http_buffer_);
+    } else {
+        Http::HeaderMapImpl header_map;
+        Http::Utility::encapHttpRequest("/",
+                                        read_callbacks_->connection().remoteAddress()->asString(),
+                                        header_map,
+                                        as->context_->message_origin_data(),
+                                        http_buffer_);
+    }
+
 }
 
 void ConnectionManager::dispatch() {
@@ -156,6 +188,9 @@ void ConnectionManager::dispatch() {
     bool underflow = false;
     while (!underflow) {
       decoder_->onData(request_buffer_, underflow);
+
+      // one pkg decode ok,encap to http.
+      encapHttpPkg();
     }
     return;
   } catch (const EnvoyException& ex) {

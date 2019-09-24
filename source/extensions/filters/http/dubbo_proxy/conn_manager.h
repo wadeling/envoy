@@ -102,6 +102,7 @@ public:
 
 private:
   void dispatch();
+  void encapHttpPkg();
   void resetAllMessages(bool local_reset);
 
   Buffer::OwnedImpl request_buffer_;
@@ -122,6 +123,7 @@ private:
 
   Http::PrivateProtoFilterCallbacks* private_proto_decoder_filter_callbacks_{};
   Http::PrivateProtoFilterCallbacks* private_proto_encoder_filter_callbacks_{};
+  Buffer::OwnedImpl http_buffer_;
 };
 
 } // namespace DubboProxy

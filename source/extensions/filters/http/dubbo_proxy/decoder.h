@@ -96,6 +96,8 @@ public:
    */
   void setCurrentState(ProtocolState state) { state_ = state; }
 
+  ActiveStream*  getActiveStream() { return active_stream_;}
+
 private:
   struct DecoderStatus {
     DecoderStatus() = default;
@@ -139,6 +141,8 @@ public:
   FilterStatus onData(Buffer::Instance& data, bool& buffer_underflow);
 
   const Protocol& protocol() { return protocol_; }
+
+  DecoderStateMachine& stateMachine() {return *state_machine_;}
 
   // It is assumed that all of the protocol parsing are stateless,
   // if there is a state of the need to provide the reset interface call here.

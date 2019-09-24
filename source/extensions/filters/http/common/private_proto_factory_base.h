@@ -17,8 +17,13 @@ public:
   Http::PrivateProtoFilterFactoryCb
   createPrivateProtoFilterFactoryFromProto(const Protobuf::Message& proto_config,
                                Server::Configuration::FactoryContext& context) override {
+//    ENVOY_LOG(debug,"private proto factory base create filter factory proto,mesg {}",proto_config.DebugString());
     return createFilterFactoryFromProtoTyped(
         MessageUtil::downcastAndValidate<const ConfigProto&>(proto_config), context);
+  }
+
+  ProtobufTypes::MessagePtr createEmptyConfigProto() override {
+      return std::make_unique<ConfigProto>();
   }
 
   std::string name() override { return name_; }
