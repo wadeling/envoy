@@ -97,6 +97,7 @@ public:
   void setCurrentState(ProtocolState state) { state_ = state; }
 
   ActiveStream*  getActiveStream() { return active_stream_;}
+  void resetActiveStream() { active_stream_ = nullptr;}
 
 private:
   struct DecoderStatus {
@@ -138,8 +139,13 @@ public:
    * @param data a Buffer containing Dubbo protocol data
    * @throw EnvoyException on Dubbo protocol errors
    */
-  FilterStatus onData(Buffer::Instance& data, bool& buffer_underflow);
+  FilterStatus onData(Buffer::Instance& data, bool& buffer_underflow,Buffer::Instance& http_buff,Network::Connection& connection);
 
+  void encapHttpPkg(Buffer::Instance& http_buff,Network::Connection& connection);
+
+  void encapHttpResponse(Buffer::Instance& http_buff);
+
+  void setIsResponse(bool);
   const Protocol& protocol() { return protocol_; }
 
   DecoderStateMachine& stateMachine() {return *state_machine_;}
@@ -158,6 +164,7 @@ protected:
   DecoderStateMachinePtr state_machine_;
 
   bool decode_started_{false};
+  bool is_response_{false};
 };
 
 /**

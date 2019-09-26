@@ -165,6 +165,7 @@ void StreamEncoderImpl::encodeData(Buffer::Instance& data, bool end_stream) {
 }
 
 void StreamEncoderImpl::encodeRawData(Buffer::Instance& data, bool end_stream) {
+    ENVOY_LOG(debug,"stream encoder impl,encode raw data");
     if (data.length() > 0) {
         connection_.buffer().move(data);
     }

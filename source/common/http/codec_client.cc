@@ -51,15 +51,18 @@ void CodecClient::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCa
 
 void CodecClient::addClientFilter(Http::PrivateProtoFilterSharedPtr filter) {
     // set callback
-    privateProtoFilterPtr filterCallbackPtr(new privateProtoFilterCallbacks(*this));
-    filter->setDecoderFilterCallbacks(*filterCallbackPtr);
-    filter->setEncoderFilterCallbacks(*filterCallbackPtr);
+//    privateProtoFilterPtr filterCallbackPtr(new privateProtoFilterCallbacks(*this));
+//    filter->setDecoderFilterCallbacks(*filterCallbackPtr);
+//    filter->setEncoderFilterCallbacks(*filterCallbackPtr);
 
     ClientStreamFilterPtr wrapper(new ClientStreamFilter(*this, filter));
+    filter->setDecoderFilterCallbacks(*wrapper);
+    filter->setEncoderFilterCallbacks(*wrapper);
     wrapper->moveIntoListBack(std::move(wrapper), pre_client_filters_);
 }
-Network::Connection& CodecClient::privateProtoFilterCallbacks::connection() {
-   return *codec_client_.connection_;
+
+Network::Connection& CodecClient::ClientStreamFilter::connection() {
+    return *codec_client_.connection_;
 }
 
 void CodecClient::close() { connection_->close(Network::ConnectionCloseType::NoFlush); }

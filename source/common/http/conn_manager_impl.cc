@@ -117,15 +117,30 @@ ConnectionManagerImpl::ConnectionManagerImpl(ConnectionManagerConfig& config,
 }
 
 void ConnectionManagerImpl::addPreSrvDecodeFilter(Http::PrivateProtoFilterSharedPtr filter) {
-    privateProtoFilterPtr filterPtr(new privateProtoFilterCallbacks(*this));
-    filter->setDecoderFilterCallbacks(*filterPtr);
+    ENVOY_LOG(debug,"ConnectionManagerImpl::addPreSrvDecodeFilter,{}", static_cast<void*>(this));
+//    privateProtoFilterPtr filterPtr(new privateProtoFilterCallbacks(*this));
+//    filter->setDecoderFilterCallbacks(*filterPtr);
+//
+//    ENVOY_LOG(debug,"filter cb conn manager pointer {},filterptr {}",
+//            static_cast<void*>(&(filterPtr->connection_manager_)),
+//              static_cast<void*>(&(*filterPtr)));
 
     // wrapper and add to list
     PreSrvStreamFilterPtr wrapper(new PreSrvStreamFilter(*this, filter));
+    filter->setDecoderFilterCallbacks(*wrapper);
     wrapper->moveIntoListBack(std::move(wrapper), pre_srv_decoder_filters_);
+
+    ENVOY_LOG(debug,"add to list end");
+    ENVOY_LOG(debug,"decoder filter connection impl addr {}", static_cast<void*>(&(pre_srv_decoder_filters_.front()->connection_manager_)));
 }
 
-Network::Connection& ConnectionManagerImpl::privateProtoFilterCallbacks::connection()  {
+//Network::Connection& ConnectionManagerImpl::privateProtoFilterCallbacks::connection()  {
+//    ENVOY_LOG(debug,"privateProtoFilterCallbacks ,read_callbacks {}", static_cast<void*>(&connection_manager_.read_callbacks_));
+//    return connection_manager_.read_callbacks_->connection();
+//}
+
+Network::Connection& ConnectionManagerImpl::PreSrvStreamFilter::connection()  {
+//    ENVOY_LOG(debug,"PreSrvStreamFilter,read_callbacks {}", static_cast<void*>(&connection_manager_.read_callbacks_));
     return connection_manager_.read_callbacks_->connection();
 }
 
@@ -293,6 +308,8 @@ StreamDecoder& ConnectionManagerImpl::newStream(StreamEncoder& response_encoder,
 }
 
 Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool end_stream) {
+  ENVOY_LOG(debug,"ConnectionManagerImpl::onData");
+
   // decode private proto data
   decodePrivateProtoData(data,end_stream);
 
@@ -1395,9 +1412,14 @@ void ConnectionManagerImpl::ActiveStream::encodeHeaders(ActiveStreamEncoderFilte
 
   // Now actually encode via the codec.
   stream_info_.onFirstDownstreamTxByteSent();
-  response_encoder_->encodeHeaders(
-      headers,
-      encoding_headers_only_ || (end_stream && continue_data_entry == encoder_filters_.end()));
+  if (Http::Utility::isPrivateProtoHeader(headers)) {
+      ENVOY_STREAM_LOG(debug, "rsponse header has private proto field,ignore encode", *this);
+  } else {
+      response_encoder_->encodeHeaders(
+              headers,
+              encoding_headers_only_ || (end_stream && continue_data_entry == encoder_filters_.end()));
+  }
+
   if (continue_data_entry != encoder_filters_.end()) {
     // We use the continueEncoding() code since it will correctly handle not calling
     // encodeHeaders() again. Fake setting StopSingleIteration since the continueEncoding() code

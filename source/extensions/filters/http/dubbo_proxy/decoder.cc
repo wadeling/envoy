@@ -2,6 +2,7 @@
 
 #include "common/common/macros.h"
 #include "common/http/utility.h"
+#include "extensions/filters/http/dubbo_proxy/serializer_impl.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -11,6 +12,8 @@ namespace DubboProxy {
 DecoderStateMachine::DecoderStatus
 DecoderStateMachine::onDecodeStreamHeader(Buffer::Instance& buffer) {
   ASSERT(!active_stream_);
+
+  ENVOY_LOG(debug, "dubbo decoder: onDecodeStreamHeader,buffer {}", buffer.toString());
 
   auto metadata = std::make_shared<MessageMetadata>();
   auto ret = protocol_.decodeHeader(buffer, metadata);
@@ -33,6 +36,7 @@ DecoderStateMachine::onDecodeStreamHeader(Buffer::Instance& buffer) {
     return {ProtocolState::Done};
   }
 
+  ENVOY_LOG(debug, "dubbo decoder: protocol {},newstream ", protocol_.name());
   active_stream_ = delegate_.newStream(metadata, context);
   ASSERT(active_stream_);
   context->message_origin_data().move(buffer, context->header_size());
@@ -53,7 +57,9 @@ DecoderStateMachine::onDecodeStreamData(Buffer::Instance& buffer) {
   active_stream_->context_->message_origin_data().move(buffer,
                                                        active_stream_->context_->body_size());
   active_stream_->onStreamDecoded();
-  active_stream_ = nullptr;
+
+  // change: not set here,
+//  active_stream_ = nullptr;
 
   ENVOY_LOG(debug, "dubbo decoder: ends the deserialization of the message");
   return {ProtocolState::Done};
@@ -92,7 +98,45 @@ DecoderBase::DecoderBase(Protocol& protocol) : protocol_(protocol) {}
 
 DecoderBase::~DecoderBase() { complete(); }
 
-FilterStatus DecoderBase::onData(Buffer::Instance& data, bool& buffer_underflow) {
+void DecoderBase::encapHttpPkg(Buffer::Instance& http_buff,Network::Connection& connection) {
+    ENVOY_LOG(debug,"encap http request");
+    ActiveStream* as = stateMachine().getActiveStream();
+
+    const auto invocation = dynamic_cast<const RpcInvocationImpl*>(&(as->metadata_->invocation_info()));
+
+    if (invocation->hasHeaders()) {
+        Http::Utility::encapHttpRequest("/",
+                                        connection.remoteAddress()->asString(),
+                                        const_cast<Http::HeaderMap &>(invocation->headers()),
+                                        as->context_->message_origin_data(),
+                                        http_buff);
+    } else {
+        Http::HeaderMapImpl header_map;
+        Http::Utility::encapHttpRequest("/",
+                                        connection.remoteAddress()->asString(),
+                                        header_map,
+                                        as->context_->message_origin_data(),
+                                        http_buff);
+    }
+
+}
+
+void DecoderBase::encapHttpResponse(Buffer::Instance& http_buff) {
+    ENVOY_LOG(debug,"encap http response,stateMachine {}", static_cast<void*>(&(*state_machine_)));
+    ActiveStream* as = stateMachine().getActiveStream();
+    Http::HeaderMapImpl header_map;
+    Http::Utility::encapHttpResponse(
+            header_map,
+            as->context_->message_origin_data(),
+            http_buff);
+
+}
+
+void DecoderBase::setIsResponse(bool is_response) {
+   is_response_ = is_response;
+}
+
+FilterStatus DecoderBase::onData(Buffer::Instance& data, bool& buffer_underflow,Buffer::Instance& http_buff,Network::Connection& connection) {
   ENVOY_LOG(debug, "dubbo decoder: {} bytes available", data.length());
   buffer_underflow = false;
 
@@ -117,11 +161,18 @@ FilterStatus DecoderBase::onData(Buffer::Instance& data, bool& buffer_underflow)
 
   ASSERT(rv == ProtocolState::Done);
 
+  //on whole dubbo pkg,encap to http pkg
+  if (is_response_) {
+      encapHttpResponse(http_buff);
+  } else {
+      encapHttpPkg(http_buff,connection);
+  }
+  state_machine_->resetActiveStream();
+
   complete();
   buffer_underflow = (data.length() == 0);
 
-
-  ENVOY_LOG(debug, "dubbo decoder: data length {}", data.length());
+  ENVOY_LOG(debug, "dubbo decoder: data length {},buffer_underflow {}", data.length(),buffer_underflow);
   return FilterStatus::Continue;
 }
 

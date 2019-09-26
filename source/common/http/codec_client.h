@@ -52,7 +52,7 @@ class CodecClient : public Logger::Loggable<Logger::Id::client>,
                     public Event::DeferredDeletable {
 public:
   // private proto filter list
-  struct ClientStreamFilter : LinkedObject<ClientStreamFilter> {
+  struct ClientStreamFilter : public PrivateProtoFilterCallbacks,LinkedObject<ClientStreamFilter> {
       ClientStreamFilter(CodecClient& codec_client, PrivateProtoFilterSharedPtr filter)
               : codec_client_(codec_client), handle_(filter) {}
       CodecClient& codec_client_;
@@ -67,6 +67,7 @@ public:
           PrivateProtoFilterDataStatus status = handle_->encodeClientData(data, end_stream);
           return status;
       }
+      Network::Connection& connection() override ;
   };
   typedef std::unique_ptr<ClientStreamFilter> ClientStreamFilterPtr;
   std::list<ClientStreamFilterPtr> pre_client_filters_;
@@ -82,13 +83,13 @@ public:
   void addPreSrvDecodeFilter(Http::PrivateProtoFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
   void decodePrivateProtoData(Buffer::Instance& data, bool end_stream) ;
   //wrapper for filter callbacks
-  struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
-      privateProtoFilterCallbacks(CodecClient& codec_client)
-              : codec_client_(codec_client) {}
-      Network::Connection& connection() override ;
-      CodecClient& codec_client_;
-  };
-  typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;
+//  struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
+//      privateProtoFilterCallbacks(CodecClient& codec_client)
+//              : codec_client_(codec_client) {}
+//      Network::Connection& connection() override ;
+//      CodecClient& codec_client_;
+//  };
+//  typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;
 
   /**
    * Type of HTTP codec to use.

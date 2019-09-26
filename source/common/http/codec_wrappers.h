@@ -90,7 +90,7 @@ public:
 
   void encodeRawData(Buffer::Instance& data, bool end_stream) override {
     ENVOY_LOG(debug,"stream encoder wrapper inner encode raw data");
-    encodeData(data,end_stream);
+    inner_.encodeRawData(data,end_stream);
   }
 
   void encodeTrailers(const HeaderMap& trailers) override {

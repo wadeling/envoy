@@ -28,6 +28,7 @@ ConnectionManager::ConnectionManager(Config& config, Runtime::RandomGenerator& r
       decoder_(std::make_unique<RequestDecoder>(*protocol_, *this)) {}
 
 Http::PrivateProtoFilterDataStatus ConnectionManager::decodeData(Buffer::Instance& data, bool end_stream) {
+  ENVOY_LOG(debug,"dubbo: decode server data, {}", static_cast<void*>(this));
   Network::FilterStatus  status = onData(data,end_stream);
   if (status == Network::FilterStatus::StopIteration) {
       return Http::PrivateProtoFilterDataStatus::StopIteration;
@@ -36,6 +37,9 @@ Http::PrivateProtoFilterDataStatus ConnectionManager::decodeData(Buffer::Instanc
 }
 
 Http::PrivateProtoFilterDataStatus ConnectionManager::decodeClientData(Buffer::Instance& data, bool end_stream) {
+    ENVOY_LOG(debug,"dubbo: decode client data,{}", static_cast<void*>(this));
+    setIsResponse(true);
+
     Network::FilterStatus  status = onData(data,end_stream);
     if (status == Network::FilterStatus::StopIteration) {
         return Http::PrivateProtoFilterDataStatus::StopIteration;
@@ -62,18 +66,22 @@ void ConnectionManager::setDecoderFilterCallbacks(Http::PrivateProtoFilterCallba
 void ConnectionManager::setEncoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) {
     private_proto_encoder_filter_callbacks_ = &callbacks;
 }
+void ConnectionManager::setIsResponse(bool is_response) {
+    is_response_ = is_response;
+}
 
 Network::FilterStatus ConnectionManager::onData(Buffer::Instance& data, bool end_stream) {
+
   ENVOY_LOG(trace, "dubbo: read {} bytes", data.length());
   request_buffer_.move(data);
-  ENVOY_LOG(trace, "dubbo: after move data length {} ", data.length());
 
   dispatch();
 
   //after dispath,put http buff to data
   data.prepend(http_buffer_);
   http_buffer_.drain(http_buffer_.length());
-  ENVOY_LOG(trace, "dubbo: after encap to http,data length {} ", data.length());
+  ENVOY_LOG(trace, "dubbo: after encap to http,data length {},http buff length {},data: {} ",
+          data.length(),http_buffer_.length(),data.toString());
 
   if (end_stream) {
     ENVOY_CONN_LOG(trace, "downstream half-closed", private_proto_decoder_filter_callbacks_->connection());
@@ -128,15 +136,18 @@ StreamHandler& ConnectionManager::newStream() {
   ENVOY_LOG(debug, "dubbo: create the new decoder event handler");
 
   ActiveMessagePtr new_message(std::make_unique<ActiveMessage>(*this));
-  new_message->createFilterChain();
+//  new_message->createFilterChain();
   new_message->moveIntoList(std::move(new_message), active_message_list_);
   return **active_message_list_.begin();
+}
+
+Network::Connection& ConnectionManager::connection() {
+    return private_proto_decoder_filter_callbacks_->connection();
 }
 
 void ConnectionManager::onHeartbeat(MessageMetadataSharedPtr metadata) {
   stats_.request_event_.inc();
 
-//  if (read_callbacks_->connection().state() != Network::Connection::State::Open) {
   if (private_proto_decoder_filter_callbacks_->connection().state() != Network::Connection::State::Open) {
     ENVOY_LOG(warn, "dubbo: downstream connection is closed or closing");
     return;
@@ -149,28 +160,7 @@ void ConnectionManager::onHeartbeat(MessageMetadataSharedPtr metadata) {
   Buffer::OwnedImpl response_buffer;
   heartbeat.encode(*metadata, *protocol_, response_buffer);
 
-//  read_callbacks_->connection().write(response_buffer, false);
   private_proto_decoder_filter_callbacks_->connection().write(response_buffer, false);
-}
-
-void ConnectionManager::encapHttpPkg() {
-    ActiveStream* as = decoder_->stateMachine().getActiveStream();
-    const auto invocation = dynamic_cast<const RpcInvocationImpl*>(&(as->metadata_->invocation_info()));
-    if (invocation->hasHeaders()) {
-        Http::Utility::encapHttpRequest("/",
-                                        read_callbacks_->connection().remoteAddress()->asString(),
-                                        const_cast<Http::HeaderMap &>(invocation->headers()),
-                                        as->context_->message_origin_data(),
-                                        http_buffer_);
-    } else {
-        Http::HeaderMapImpl header_map;
-        Http::Utility::encapHttpRequest("/",
-                                        read_callbacks_->connection().remoteAddress()->asString(),
-                                        header_map,
-                                        as->context_->message_origin_data(),
-                                        http_buffer_);
-    }
-
 }
 
 void ConnectionManager::dispatch() {
@@ -184,13 +174,11 @@ void ConnectionManager::dispatch() {
     return;
   }
 
+  decoder_->setIsResponse(is_response_);
   try {
     bool underflow = false;
     while (!underflow) {
-      decoder_->onData(request_buffer_, underflow);
-
-      // one pkg decode ok,encap to http.
-      encapHttpPkg();
+      decoder_->onData(request_buffer_, underflow,http_buffer_,private_proto_decoder_filter_callbacks_->connection());
     }
     return;
   } catch (const EnvoyException& ex) {

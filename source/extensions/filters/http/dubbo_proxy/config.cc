@@ -25,6 +25,8 @@ Http::PrivateProtoFilterFactoryCb DubboProxyFilterConfigFactory::createFilterFac
   return [filter_config, &context](Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) -> void {
     callbacks.addPreSrvDecodeFilter(std::make_shared<ConnectionManager>(
         *filter_config, context.random(), context.dispatcher().timeSource()));
+    callbacks.addClientFilter(std::make_shared<ConnectionManager>(
+            *filter_config, context.random(), context.dispatcher().timeSource()));
   };
 }
 

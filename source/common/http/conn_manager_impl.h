@@ -84,13 +84,13 @@ public:
   void encodePrivateProtoData(Buffer::Instance& data, bool end_stream);
   void addClientFilter(Http::PrivateProtoFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
   // wrapper of private proto callbacks
-  struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
-      privateProtoFilterCallbacks(ConnectionManagerImpl& connection_manager)
-        : connection_manager_(connection_manager) {}
-      Network::Connection& connection() override;
-      ConnectionManagerImpl& connection_manager_;
-  };
-  typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;
+//  struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
+//      privateProtoFilterCallbacks(ConnectionManagerImpl& connection_manager)
+//        : connection_manager_(connection_manager) {}
+//      Network::Connection& connection() override;
+//      ConnectionManagerImpl& connection_manager_;
+//  };
+//  typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;
 
   // Network::ConnectionCallbacks
   void onEvent(Network::ConnectionEvent event) override;
@@ -553,7 +553,7 @@ private:
   /**
    * Wrapper for a pre srv stream decoder filter.
    */
-  struct PreSrvStreamFilter : LinkedObject<PreSrvStreamFilter> {
+  struct PreSrvStreamFilter : public PrivateProtoFilterCallbacks, LinkedObject<PreSrvStreamFilter> {
       PreSrvStreamFilter(ConnectionManagerImpl& connection_manager, PrivateProtoFilterSharedPtr filter)
               : connection_manager_(connection_manager), handle_(filter) {}
       ConnectionManagerImpl& connection_manager_;
@@ -569,6 +569,8 @@ private:
           PrivateProtoFilterDataStatus status = handle_->encodeData(data, end_stream);
           return status;
       }
+
+      Network::Connection& connection() override;
   };
 
   typedef std::unique_ptr<PreSrvStreamFilter> PreSrvStreamFilterPtr;

@@ -68,7 +68,7 @@ public:
 
   void setEncoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) override;
   void setDecoderFilterCallbacks(Http::PrivateProtoFilterCallbacks& callbacks) override;
-
+  void setIsResponse(bool);
 
   // Network::ReadFilter
   Network::FilterStatus onData(Buffer::Instance& data, bool end_stream) override;
@@ -85,7 +85,8 @@ public:
   void onHeartbeat(MessageMetadataSharedPtr metadata) override;
 
   DubboFilterStats& stats() const { return stats_; }
-  Network::Connection& connection() const { return read_callbacks_->connection(); }
+//  Network::Connection& connection() const { return read_callbacks_->connection(); }
+  Network::Connection& connection();
   TimeSource& time_system() const { return time_system_; }
   Runtime::RandomGenerator& random_generator() const { return random_generator_; }
   Config& config() const { return config_; }
@@ -102,7 +103,6 @@ public:
 
 private:
   void dispatch();
-  void encapHttpPkg();
   void resetAllMessages(bool local_reset);
 
   Buffer::OwnedImpl request_buffer_;
@@ -124,6 +124,7 @@ private:
   Http::PrivateProtoFilterCallbacks* private_proto_decoder_filter_callbacks_{};
   Http::PrivateProtoFilterCallbacks* private_proto_encoder_filter_callbacks_{};
   Buffer::OwnedImpl http_buffer_;
+  bool is_response_{false};
 };
 
 } // namespace DubboProxy

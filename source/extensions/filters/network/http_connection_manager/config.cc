@@ -417,6 +417,7 @@ void HttpConnectionManagerConfig::createFilterChain(Http::FilterChainFactoryCall
 }
 
 void HttpConnectionManagerConfig::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {
+  ENVOY_LOG(debug,"create pre srv filter chain");
   for (const Http::PrivateProtoFilterFactoryCb& factory : pre_srv_filter_factories_) {
       factory(callbacks);
   }
