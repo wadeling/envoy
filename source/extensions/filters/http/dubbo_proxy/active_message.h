@@ -14,7 +14,7 @@
 #include "extensions/filters/http/dubbo_proxy/decoder_event_handler.h"
 #include "extensions/filters/http/dubbo_proxy/filters/filter.h"
 #include "extensions/filters/http/dubbo_proxy/metadata.h"
-#include "extensions/filters/http/dubbo_proxy/router/router.h"
+//#include "extensions/filters/http/dubbo_proxy/router/router.h"
 #include "extensions/filters/http/dubbo_proxy/stats.h"
 
 #include "absl/types/optional.h"
@@ -71,7 +71,6 @@ public:
   uint64_t requestId() const override;
   uint64_t streamId() const override;
   const Network::Connection* connection() const override;
-  DubboProxy::Router::RouteConstSharedPtr route() override;
   SerializationType serializationType() const override;
   ProtocolType protocolType() const override;
   StreamInfo::StreamInfo& streamInfo() override;
@@ -167,7 +166,6 @@ public:
   SerializationType serializationType() const override;
   ProtocolType protocolType() const override;
   StreamInfo::StreamInfo& streamInfo() override;
-  Router::RouteConstSharedPtr route() override;
   void sendLocalReply(const DubboFilters::DirectResponse& response, bool end_stream) override;
   void startUpstreamResponse() override;
   DubboFilters::UpstreamResponseStatus upstreamData(Buffer::Instance& buffer) override;

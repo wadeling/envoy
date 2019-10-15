@@ -115,9 +115,6 @@ envoy_cc_library(
         "//source/extensions/filters/http/common:factory_base_lib",
         "//source/extensions/filters/http/dubbo_proxy/filters:factory_base_lib",
         "//source/extensions/filters/http/dubbo_proxy/filters:well_known_names",
-        "//source/extensions/filters/http/dubbo_proxy/router:config",
-        "//source/extensions/filters/http/dubbo_proxy/router:route_matcher",
-        "//source/extensions/filters/http/dubbo_proxy/router:router_lib",
         "@envoy_api//envoy/config/filter/network/dubbo_proxy/v2alpha1:dubbo_proxy_cc",
     ],
 )

@@ -104,7 +104,6 @@ const Network::Connection* ActiveMessageFilterBase::connection() const {
   return parent_.connection();
 }
 
-Router::RouteConstSharedPtr ActiveMessageFilterBase::route() { return parent_.route(); }
 
 SerializationType ActiveMessageFilterBase::serializationType() const {
   return parent_.serializationType();
@@ -296,21 +295,6 @@ void ActiveMessage::finalizeRequest() {
 
 void ActiveMessage::createFilterChain() {
 //  parent_.config().filterFactory().createFilterChain(*this);
-}
-
-DubboProxy::Router::RouteConstSharedPtr ActiveMessage::route() {
-  if (cached_route_) {
-    return cached_route_.value();
-  }
-
-//  if (metadata_ != nullptr) {
-//    DubboProxy::Router::RouteConstSharedPtr route =
-//        parent_.config().routerConfig().route(*metadata_, stream_id_);
-//    cached_route_ = route;
-//    return cached_route_.value();
-//  }
-
-  return nullptr;
 }
 
 FilterStatus ActiveMessage::applyDecoderFilters(ActiveMessageDecoderFilter* filter,

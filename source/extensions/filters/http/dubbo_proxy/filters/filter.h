@@ -12,7 +12,6 @@
 #include "extensions/filters/http/dubbo_proxy/message.h"
 #include "extensions/filters/http/dubbo_proxy/metadata.h"
 #include "extensions/filters/http/dubbo_proxy/protocol.h"
-#include "extensions/filters/http/dubbo_proxy/router/router.h"
 #include "extensions/filters/http/dubbo_proxy/serializer.h"
 
 namespace Envoy {
@@ -82,7 +81,7 @@ public:
   /**
    * @return RouteConstSharedPtr the route for the current request.
    */
-  virtual DubboProxy::Router::RouteConstSharedPtr route() PURE;
+//  virtual DubboProxy::Router::RouteConstSharedPtr route() PURE;
 
   /**
    * @return SerializationType the originating protocol.
