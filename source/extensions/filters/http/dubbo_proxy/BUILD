@@ -224,7 +224,6 @@ envoy_cc_library(
         "//source/common/network:filter_lib",
         "//source/common/stream_info:stream_info_lib",
         "//source/extensions/filters/http/dubbo_proxy/filters:filter_interface",
-        "//source/extensions/filters/http/dubbo_proxy/router:router_interface",
         "@envoy_api//envoy/config/filter/network/dubbo_proxy/v2alpha1:dubbo_proxy_cc",
     ],
 )

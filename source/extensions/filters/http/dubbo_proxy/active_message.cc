@@ -295,7 +295,7 @@ void ActiveMessage::finalizeRequest() {
 }
 
 void ActiveMessage::createFilterChain() {
-  parent_.config().filterFactory().createFilterChain(*this);
+//  parent_.config().filterFactory().createFilterChain(*this);
 }
 
 DubboProxy::Router::RouteConstSharedPtr ActiveMessage::route() {
@@ -303,12 +303,12 @@ DubboProxy::Router::RouteConstSharedPtr ActiveMessage::route() {
     return cached_route_.value();
   }
 
-  if (metadata_ != nullptr) {
-    DubboProxy::Router::RouteConstSharedPtr route =
-        parent_.config().routerConfig().route(*metadata_, stream_id_);
-    cached_route_ = route;
-    return cached_route_.value();
-  }
+//  if (metadata_ != nullptr) {
+//    DubboProxy::Router::RouteConstSharedPtr route =
+//        parent_.config().routerConfig().route(*metadata_, stream_id_);
+//    cached_route_ = route;
+//    return cached_route_.value();
+//  }
 
   return nullptr;
 }

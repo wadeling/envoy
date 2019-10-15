@@ -32,10 +32,10 @@ class Config {
 public:
   virtual ~Config() = default;
 
-  virtual DubboFilters::FilterChainFactory& filterFactory() PURE;
+//  virtual DubboFilters::FilterChainFactory& filterFactory() PURE;
   virtual DubboFilterStats& stats() PURE;
   virtual ProtocolPtr createProtocol() PURE;
-  virtual Router::Config& routerConfig() PURE;
+//  virtual Router::Config& routerConfig() PURE;
 };
 
 // class ActiveMessagePtr;
