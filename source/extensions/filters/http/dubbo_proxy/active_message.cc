@@ -186,13 +186,8 @@ ActiveMessage::ActiveMessage(ConnectionManager& parent)
       request_id_(-1), stream_id_(parent.random_generator().random()),
       stream_info_(parent.time_system()), pending_stream_decoded_(false),
       local_response_sent_(false) {
-//    ENVOY_LOG(debug,"active message new");
   parent_.stats().request_active_.inc();
-//  ENVOY_LOG(debug,"set adddr {}", static_cast<void*>(&stream_info_));
-//  ENVOY_LOG(debug,"parent adddr {}", static_cast<void*>(&parent_));
-//  ENVOY_LOG(debug,"conn addr {}", static_cast<void*>(&parent_.connection()));
   stream_info_.setDownstreamLocalAddress(parent_.connection().localAddress());
-//  ENVOY_LOG(debug,"set adddr 2");
   stream_info_.setDownstreamRemoteAddress(parent_.connection().remoteAddress());
 }
 

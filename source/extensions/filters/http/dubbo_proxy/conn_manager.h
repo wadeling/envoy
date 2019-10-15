@@ -39,9 +39,7 @@ public:
 };
 
 // class ActiveMessagePtr;
-class ConnectionManager : public Network::ReadFilter,
-                          public Network::ConnectionCallbacks,
-                          public RequestDecoderCallbacks,
+class ConnectionManager : public RequestDecoderCallbacks,
                           public Http::PrivateProtoFilter,
                           Logger::Loggable<Logger::Id::dubbo> {
 public:
@@ -71,14 +69,7 @@ public:
   void setIsResponse(bool);
 
   // Network::ReadFilter
-  Network::FilterStatus onData(Buffer::Instance& data, bool end_stream) override;
-  Network::FilterStatus onNewConnection() override;
-  void initializeReadFilterCallbacks(Network::ReadFilterCallbacks&) override;
-
-  // Network::ConnectionCallbacks
-  void onEvent(Network::ConnectionEvent) override;
-  void onAboveWriteBufferHighWatermark() override;
-  void onBelowWriteBufferLowWatermark() override;
+  Network::FilterStatus onData(Buffer::Instance& data, bool end_stream) ;
 
   // RequestDecoderCallbacks
   StreamHandler& newStream() override;

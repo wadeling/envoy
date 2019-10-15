@@ -19,8 +19,6 @@ namespace Extensions {
 namespace HttpFilters {
 namespace DubboProxy {
 
-constexpr uint32_t BufferLimit = UINT32_MAX;
-
 ConnectionManager::ConnectionManager(Config& config, Runtime::RandomGenerator& random_generator,
                                      TimeSource& time_system)
     : config_(config), time_system_(time_system), stats_(config_.stats()),
@@ -107,36 +105,10 @@ Network::FilterStatus ConnectionManager::onData(Buffer::Instance& data, bool end
   return Network::FilterStatus::StopIteration;
 }
 
-Network::FilterStatus ConnectionManager::onNewConnection() {
-  return Network::FilterStatus::Continue;
-}
-
-void ConnectionManager::initializeReadFilterCallbacks(Network::ReadFilterCallbacks& callbacks) {
-  read_callbacks_ = &callbacks;
-  read_callbacks_->connection().addConnectionCallbacks(*this);
-  read_callbacks_->connection().enableHalfClose(true);
-  read_callbacks_->connection().setBufferLimits(BufferLimit);
-}
-
-void ConnectionManager::onEvent(Network::ConnectionEvent event) {
-  resetAllMessages(event == Network::ConnectionEvent::LocalClose);
-}
-
-void ConnectionManager::onAboveWriteBufferHighWatermark() {
-  ENVOY_CONN_LOG(debug, "onAboveWriteBufferHighWatermark", read_callbacks_->connection());
-  read_callbacks_->connection().readDisable(true);
-}
-
-void ConnectionManager::onBelowWriteBufferLowWatermark() {
-  ENVOY_CONN_LOG(debug, "onBelowWriteBufferLowWatermark", read_callbacks_->connection());
-  read_callbacks_->connection().readDisable(false);
-}
-
 StreamHandler& ConnectionManager::newStream() {
   ENVOY_LOG(debug, "dubbo: create the new decoder event handler");
 
   ActiveMessagePtr new_message(std::make_unique<ActiveMessage>(*this));
-//  new_message->createFilterChain();
   new_message->moveIntoList(std::move(new_message), active_message_list_);
   return **active_message_list_.begin();
 }
