@@ -2,8 +2,9 @@
 
 #cp newest envoy
 
-cp -f ~/go/src/github.com/wadeling/envoy/bazel-bin/source/exe/envoy-static ./
+cp -af ~/go/src/github.com/wadeling/envoy/bazel-bin/source/exe/envoy-static ./
 
 #start
 
-./envoy-static -c config.yaml -l trace
+#./envoy-static -c config.yaml -l trace
+./envoy-static -c config.yaml -l critical

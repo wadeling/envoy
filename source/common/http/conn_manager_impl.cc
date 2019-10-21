@@ -660,6 +660,8 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
     return;
   }
 
+  ENVOY_STREAM_LOG(debug, "after over load check", *this);
+
   if (!connection_manager_.config_.proxy100Continue() && request_headers_->Expect() &&
       request_headers_->Expect()->value() == Headers::get().ExpectValues._100Continue.c_str()) {
     // Note in the case Envoy is handling 100-Continue complexity, it skips the filter chain
@@ -675,6 +677,7 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
 
   // Make sure we are getting a codec version we support.
   Protocol protocol = connection_manager_.codec_->protocol();
+  ENVOY_LOG(debug, "protocol {}", static_cast<int>(protocol));
   if (protocol == Protocol::Http10) {
     // Assume this is HTTP/1.0. This is fine for HTTP/0.9 but this code will also affect any
     // requests with non-standard version numbers (0.9, 1.3), basically anything which is not
@@ -683,6 +686,8 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
     // The protocol may have shifted in the HTTP/1.0 case so reset it.
     stream_info_.protocol(protocol);
     if (!connection_manager_.config_.http1Settings().accept_http_10_) {
+      ENVOY_STREAM_LOG(debug, "not config accept http 10",*this);
+
       // Send "Upgrade Required" if HTTP/1.0 support is not explicitly configured on.
       sendLocalReply(false, Code::UpgradeRequired, "", nullptr, is_head_request_, absl::nullopt,
                      StreamInfo::ResponseCodeDetails::get().LowVersion);
@@ -699,6 +704,8 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
     }
   }
 
+  ENVOY_STREAM_LOG(debug, "after protocol check", *this);
+
   if (!request_headers_->Host()) {
     if ((protocol == Protocol::Http10) &&
         !connection_manager_.config_.http1Settings().default_host_for_http_10_.empty()) {
@@ -713,6 +720,7 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
       return;
     }
   }
+  ENVOY_STREAM_LOG(debug, "after host check", *this);
 
   ASSERT(connection_manager_.config_.maxRequestHeadersKb() > 0);
   if (request_headers_->byteSize() > (connection_manager_.config_.maxRequestHeadersKb() * 1024)) {
@@ -738,6 +746,8 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
                             : StreamInfo::ResponseCodeDetails::get().MissingPath);
     return;
   }
+
+ ENVOY_STREAM_LOG(debug, "after absulte path check", *this);
 
   // Path sanitization should happen before any path access other than the above sanity check.
   if (!ConnectionManagerUtility::maybeNormalizePath(*request_headers_,
@@ -1214,7 +1224,12 @@ void ConnectionManagerImpl::ActiveStream::sendLocalReply(
     bool is_grpc_request, Code code, absl::string_view body,
     const std::function<void(HeaderMap& headers)>& modify_headers, bool is_head_request,
     const absl::optional<Grpc::Status::GrpcStatus> grpc_status, absl::string_view details) {
-  ENVOY_STREAM_LOG(debug, "Sending local reply with details {},grpc status {}", *this, details,grpc_status.value());
+    if (grpc_status.has_value()) {
+        ENVOY_STREAM_LOG(debug, "Sending local reply with details {},grpc status {}", *this, details,grpc_status.value());
+    } else {
+        ENVOY_STREAM_LOG(debug, "Sending local reply with details {},grpc status null", *this, details);
+    }
+
   ASSERT(response_headers_ == nullptr);
   // For early error handling, do a best-effort attempt to create a filter chain
   // to ensure access logging.

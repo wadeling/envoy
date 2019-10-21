@@ -4,7 +4,7 @@
 
 #include "envoy/config/filter/network/dubbo_proxy/v2alpha1/dubbo_proxy.pb.h"
 #include "envoy/config/filter/network/dubbo_proxy/v2alpha1/dubbo_proxy.pb.validate.h"
-#include "extensions/filters/http/common/private_proto_factory_base.h"
+#include "extensions/filters/http/common/generic_proto_factory_base.h"
 #include "extensions/filters/http/dubbo_proxy/conn_manager.h"
 #include "extensions/filters/http/dubbo_proxy/filters/filter.h"
 //#include "extensions/filters/http/dubbo_proxy/router/route_matcher.h"

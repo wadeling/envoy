@@ -716,7 +716,7 @@ add_executable(envoy
     source/extensions/filters/http/common/aws/utility.h
     source/extensions/filters/http/common/empty_http_filter_config.h
     source/extensions/filters/http/common/factory_base.h
-    source/extensions/filters/http/common/private_proto_factory_base.h
+        source/extensions/filters/http/common/generic_proto_factory_base.h
     source/extensions/filters/http/common/jwks_fetcher.cc
     source/extensions/filters/http/common/jwks_fetcher.h
     source/extensions/filters/http/common/pass_through_filter.h

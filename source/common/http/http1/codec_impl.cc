@@ -462,7 +462,7 @@ void ConnectionImpl::onHeaderValue(const char* data, size_t length) {
 }
 
 int ConnectionImpl::onHeadersCompleteBase() {
-  ENVOY_CONN_LOG(trace, "headers complete", connection_);
+  ENVOY_CONN_LOG(trace, "headers complete,http_major {},htp_minor {}", connection_,parser_.http_major,parser_.http_minor);
   completeLastHeader();
   if (!(parser_.http_major == 1 && parser_.http_minor == 1)) {
     // This is not necessarily true, but it's good enough since higher layers only care if this is
