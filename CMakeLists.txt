@@ -268,6 +268,8 @@ add_executable(envoy
     source/common/api/os_sys_calls_impl_linux.h
     source/common/buffer/buffer_impl.cc
     source/common/buffer/buffer_impl.h
+    source/common/perf/perf.h
+    source/common/perf/perf.cc
     source/common/buffer/watermark_buffer.cc
     source/common/buffer/watermark_buffer.h
     source/common/chromium_url/LICENSE
@@ -825,14 +827,6 @@ add_executable(envoy
     source/extensions/filters/http/dubbo_proxy/filters/filter.h
     source/extensions/filters/http/dubbo_proxy/filters/filter_config.h
     source/extensions/filters/http/dubbo_proxy/filters/well_known_names.h
-    source/extensions/filters/http/dubbo_proxy/router/BUILD
-    source/extensions/filters/http/dubbo_proxy/router/config.cc
-    source/extensions/filters/http/dubbo_proxy/router/config.h
-    source/extensions/filters/http/dubbo_proxy/router/route_matcher.cc
-    source/extensions/filters/http/dubbo_proxy/router/route_matcher.h
-    source/extensions/filters/http/dubbo_proxy/router/router.h
-    source/extensions/filters/http/dubbo_proxy/router/router_impl.cc
-    source/extensions/filters/http/dubbo_proxy/router/router_impl.h
     source/extensions/filters/http/dubbo_proxy/active_message.cc
     source/extensions/filters/http/dubbo_proxy/active_message.h
     source/extensions/filters/http/dubbo_proxy/app_exception.cc
@@ -846,8 +840,6 @@ add_executable(envoy
     source/extensions/filters/http/dubbo_proxy/conn_manager.h
     source/extensions/filters/http/dubbo_proxy/decoder.cc
     source/extensions/filters/http/dubbo_proxy/decoder.h
-    source/extensions/filters/http/dubbo_proxy/decoder_event_handler.h
-    source/extensions/filters/http/dubbo_proxy/deserializer.h
     source/extensions/filters/http/dubbo_proxy/dubbo_protocol_impl.cc
     source/extensions/filters/http/dubbo_proxy/dubbo_protocol_impl.h
     source/extensions/filters/http/dubbo_proxy/heartbeat_response.cc

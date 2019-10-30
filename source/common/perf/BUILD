@@ -12,7 +12,5 @@ envoy_cc_library(
     name = "perf_lib",
     srcs = ["perf.cc"],
     hdrs = ["perf.h"],
-    deps = [
-
-    ],
+)
 
