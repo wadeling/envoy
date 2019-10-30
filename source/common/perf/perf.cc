@@ -13,7 +13,7 @@ namespace ENVOY {
     }
 
     int record_server_rcv_time(int id) {
-        if (id + 1 > MAX_RECORD_NUM) {
+        if (id + 1 >= MAX_RECORD_NUM) {
             return -1;
         }
         LatencyRecordArr[id].server_rcv_time = get_current_time();
@@ -21,7 +21,7 @@ namespace ENVOY {
     }
 
     int record_server_send_time(int id) {
-        if (id + 1 > MAX_RECORD_NUM) {
+        if (id + 1 >= MAX_RECORD_NUM) {
             return -1;
         }
         LatencyRecordArr[id].server_send_time = get_current_time();
@@ -29,7 +29,7 @@ namespace ENVOY {
     }
 
     int record_client_send_time(int id) {
-        if (id + 1 > MAX_RECORD_NUM) {
+        if (id + 1 >= MAX_RECORD_NUM) {
             return -1;
         }
         LatencyRecordArr[id].client_send_time = get_current_time();
@@ -37,7 +37,7 @@ namespace ENVOY {
     }
 
     int record_client_rcv_time(int id) {
-        if (id + 1 > MAX_RECORD_NUM) {
+        if (id + 1 >= MAX_RECORD_NUM) {
             return -1;
         }
         LatencyRecordArr[id].client_rcv_time = get_current_time();
