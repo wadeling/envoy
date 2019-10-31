@@ -3,6 +3,7 @@
 #include "common/common/assert.h"
 #include "common/common/empty_string.h"
 #include "common/http/headers.h"
+#include "common/perf/perf.h"
 
 namespace Envoy {
 namespace Network {
@@ -16,6 +17,9 @@ IoResult RawBufferSocket::doRead(Buffer::Instance& buffer) {
   uint64_t bytes_read = 0;
   bool end_stream = false;
   do {
+      // perf test
+      ENVOY::recordTimePoint(buffer,ENVOY::Server_Rcv_Time);
+
     // 16K read is arbitrary. TODO(mattklein123) PERF: Tune the read size.
     Api::IoCallUint64Result result = buffer.read(callbacks_->ioHandle(), 16384);
 
@@ -60,6 +64,9 @@ IoResult RawBufferSocket::doWrite(Buffer::Instance& buffer, bool end_stream) {
       action = PostIoAction::KeepOpen;
       break;
     }
+    // record time
+    ENVOY::recordTimePoint(buffer,ENVOY::Client_Send_Time);
+
     Api::IoCallUint64Result result = buffer.write(callbacks_->ioHandle());
 
     if (result.ok()) {

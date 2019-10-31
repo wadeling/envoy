@@ -5,11 +5,13 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <sstream>
 #include "envoy/buffer/buffer.h"
 
 #define  MAX_RECORD_NUM     (60*4*60*1000)  // 60 concurrency,4 min,60sec,1000qps
 
 const std::string XID= "x-id";
+const std::string XID_ALTER= "X-Id";
 const std::string XID_END= "\r\n";
 
 namespace ENVOY {
@@ -28,6 +30,8 @@ namespace ENVOY {
     };
 
     extern int recordTimePoint(Envoy::Buffer::Instance& data,Record_Type_Enum type) ;
+
+    extern std::string dumpLatency() ;
 
     extern int BufferToSmallCount;
 

@@ -6,5 +6,5 @@ cp -af ~/go/src/github.com/wadeling/envoy/bazel-bin/source/exe/envoy-static ./
 
 #start
 
-#./envoy-static -c config.yaml -l trace
-./envoy-static -c config.yaml -l critical
+./envoy-static -c config.yaml -l trace
+#./envoy-static -c config.yaml -l critical

@@ -8,6 +8,7 @@
 #include "common/http/http1/codec_impl.h"
 #include "common/http/http2/codec_impl.h"
 #include "common/http/utility.h"
+//#include "common/perf/perf.h"
 
 namespace Envoy {
 namespace Http {
@@ -162,6 +163,9 @@ void CodecClient::onData(Buffer::Instance& data) {
   Network::Address::InstanceConstSharedPtr remoteAddr = connection_->remoteAddress();
 
   ENVOY_CONN_LOG(debug, "CodeClient onData,local addr {},remote {} ",*connection_,addr->asString(),remoteAddr->asString());
+
+  //perf check
+//  ENVOY::recordTimePoint(data,ENVOY::Client_Rcv_Time);
 
   // private proto data
   decodePrivateProtoData(data, false);

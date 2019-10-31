@@ -183,6 +183,7 @@ envoy_cc_library(
         "//source/common/runtime:uuid_util_lib",
         "//source/common/stream_info:stream_info_lib",
         "//source/common/tracing:http_tracer_lib",
+        "//source/common/perf:perf_lib",
     ],
 )
 

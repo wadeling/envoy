@@ -58,6 +58,7 @@ envoy_cc_library(
         "//source/common/stats:isolated_store_lib",
         "//source/common/stats:stats_lib",
         "//source/common/upstream:host_utility_lib",
+        "//source/common/perf:perf_lib",
         "//source/extensions/access_loggers/file:file_access_log_lib",
         "@envoy_api//envoy/admin/v2alpha:certs_cc",
         "@envoy_api//envoy/admin/v2alpha:clusters_cc",

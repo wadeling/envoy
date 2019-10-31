@@ -32,6 +32,7 @@
 #include "common/http/path_utility.h"
 #include "common/http/utility.h"
 #include "common/network/utility.h"
+#include "common/perf/perf.h"
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
@@ -308,7 +309,11 @@ StreamDecoder& ConnectionManagerImpl::newStream(StreamEncoder& response_encoder,
 }
 
 Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool end_stream) {
-  ENVOY_LOG(debug,"ConnectionManagerImpl::onData");
+  ENVOY_LOG(debug,"ConnectionManagerImpl::onData {}",data.toString());
+
+  //perf check
+//  int tmp = ENVOY::recordTimePoint(data,ENVOY::Server_Rcv_Time);
+//  ENVOY_LOG(debug,"ConnectionManagerImpl::recordTimePoint ret {}",tmp);
 
   // decode private proto data
   decodePrivateProtoData(data,end_stream);

@@ -49,6 +49,7 @@
 #include "common/router/config_impl.h"
 #include "common/stats/histogram_impl.h"
 #include "common/upstream/host_utility.h"
+#include "common/perf/perf.h"
 
 #include "extensions/access_loggers/file/file_access_log_impl.h"
 
@@ -1113,6 +1114,15 @@ Http::Code AdminImpl::handlerRuntimeModify(absl::string_view url, Http::HeaderMa
   return Http::Code::OK;
 }
 
+Http::Code AdminImpl::handlerPerf(absl::string_view url ABSL_ATTRIBUTE_UNUSED, Http::HeaderMap&,
+                                  Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
+    std::string result = ENVOY::dumpLatency();
+    response.add("perf test OK\n");
+    response.add(result);
+
+    return Http::Code::OK;
+}
+
 ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
 
 void AdminFilter::onComplete() {
@@ -1206,6 +1216,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/runtime", "print runtime values", MAKE_ADMIN_HANDLER(handlerRuntime), false, false},
           {"/runtime_modify", "modify runtime values", MAKE_ADMIN_HANDLER(handlerRuntimeModify),
            false, true},
+          {"/perf", "print perf latency check result", MAKE_ADMIN_HANDLER(handlerPerf), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}
@@ -1232,9 +1243,9 @@ void AdminImpl::createFilterChain(Http::FilterChainFactoryCallbacks& callbacks) 
   callbacks.addStreamDecoderFilter(Http::StreamDecoderFilterSharedPtr{new AdminFilter(*this)});
 }
 
-void AdminImpl::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {
+void AdminImpl::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& ) {
     // not support
-    callbacks.addPreSrvDecodeFilter(nullptr);
+    //callbacks.addPreSrvDecodeFilter(nullptr);
 }
 
 Http::Code AdminImpl::runCallback(absl::string_view path_and_query,
