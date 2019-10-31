@@ -1,12 +1,24 @@
 #pragma once
 
 #include <cstdint>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 #include <chrono>
+#include "envoy/buffer/buffer.h"
 
 #define  MAX_RECORD_NUM     (60*4*60*1000)  // 60 concurrency,4 min,60sec,1000qps
+
+const std::string XID= "x-id";
+const std::string XID_END= "\r\n";
+
 namespace ENVOY {
+    enum Record_Type_Enum {
+        Server_Rcv_Time = 0,
+        Server_Send_Time = 1,
+        Client_Send_Time = 2,
+        Client_Rcv_Time = 3,
+    };
 
     struct LatencyRecord {
         uint64_t server_rcv_time;
@@ -15,9 +27,8 @@ namespace ENVOY {
         uint64_t client_rcv_time;
     };
 
+    extern int recordTimePoint(Envoy::Buffer::Instance& data,Record_Type_Enum type) ;
+
     extern int BufferToSmallCount;
-    extern int record_server_rcv_time(int);
-    extern int record_server_send_time(int);
-    extern int record_client_rcv_time(int);
-    extern int record_client_send_time(int);
+
 }
