@@ -80,7 +80,7 @@ namespace ENVOY {
         std::string result;
 //        result += "dump latency \r\n";
         result += "id\tserver-rcv-time\tclient-send-time\tclient-rcv-time\tserver-send-time\r\n";
-        for (int i = 0; i < LatencyRecordArr.size() ; ++i) {
+        for (int i = 0; i < int(LatencyRecordArr.size()) ; ++i) {
             std::ostringstream tmpStream;
             tmpStream << i << "\t";
             tmpStream << LatencyRecordArr[i].server_rcv_time << "\t";
