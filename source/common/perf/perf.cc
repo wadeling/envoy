@@ -31,15 +31,18 @@ namespace ENVOY {
     }
 
     int recordTimePoint(Envoy::Buffer::Instance& data,Record_Type_Enum type) {
-        int id= getXId(data,XID_ALTER);
+//        int id= getXId(data,XID_ALTER);
+//        if ( id == -1) {
+//           // serach another
+//           id = getXId(data,XID);
+//           if (id == -1) {
+//                return -1;
+//            }
+//        }
+        int id= getXId(data,XID);
         if ( id == -1) {
-           // serach another
-           id = getXId(data,XID);
-           if (id == -1) {
-                return -1;
-            }
+            return -1;
         }
-
 //        printf("get xid %d \r\n",id);
 
         uint64_t cur_time = getCurrentTime();
