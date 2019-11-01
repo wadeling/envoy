@@ -15,12 +15,12 @@ namespace ENVOY {
     int getXId(Envoy::Buffer::Instance& data,const std::string& key) {
         ssize_t pos = data.search(key.c_str(),key.size(),0);
         if (pos == -1) {
-            printf("not find x-id in data.\r\n");
+//            printf("not find x-id in data.\r\n");
             return -1;
         }
         ssize_t pos2 = data.search(XID_END.c_str(),XID_END.size(),pos);
         if (pos2 == -1) {
-            printf("not find x-id end in data.\r\n");
+//            printf("not find x-id end in data.\r\n");
             return -2;
         }
 
@@ -40,16 +40,16 @@ namespace ENVOY {
             }
         }
 
-        printf("get xid %d \r\n",id);
+//        printf("get xid %d \r\n",id);
 
         uint64_t cur_time = getCurrentTime();
-        printf("get cur_time %llu \r\n",cur_time);
+//        printf("get cur_time %llu \r\n",cur_time);
         if (id + 1 >= MAX_RECORD_NUM) {
             return -1;
         }
         if (type == Server_Rcv_Time) {
             if (LatencyRecordArr[id].server_rcv_time != 0) {
-                printf("change to clint recv time \r\n");
+//                printf("change to clint recv time \r\n");
                 LatencyRecordArr[id].client_rcv_time = cur_time;
             } else {
                 LatencyRecordArr[id].server_rcv_time = cur_time;
@@ -58,7 +58,7 @@ namespace ENVOY {
             LatencyRecordArr[id].server_send_time = cur_time;
         } else if ( type == Client_Send_Time) {
             if (LatencyRecordArr[id].client_send_time != 0) {
-                printf("change to server send time \r\n");
+//                printf("change to server send time \r\n");
                 LatencyRecordArr[id].server_send_time = cur_time;
             } else {
                 LatencyRecordArr[id].client_send_time = cur_time;
@@ -75,7 +75,7 @@ namespace ENVOY {
 
     std::string dumpLatency() {
         std::string result;
-        result += "dump latency \r\n";
+//        result += "dump latency \r\n";
         result += "id\tserver-rcv-time\tclient-send-time\tclient-rcv-time\tserver-send-time\r\n";
         for (int i = 0; i < 10 ; ++i) {
             std::ostringstream tmpStream;
