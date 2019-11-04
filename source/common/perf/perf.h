@@ -6,6 +6,7 @@
 #include <vector>
 #include <chrono>
 #include <sstream>
+#include <fstream>
 #include "envoy/buffer/buffer.h"
 
 #define  MAX_RECORD_NUM     (60*4*60*1000)  // 60 concurrency,4 min,60sec,1000qps
@@ -31,7 +32,11 @@ namespace ENVOY {
 
     extern int recordTimePoint(Envoy::Buffer::Instance& data,Record_Type_Enum type) ;
 
-    extern std::string dumpLatency() ;
+    extern std::string dumpLatency(int start,int end,std::string file) ;
+
+    extern int dumpDuplicateId(std::string file);
+    extern int dumpExtra(std::string file);
+    extern void resetSta();
 
     extern int BufferToSmallCount;
 
