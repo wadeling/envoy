@@ -52,7 +52,7 @@ namespace ENVOY {
     }
 
     int recordTimePoint(Envoy::Buffer::Instance& data,Record_Type_Enum type) {
-        return 0;
+//        return 0;
 //        int id= getXId(data,XID_ALTER);
 //        if ( id == -1) {
 //           // serach another
