@@ -10,7 +10,7 @@ namespace ENVOY {
 
     std::string intToStr(int i) {
         std::ostringstream tmpStream;
-        tmpStream << i << "\t";
+        tmpStream << i ;
         return tmpStream.str();
     }
 
