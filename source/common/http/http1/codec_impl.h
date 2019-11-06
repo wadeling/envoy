@@ -1,6 +1,6 @@
 #pragma once
 
-#include <http_parser.h>
+#include <llhttp.h>
 
 #include <array>
 #include <cstdint>
@@ -173,13 +173,13 @@ public:
   bool maybeDirectDispatch(Buffer::Instance& data);
 
 protected:
-  ConnectionImpl(Network::Connection& connection, http_parser_type type,
+  ConnectionImpl(Network::Connection& connection, llhttp_type type,
                  uint32_t max_request_headers_kb);
 
   bool resetStreamCalled() { return reset_stream_called_; }
 
   Network::Connection& connection_;
-  http_parser parser_;
+  llhttp_t parser_;
   HeaderMapPtr deferred_end_stream_headers_;
   Http::Code error_code_{Http::Code::BadRequest};
   bool handling_upgrade_{};
@@ -270,7 +270,7 @@ private:
    */
   virtual void onBelowLowWatermark() PURE;
 
-  static http_parser_settings settings_;
+  static llhttp_settings_s settings_;
   static const ToLowerTable& toLowerTable();
 
   HeaderMapImplPtr current_header_map_;
@@ -374,7 +374,7 @@ private:
   // Set true between receiving 100-Continue headers and receiving the spurious onMessageComplete.
   bool ignore_message_complete_for_100_continue_{};
 
-  // The default limit of 80 KiB is the vanilla http_parser behaviour.
+  // The default limit of 80 KiB is the vanilla llhttp behaviour.
   static constexpr uint32_t MAX_RESPONSE_HEADERS_KB = 80;
 };
 

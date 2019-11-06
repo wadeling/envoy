@@ -162,6 +162,11 @@ REPOSITORY_LOCATIONS = dict(
         strip_prefix = "http-parser-2.9.0",
         urls = ["https://github.com/nodejs/http-parser/archive/v2.9.0.tar.gz"],
     ),
+    com_github_nodejs_llhttp = dict(
+        sha256 = "579a81e1e56088470a121e308127f205e22b8988b944b5f36b2a11c1724590d4",
+        strip_prefix = "llhttp-release-v1.1.1",
+        urls = ["https://github.com/nodejs/llhttp/archive/release/v1.1.1.tar.gz"],
+    ),
     com_github_pallets_jinja = dict(
         sha256 = "e9baab084b8d84b511c75aca98bba8585041dbe971d5476ee53d9c6eea1b58b3",
         strip_prefix = "jinja-2.10.1",
