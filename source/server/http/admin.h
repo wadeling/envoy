@@ -297,8 +297,14 @@ private:
   Http::Code handlerPerfExtra(absl::string_view path_and_query,
                            Http::HeaderMap& response_headers, Buffer::Instance& response,
                            AdminStream&);
+  Http::Code handlerPerfOn(absl::string_view path_and_query,
+                           Http::HeaderMap& response_headers, Buffer::Instance& response,
+                           AdminStream&);
+  Http::Code handlerPerfOff(absl::string_view path_and_query,
+                           Http::HeaderMap& response_headers, Buffer::Instance& response,
+                           AdminStream&);
 
-  bool isFormUrlEncoded(const Http::HeaderEntry* content_type) const;
+    bool isFormUrlEncoded(const Http::HeaderEntry* content_type) const;
 
   class AdminListener : public Network::ListenerConfig {
   public:

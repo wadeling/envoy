@@ -1114,6 +1114,21 @@ Http::Code AdminImpl::handlerRuntimeModify(absl::string_view url, Http::HeaderMa
   return Http::Code::OK;
 }
 
+Http::Code AdminImpl::handlerPerfOn(absl::string_view ,
+                             Http::HeaderMap& , Buffer::Instance& response,
+                             AdminStream&) {
+    ENVOY::perfOn();
+    response.add("perf on OK\n");
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerPerfOff(absl::string_view ,
+                                    Http::HeaderMap& , Buffer::Instance& response,
+                                    AdminStream&) {
+    ENVOY::perfOff();
+    response.add("perf off OK\n");
+    return Http::Code::OK;
+}
 Http::Code AdminImpl::handlerPerf(absl::string_view url , Http::HeaderMap&,
                                   Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
     Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);

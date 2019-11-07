@@ -37,6 +37,8 @@ namespace ENVOY {
     extern int dumpDuplicateId(std::string file);
     extern int dumpExtra(std::string file);
     extern void resetSta();
+    extern void perfOn();
+    extern void perfOff();
 
     extern int BufferToSmallCount;
 

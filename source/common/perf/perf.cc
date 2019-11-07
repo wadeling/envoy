@@ -8,6 +8,16 @@ namespace ENVOY {
 
     int BufferToSmallCount = 0;
 
+    int perfOpen = 0;
+
+    void perfOn() {
+        perfOpen = 1;
+    }
+
+    void perfOff() {
+        perfOpen = 0;
+    }
+
     std::string intToStr(int i) {
         std::ostringstream tmpStream;
         tmpStream << i ;
@@ -52,6 +62,10 @@ namespace ENVOY {
     }
 
     int recordTimePoint(Envoy::Buffer::Instance& data,Record_Type_Enum type) {
+        // check open flag
+        if (perfOpen == 0 ) {
+            return 0;
+        }
 //        return 0;
 //        int id= getXId(data,XID_ALTER);
 //        if ( id == -1) {
