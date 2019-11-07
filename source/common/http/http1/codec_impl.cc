@@ -392,7 +392,7 @@ void ConnectionImpl::dispatch(Buffer::Instance& data) {
   }
 
   // Always unpause before dispatch.
-  llhttp_pause(&parser_);
+  llhttp_resume(&parser_);
 
   ssize_t total_parsed = 0;
   if (data.length() > 0) {
@@ -446,6 +446,8 @@ size_t ConnectionImpl::dispatchSlice(const char* slice, size_t len) {
         return_val = len;
         ENVOY_CONN_LOG(trace, "null error_pos, setting return_val to {}", connection_, return_val);
     }
+
+    ENVOY_CONN_LOG(trace, "llhttp get errno {}", connection_, llhttp_get_errno(&parser_));
 
     if (llhttp_get_errno(&parser_) != HPE_OK && llhttp_get_errno(&parser_) != HPE_PAUSED) {
         sendProtocolError();
@@ -528,7 +530,7 @@ void ConnectionImpl::onMessageCompleteBase() {
     // upgrade payload will be treated as stream body.
     ASSERT(!deferred_end_stream_headers_);
     ENVOY_CONN_LOG(trace, "Pausing parser due to upgrade.", connection_);
-    llhttp_resume(&parser_);
+    llhttp_pause(&parser_);
     return;
   }
   onMessageComplete();
