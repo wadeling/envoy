@@ -6,6 +6,7 @@
 #include "common/protobuf/utility.h"
 
 #include "absl/strings/match.h"
+#include "nghttp2/nghttp2.h"
 
 namespace Envoy {
 namespace Http {
@@ -64,11 +65,26 @@ HeaderUtility::HeaderData::HeaderData(const Json::Object& config)
         return header_matcher;
       }()) {}
 
+void HeaderUtility::getAllOfHeader(const Http::HeaderMap& headers, absl::string_view key,
+                                   std::vector<absl::string_view>& out) {
+  auto args = std::make_pair(LowerCaseString(std::string(key)), &out);
+
+  headers.iterate(
+      [](const HeaderEntry& header, void* context) -> Envoy::Http::HeaderMap::Iterate {
+        auto key_ret =
+            static_cast<std::pair<LowerCaseString, std::vector<absl::string_view>*>*>(context);
+        if (header.key() == key_ret->first.get().c_str()) {
+          key_ret->second->emplace_back(header.value().getStringView());
+        }
+        return Envoy::Http::HeaderMap::Iterate::Continue;
+      },
+      &args);
+}
+
 bool HeaderUtility::matchHeaders(const Http::HeaderMap& request_headers,
                                  const std::vector<HeaderData>& config_headers) {
   // No headers to match is considered a match.
   if (!config_headers.empty()) {
-      ENVOY_LOG_MISC(debug,"config header not empty,match headers");
     for (const HeaderData& cfg_header_data : config_headers) {
       if (!matchHeaders(request_headers, cfg_header_data)) {
         return false;
@@ -77,20 +93,6 @@ bool HeaderUtility::matchHeaders(const Http::HeaderMap& request_headers,
   }
 
   return true;
-}
-
-bool HeaderUtility::matchHeaders(const Http::HeaderMap& request_headers,
-                                 const std::vector<HeaderDataPtr>& config_headers) {
-    // No headers to match is considered a match.
-    if (!config_headers.empty()) {
-        for (const HeaderDataPtr& cfg_header_data : config_headers) {
-            if (!matchHeaders(request_headers, *cfg_header_data)) {
-                return false;
-            }
-        }
-    }
-
-    return true;
 }
 
 bool HeaderUtility::matchHeaders(const Http::HeaderMap& request_headers,
@@ -130,6 +132,11 @@ bool HeaderUtility::matchHeaders(const Http::HeaderMap& request_headers,
   }
 
   return match != header_data.invert_match_;
+}
+
+bool HeaderUtility::headerIsValid(const absl::string_view header_value) {
+  return (nghttp2_check_header_value(reinterpret_cast<const uint8_t*>(header_value.data()),
+                                     header_value.size()) != 0);
 }
 
 void HeaderUtility::addHeaders(Http::HeaderMap& headers, const Http::HeaderMap& headers_to_add) {

@@ -58,7 +58,7 @@ message VirtualHost {
 
   // The list of routes that will be matched, in order, for incoming requests.
   // The first route that matches will be used.
-  repeated Route routes = 3 [(gogoproto.nullable) = false];
+  repeated Route routes = 3;
 
   enum TlsRequirementType {
     // No TLS requirement for the virtual host.
@@ -164,7 +164,7 @@ message Route {
   string name = 14;
 
   // Route matching parameters.
-  RouteMatch match = 1 [(validate.rules).message.required = true, (gogoproto.nullable) = false];
+  RouteMatch match = 1 [(validate.rules).message.required = true];
 
   oneof action {
     option (validate.required) = true;
@@ -234,23 +234,6 @@ message Route {
   // Presence of the object defines whether the connection manager's tracing configuration
   // is overridden by this route specific instance.
   Tracing tracing = 15;
-
-  repeated HttpPreClientFilter http_pre_client_filters = 20;
-}
-
-message HttpPreClientFilter {
-  // The name of the filter to instantiate. The name must match a supported
-  string name = 1 [(validate.rules).string.min_bytes = 1];
-
-  // Filter specific configuration which depends on the filter being instantiated. See the supported
-  // filters for further documentation.
-  oneof config_type {
-    google.protobuf.Struct config = 2;
-
-    google.protobuf.Any typed_config = 4;
-  }
-
-  reserved 3;
 }
 
 // Compared to the :ref:`cluster <envoy_api_field_route.RouteAction.cluster>` field that specifies a
@@ -477,7 +460,7 @@ message CorsPolicy {
   core.RuntimeFractionalPercent shadow_enabled = 10;
 }
 
-// [#comment:next free field: 27]
+// [#comment:next free field: 30]
 message RouteAction {
   oneof cluster_specifier {
     option (validate.required) = true;
@@ -565,11 +548,22 @@ message RouteAction {
     // type *strict_dns* or *logical_dns*. Setting this to true with other cluster
     // types has no effect.
     google.protobuf.BoolValue auto_host_rewrite = 7;
+
+    // Indicates that during forwarding, the host header will be swapped with the content of given
+    // downstream or :ref:`custom <config_http_conn_man_headers_custom_request_headers>` header.
+    // If header value is empty, host header is left intact.
+    //
+    // .. attention::
+    //
+    //   Pay attention to the potential security implications of using this option. Provided header
+    //   must come from trusted source.
+    string auto_host_rewrite_header = 29;
   }
 
   // Specifies the upstream timeout for the route. If not specified, the default is 15s. This
   // spans between the point at which the entire downstream request (i.e. end-of-stream) has been
-  // processed and when the upstream response has been completely processed.
+  // processed and when the upstream response has been completely processed. A value of 0 will
+  // disable the route's timeout.
   //
   // .. note::
   //

@@ -65,7 +65,7 @@ protected:
 /**
  * Wrapper for StreamEncoder that just forwards to an "inner" encoder.
  */
-class StreamEncoderWrapper : public StreamEncoder, Logger::Loggable<Logger::Id::upstream> {
+class StreamEncoderWrapper : public StreamEncoder {
 public:
   // StreamEncoder
   void encode100ContinueHeaders(const HeaderMap& headers) override {
@@ -73,7 +73,6 @@ public:
   }
 
   void encodeHeaders(const HeaderMap& headers, bool end_stream) override {
-    ENVOY_LOG(debug,"stream encoder wrapper inner encode headers");
     inner_.encodeHeaders(headers, end_stream);
     if (end_stream) {
       onEncodeComplete();
@@ -81,16 +80,10 @@ public:
   }
 
   void encodeData(Buffer::Instance& data, bool end_stream) override {
-    ENVOY_LOG(debug,"stream encoder wrapper inner encode data");
     inner_.encodeData(data, end_stream);
     if (end_stream) {
       onEncodeComplete();
     }
-  }
-
-  void encodeRawData(Buffer::Instance& data, bool end_stream) override {
-    ENVOY_LOG(debug,"stream encoder wrapper inner encode raw data");
-    inner_.encodeRawData(data,end_stream);
   }
 
   void encodeTrailers(const HeaderMap& trailers) override {

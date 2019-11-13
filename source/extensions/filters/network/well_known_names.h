@@ -16,10 +16,6 @@ public:
   const std::string ClientSslAuth = "envoy.client_ssl_auth";
   // Echo filter
   const std::string Echo = "envoy.echo";
-
-   // Echo2 filter
-  const std::string Echo2 = "envoy.echo2";
-
   // Dubbo proxy filter
   const std::string DubboProxy = "envoy.filters.network.dubbo_proxy";
   // HTTP connection manager filter
@@ -32,7 +28,7 @@ public:
   const std::string RateLimit = "envoy.ratelimit";
   // Redis proxy filter
   const std::string RedisProxy = "envoy.redis_proxy";
-  // IP tagging filter
+  // TCP proxy filter
   const std::string TcpProxy = "envoy.tcp_proxy";
   // Authorization filter
   const std::string ExtAuthorization = "envoy.ext_authz";
@@ -54,7 +50,7 @@ public:
                        RedisProxy, TcpProxy, ExtAuthorization}) {}
 };
 
-typedef ConstSingleton<NetworkFilterNameValues> NetworkFilterNames;
+using NetworkFilterNames = ConstSingleton<NetworkFilterNameValues>;
 
 } // namespace NetworkFilters
 } // namespace Extensions

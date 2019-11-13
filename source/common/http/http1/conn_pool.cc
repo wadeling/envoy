@@ -14,6 +14,7 @@
 #include "common/http/codes.h"
 #include "common/http/headers.h"
 #include "common/network/utility.h"
+#include "common/runtime/runtime_impl.h"
 #include "common/upstream/upstream_impl.h"
 
 #include "absl/strings/match.h"
@@ -40,15 +41,12 @@ ConnPoolImpl::~ConnPoolImpl() {
 
   // Make sure all clients are destroyed before we are destroyed.
   dispatcher_.clearDeferredDeleteList();
-  ENVOY_LOG(debug,"conn pool defer,clear defer delete list,ready clients size {}",ready_clients_.size());
 }
 
 void ConnPoolImpl::drainConnections() {
-  ENVOY_LOG(debug,"drainConnections,ready clients size {}",ready_clients_.size());
   while (!ready_clients_.empty()) {
     ready_clients_.front()->codec_client_->close();
   }
-  ENVOY_LOG(debug,"drainConnections,after codec close ready clients size {}",ready_clients_.size());
 
   // We drain busy clients by manually setting remaining requests to 1. Thus, when the next
   // response completes the client will be destroyed.
@@ -69,22 +67,17 @@ bool ConnPoolImpl::hasActiveConnections() const {
 void ConnPoolImpl::attachRequestToClient(ActiveClient& client, StreamDecoder& response_decoder,
                                          ConnectionPool::Callbacks& callbacks) {
   ASSERT(!client.stream_wrapper_);
-  ENVOY_LOG(debug, "attachRequestToClient");
-
   host_->cluster().stats().upstream_rq_total_.inc();
   host_->stats().rq_total_.inc();
   client.stream_wrapper_ = std::make_unique<StreamWrapper>(response_decoder, client);
-  callbacks.onPoolReady(*client.stream_wrapper_, client.real_host_description_,*client.codec_client_);
+  callbacks.onPoolReady(*client.stream_wrapper_, client.real_host_description_);
 }
 
 void ConnPoolImpl::checkForDrained() {
-  ENVOY_LOG(debug, "check for drained,darined callback size {},pending req size {},busy client size {},ready clients size {}",
-          drained_callbacks_.size(),pending_requests_.size(),busy_clients_.size(),ready_clients_.size());
   if (!drained_callbacks_.empty() && pending_requests_.empty() && busy_clients_.empty()) {
     while (!ready_clients_.empty()) {
       ready_clients_.front()->codec_client_->close();
     }
-    ENVOY_LOG(debug,"after close ,ready clients size {}",ready_clients_.size());
 
     for (const DrainedCb& cb : drained_callbacks_) {
       cb();
@@ -99,13 +92,7 @@ void ConnPoolImpl::createNewConnection() {
 }
 
 ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_decoder,
-                                                     ConnectionPool::Callbacks& callbacks,
-                                                     const Http::PrivateProtoFilterFactoriesList& factory_list) {
-  ENVOY_LOG(debug, "ConnPoolImpl newstream");
-
-  // set factory list
-  setPreClientFactoriesList(factory_list);
-
+                                                     ConnectionPool::Callbacks& callbacks) {
   if (!ready_clients_.empty()) {
     ready_clients_.front()->moveBetweenLists(ready_clients_, busy_clients_);
     ENVOY_CONN_LOG(debug, "using existing connection", *busy_clients_.front()->codec_client_);
@@ -136,9 +123,6 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_dec
 }
 
 void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEvent event) {
-  ENVOY_LOG(debug, "ConnPoolImpl::onConnectionEvent {},client host name {},cluster name {}",
-          int(event),client.real_host_description_->hostname(),client.real_host_description_->cluster().name());
-
   if (event == Network::ConnectionEvent::RemoteClose ||
       event == Network::ConnectionEvent::LocalClose) {
     // The client died.
@@ -157,12 +141,10 @@ void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEv
       // already have "reset" the stream to fire the reset callback. All we do here is just
       // destroy the client.
       removed = client.removeFromList(busy_clients_);
-      ENVOY_LOG(debug,"remove busy clients,{}",busy_clients_.size());
     } else if (!client.connect_timer_) {
       // The connect timer is destroyed on connect. The lack of a connect timer means that this
       // client is idle and in the ready pool.
       removed = client.removeFromList(ready_clients_);
-      ENVOY_LOG(debug,"remove ready clients,{}",ready_clients_.size());
       check_for_drained = false;
     } else {
       // The only time this happens is if we actually saw a connect failure.
@@ -185,7 +167,6 @@ void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEv
 
     // If we have pending requests and we just lost a connection we should make a new one.
     if (pending_requests_.size() > (ready_clients_.size() + busy_clients_.size())) {
-      ENVOY_LOG(debug,"onConnEvent,create new conn,ready clients size {},busy clients size {}",ready_clients_.size(),busy_clients_.size());
       createNewConnection();
     }
 
@@ -205,7 +186,6 @@ void ConnPoolImpl::onConnectionEvent(ActiveClient& client, Network::ConnectionEv
   // whether the client is in the ready list (connected) or the busy list (failed to connect).
   if (event == Network::ConnectionEvent::Connected) {
     conn_connect_ms_->complete();
-    ENVOY_LOG(debug,"onConnEvent,process idle client,ready clients size {},busy clients size {}",ready_clients_.size(),busy_clients_.size());
     processIdleClient(client, false);
   }
 }
@@ -231,7 +211,6 @@ void ConnPoolImpl::onResponseComplete(ActiveClient& client) {
     // Upstream connection might be closed right after response is complete. Setting delay=true
     // here to attach pending requests in next dispatcher loop to handle that case.
     // https://github.com/envoyproxy/envoy/issues/2715
-    ENVOY_CONN_LOG(debug, "on response complete,process id client", *client.codec_client_);
     processIdleClient(client, true);
   }
 }
@@ -240,33 +219,27 @@ void ConnPoolImpl::onUpstreamReady() {
   upstream_ready_enabled_ = false;
   while (!pending_requests_.empty() && !ready_clients_.empty()) {
     ActiveClient& client = *ready_clients_.front();
-    ENVOY_CONN_LOG(debug, "onUpsteamReady attaching to next request", *client.codec_client_);
+    ENVOY_CONN_LOG(debug, "attaching to next request", *client.codec_client_);
     // There is work to do so bind a request to the client and move it to the busy list. Pending
     // requests are pushed onto the front, so pull from the back.
     attachRequestToClient(client, pending_requests_.back()->decoder_,
                           pending_requests_.back()->callbacks_);
     pending_requests_.pop_back();
     client.moveBetweenLists(ready_clients_, busy_clients_);
-    ENVOY_CONN_LOG(debug, "move ready clients to busy clients,ready clients size {},busy clients size {}",
-            *client.codec_client_,ready_clients_.size(),busy_clients_.size());
   }
 }
 
 void ConnPoolImpl::processIdleClient(ActiveClient& client, bool delay) {
-  ENVOY_CONN_LOG(debug, "processIdleClient", *client.codec_client_);
-
   client.stream_wrapper_.reset();
   if (pending_requests_.empty() || delay) {
     // There is nothing to service or delayed processing is requested, so just move the connection
     // into the ready list.
     ENVOY_CONN_LOG(debug, "moving to ready", *client.codec_client_);
     client.moveBetweenLists(busy_clients_, ready_clients_);
-    ENVOY_CONN_LOG(debug, "busy clients size {},ready clients size {}", *client.codec_client_,busy_clients_.size(),ready_clients_.size());
   } else {
     // There is work to do immediately so bind a request to the client and move it to the busy list.
     // Pending requests are pushed onto the front, so pull from the back.
     ENVOY_CONN_LOG(debug, "attaching to next request", *client.codec_client_);
-    ENVOY_CONN_LOG(debug, "pending requests size {}", *client.codec_client_,pending_requests_.size());
     attachRequestToClient(client, pending_requests_.back()->decoder_,
                           pending_requests_.back()->callbacks_);
     pending_requests_.pop_back();
@@ -334,12 +307,6 @@ ConnPoolImpl::ActiveClient::ActiveClient(ConnPoolImpl& parent)
   real_host_description_ = data.host_description_;
   codec_client_ = parent_.createCodecClient(data);
   codec_client_->addConnectionCallbacks(*this);
-
-  // set private proto filters
-  codec_client_->setPrivateProtoFilterFactoriesList(parent.pre_client_factory_list_);
-  // init private filters
-  codec_client_->createPreSrvFilterChain(*codec_client_);
-  ENVOY_LOG(debug,"codec client filter size {}",codec_client_->pre_client_filters_.size());
 
   parent_.host_->cluster().stats().upstream_cx_total_.inc();
   parent_.host_->cluster().stats().upstream_cx_active_.inc();

@@ -2,12 +2,11 @@
 
 #include <functional>
 #include <memory>
+
 #include "envoy/common/pure.h"
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/http/codec.h"
-#include "envoy/http/private_proto_filter.h"
 #include "envoy/upstream/upstream.h"
-#include "common/http/codec_client.h"
 
 namespace Envoy {
 namespace Http {
@@ -18,7 +17,7 @@ namespace ConnectionPool {
  */
 class Cancellable {
 public:
-  virtual ~Cancellable() {}
+  virtual ~Cancellable() = default;
 
   /**
    * Cancel the pending request.
@@ -42,7 +41,7 @@ enum class PoolFailureReason {
  */
 class Callbacks {
 public:
-  virtual ~Callbacks() {}
+  virtual ~Callbacks() = default;
 
   /**
    * Called when a pool error occurred and no connection could be acquired for making the request.
@@ -61,19 +60,15 @@ public:
    *             connection pools the description may be different each time this is called.
    */
   virtual void onPoolReady(Http::StreamEncoder& encoder,
-                           Upstream::HostDescriptionConstSharedPtr host,
-                           Http::CodecClient& codec_client) PURE;
+                           Upstream::HostDescriptionConstSharedPtr host) PURE;
 };
-
-//class Filter;
-//typedef std::shared_ptr<Envoy::Router::Filter> RouterFilterPtr;
 
 /**
  * An instance of a generic connection pool.
  */
 class Instance : public Event::DeferredDeletable {
 public:
-  virtual ~Instance() {}
+  ~Instance() override = default;
 
   /**
    * @return Http::Protocol Reports the protocol in use by this connection pool.
@@ -84,7 +79,7 @@ public:
    * Called when a connection pool has been drained of pending requests, busy connections, and
    * ready connections.
    */
-  typedef std::function<void()> DrainedCb;
+  using DrainedCb = std::function<void()>;
 
   /**
    * Register a callback that gets called when the connection pool is fully drained. No actual
@@ -119,20 +114,18 @@ public:
    *                      callbacks is called and the routine returns nullptr. NOTE: Once a callback
    *                      is called, the handle is no longer valid and any further cancellation
    *                      should be done by resetting the stream.
+   * @warning Do not call cancel() from the callbacks, as the request is implicitly canceled when
+   *          the callbacks are called.
    */
-  virtual Cancellable* newStream(Http::StreamDecoder& response_decoder, Callbacks& callbacks,const Http::PrivateProtoFilterFactoriesList& factory_list) PURE;
+  virtual Cancellable* newStream(Http::StreamDecoder& response_decoder, Callbacks& callbacks) PURE;
 
   /**
    * @return Upstream::HostDescriptionConstSharedPtr the host for which connections are pooled.
    */
   virtual Upstream::HostDescriptionConstSharedPtr host() const PURE;
-
-//  RouterFilterPtr router_callbacks_;
-//  void SetRouterCallbacks(RouterFilterPtr r) {router_callbacks_=r;}
 };
 
-typedef std::unique_ptr<Instance> InstancePtr;
-
+using InstancePtr = std::unique_ptr<Instance>;
 
 } // namespace ConnectionPool
 } // namespace Http

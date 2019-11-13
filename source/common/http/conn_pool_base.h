@@ -1,7 +1,6 @@
 #pragma once
 
 #include "envoy/http/conn_pool.h"
-#include "envoy/http/private_proto_filter.h"
 
 #include "common/common/linked_object.h"
 
@@ -9,6 +8,7 @@
 
 namespace Envoy {
 namespace Http {
+
 // Base class that handles request queueing logic shared between connection pool implementations.
 class ConnPoolImplBase : protected Logger::Loggable<Logger::Id::pool> {
 protected:
@@ -19,7 +19,7 @@ protected:
   struct PendingRequest : LinkedObject<PendingRequest>, public ConnectionPool::Cancellable {
     PendingRequest(ConnPoolImplBase& parent, StreamDecoder& decoder,
                    ConnectionPool::Callbacks& callbacks);
-    ~PendingRequest();
+    ~PendingRequest() override;
 
     // ConnectionPool::Cancellable
     void cancel() override { parent_.onPendingRequestCancel(*this); }
@@ -29,7 +29,7 @@ protected:
     ConnectionPool::Callbacks& callbacks_;
   };
 
-  typedef std::unique_ptr<PendingRequest> PendingRequestPtr;
+  using PendingRequestPtr = std::unique_ptr<PendingRequest>;
 
   // Creates a new PendingRequest and enqueues it into the request queue.
   ConnectionPool::Cancellable* newPendingRequest(StreamDecoder& decoder,
@@ -48,13 +48,9 @@ protected:
   const Upstream::HostConstSharedPtr host_;
   const Upstream::ResourcePriority priority_;
   std::list<PendingRequestPtr> pending_requests_;
-
-  // private proto pre client filter
-  PrivateProtoFilterFactoriesList pre_client_factory_list_;
-
-public:
-  void setPreClientFactoriesList(const PrivateProtoFilterFactoriesList pre_client_factory_list);
-
+  // When calling purgePendingRequests, this list will be used to hold the requests we are about
+  // to purge. We need this if one cancelled requests cancels a different pending request
+  std::list<PendingRequestPtr> pending_requests_to_purge_;
 };
 } // namespace Http
 } // namespace Envoy

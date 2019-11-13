@@ -15,7 +15,7 @@ namespace HttpFilters {
 namespace GrpcHttp1ReverseBridge {
 
 // When enabled, will downgrade an incoming gRPC http request into a h/1.1 request.
-class Filter :  public Logger::Loggable<Logger::Id::filter>,public Envoy::Http::PassThroughFilter {
+class Filter : public Envoy::Http::PassThroughFilter {
 public:
   Filter(std::string upstream_content_type, bool withhold_grpc_frames)
       : upstream_content_type_(std::move(upstream_content_type)),

@@ -7,7 +7,6 @@
 #include "envoy/event/deferred_deletable.h"
 #include "envoy/event/timer.h"
 #include "envoy/http/codec.h"
-#include "envoy/http/private_proto_filter.h"
 #include "envoy/network/connection.h"
 #include "envoy/network/filter.h"
 #include "envoy/upstream/upstream.h"
@@ -26,7 +25,7 @@ namespace Http {
  */
 class CodecClientCallbacks {
 public:
-  virtual ~CodecClientCallbacks() {}
+  virtual ~CodecClientCallbacks() = default;
 
   /**
    * Called every time an owned stream is destroyed, whether complete or not.
@@ -44,59 +43,17 @@ public:
  * This is an HTTP client that multiple stream management and underlying connection management
  * across multiple HTTP codec types.
  */
-class CodecClient : public Logger::Loggable<Logger::Id::client>,
+class CodecClient : Logger::Loggable<Logger::Id::client>,
                     public Http::ConnectionCallbacks,
-                    public Http::PrivateProtoFilterChainFactory,
-                    public Http::PrivateProtoFilterChainFactoryCallbacks,
                     public Network::ConnectionCallbacks,
                     public Event::DeferredDeletable {
 public:
-  // private proto filter list
-  struct ClientStreamFilter : public PrivateProtoFilterCallbacks,LinkedObject<ClientStreamFilter> {
-      ClientStreamFilter(CodecClient& codec_client, PrivateProtoFilterSharedPtr filter)
-              : codec_client_(codec_client), handle_(filter) {}
-      CodecClient& codec_client_;
-      PrivateProtoFilterSharedPtr handle_;
-
-      PrivateProtoFilterDataStatus decodeClientData(Buffer::Instance& data, bool end_stream) {
-          PrivateProtoFilterDataStatus status = handle_->decodeClientData(data, end_stream);
-          return status;
-      }
-
-      PrivateProtoFilterDataStatus encodeClientData(Buffer::Instance& data ABSL_ATTRIBUTE_UNUSED, bool end_stream ABSL_ATTRIBUTE_UNUSED) {
-          PrivateProtoFilterDataStatus status = handle_->encodeClientData(data, end_stream);
-          return status;
-      }
-      Network::Connection& connection() override ;
-  };
-  typedef std::unique_ptr<ClientStreamFilter> ClientStreamFilterPtr;
-  std::list<ClientStreamFilterPtr> pre_client_filters_;
-  Http::PrivateProtoFilterFactoriesList pre_client_factories_list_;
-
-  void setPrivateProtoFilterFactoriesList(const PrivateProtoFilterFactoriesList);
-
-  // init all registerd filters
-  void createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) override;
-
-  // add filter to filter list
-  void addClientFilter(Http::PrivateProtoFilterSharedPtr filter) override ;
-  void addPreSrvDecodeFilter(Http::PrivateProtoFilterSharedPtr filter ABSL_ATTRIBUTE_UNUSED) override {}
-  void decodePrivateProtoData(Buffer::Instance& data, bool end_stream) ;
-  //wrapper for filter callbacks
-//  struct privateProtoFilterCallbacks: public PrivateProtoFilterCallbacks {
-//      privateProtoFilterCallbacks(CodecClient& codec_client)
-//              : codec_client_(codec_client) {}
-//      Network::Connection& connection() override ;
-//      CodecClient& codec_client_;
-//  };
-//  typedef std::unique_ptr<privateProtoFilterCallbacks> privateProtoFilterPtr;
-
   /**
    * Type of HTTP codec to use.
    */
   enum class Type { HTTP1, HTTP2 };
 
-  ~CodecClient();
+  ~CodecClient() override;
 
   /**
    * Add a connection callback to the underlying network connection.
@@ -246,7 +203,7 @@ private:
     CodecClient& parent_;
   };
 
-  typedef std::unique_ptr<ActiveRequest> ActiveRequestPtr;
+  using ActiveRequestPtr = std::unique_ptr<ActiveRequest>;
 
   /**
    * Called when a response finishes decoding. This is called *before* forwarding on to the
@@ -276,12 +233,12 @@ private:
   bool remote_closed_{};
 };
 
-typedef std::unique_ptr<CodecClient> CodecClientPtr;
+using CodecClientPtr = std::unique_ptr<CodecClient>;
 
 /**
  * Production implementation that installs a real codec.
  */
-class CodecClientProd :public CodecClient {
+class CodecClientProd : public CodecClient {
 public:
   CodecClientProd(Type type, Network::ClientConnectionPtr&& connection,
                   Upstream::HostDescriptionConstSharedPtr host, Event::Dispatcher& dispatcher);

@@ -14,14 +14,12 @@
 #include "envoy/type/percent.pb.validate.h"
 #include "envoy/upstream/cluster_manager.h"
 #include "envoy/upstream/upstream.h"
-#include "envoy/server/filter_config.h"
 
 #include "common/common/assert.h"
 #include "common/common/empty_string.h"
 #include "common/common/fmt.h"
 #include "common/common/hash.h"
-#include "common/config/utility.h"
-//#include "common/common/logger.h"
+#include "common/common/logger.h"
 #include "common/common/utility.h"
 #include "common/config/metadata.h"
 #include "common/config/rds_json.h"
@@ -72,8 +70,8 @@ RetryPolicyImpl::RetryPolicyImpl(const envoy::api::v2::route::RetryPolicy& retry
   per_try_timeout_ =
       std::chrono::milliseconds(PROTOBUF_GET_MS_OR_DEFAULT(retry_policy, per_try_timeout, 0));
   num_retries_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(retry_policy, num_retries, 1);
-  retry_on_ = RetryStateImpl::parseRetryOn(retry_policy.retry_on());
-  retry_on_ |= RetryStateImpl::parseRetryGrpcOn(retry_policy.retry_on());
+  retry_on_ = RetryStateImpl::parseRetryOn(retry_policy.retry_on()).first;
+  retry_on_ |= RetryStateImpl::parseRetryGrpcOn(retry_policy.retry_on()).first;
 
   for (const auto& host_predicate : retry_policy.retry_host_predicate()) {
     auto& factory = Envoy::Config::Utility::getAndCheckFactory<Upstream::RetryHostPredicateFactory>(
@@ -83,7 +81,7 @@ RetryPolicyImpl::RetryPolicyImpl(const envoy::api::v2::route::RetryPolicy& retry
     retry_host_predicate_configs_.emplace_back(host_predicate.name(), std::move(config));
   }
 
-  const auto retry_priority = retry_policy.retry_priority();
+  const auto& retry_priority = retry_policy.retry_priority();
   if (!retry_priority.name().empty()) {
     auto& factory = Envoy::Config::Utility::getAndCheckFactory<Upstream::RetryPriorityFactory>(
         retry_priority.name());
@@ -148,21 +146,19 @@ Upstream::RetryPrioritySharedPtr RetryPolicyImpl::retryPriority() const {
 
 CorsPolicyImpl::CorsPolicyImpl(const envoy::api::v2::route::CorsPolicy& config,
                                Runtime::Loader& loader)
-    : config_(config), loader_(loader) {
+    : config_(config), loader_(loader), allow_methods_(config.allow_methods()),
+      allow_headers_(config.allow_headers()), expose_headers_(config.expose_headers()),
+      max_age_(config.max_age()),
+      legacy_enabled_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, enabled, true)) {
   for (const auto& origin : config.allow_origin()) {
     allow_origin_.push_back(origin);
   }
   for (const auto& regex : config.allow_origin_regex()) {
     allow_origin_regex_.push_back(RegexUtil::parseRegex(regex));
   }
-  allow_methods_ = config.allow_methods();
-  allow_headers_ = config.allow_headers();
-  expose_headers_ = config.expose_headers();
-  max_age_ = config.max_age();
   if (config.has_allow_credentials()) {
     allow_credentials_ = PROTOBUF_GET_WRAPPED_REQUIRED(config, allow_credentials);
   }
-  legacy_enabled_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, enabled, true);
 }
 
 ShadowPolicyImpl::ShadowPolicyImpl(const envoy::api::v2::route::RouteAction& config) {
@@ -183,7 +179,7 @@ ShadowPolicyImpl::ShadowPolicyImpl(const envoy::api::v2::route::RouteAction& con
 
 class HashMethodImplBase : public HashPolicyImpl::HashMethod {
 public:
-  HashMethodImplBase(bool terminal) : terminal_(terminal) {}
+  explicit HashMethodImplBase(bool terminal) : terminal_(terminal) {}
 
   bool terminal() const override { return terminal_; }
 
@@ -364,10 +360,14 @@ const envoy::type::FractionalPercent& RouteTracingImpl::getOverallSampling() con
 RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
                                        const envoy::api::v2::route::Route& route,
                                        Server::Configuration::FactoryContext& factory_context)
-    : context_(factory_context), case_sensitive_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(route.match(), case_sensitive, true)),
+    : case_sensitive_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(route.match(), case_sensitive, true)),
       prefix_rewrite_(route.route().prefix_rewrite()), host_rewrite_(route.route().host_rewrite()),
       vhost_(vhost),
       auto_host_rewrite_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(route.route(), auto_host_rewrite, false)),
+      auto_host_rewrite_header_(!route.route().auto_host_rewrite_header().empty()
+                                    ? absl::optional<Http::LowerCaseString>(Http::LowerCaseString(
+                                          route.route().auto_host_rewrite_header()))
+                                    : absl::nullopt),
       cluster_name_(route.route().cluster()), cluster_header_name_(route.route().cluster_header()),
       cluster_not_found_response_code_(ConfigUtility::parseClusterNotFoundResponseCode(
           route.route().cluster_not_found_response_code())),
@@ -405,7 +405,6 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
                           factory_context),
       route_name_(route.name()), time_source_(factory_context.dispatcher().timeSource()),
       internal_redirect_action_(convertInternalRedirectAction(route.route())) {
-
   if (route.route().has_metadata_match()) {
     const auto filter_it = route.route().metadata_match().filter_metadata().find(
         Envoy::Config::MetadataFilters::get().ENVOY_LB);
@@ -427,8 +426,8 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
     const std::string& runtime_key_prefix = route.route().weighted_clusters().runtime_key_prefix();
 
     for (const auto& cluster : route.route().weighted_clusters().clusters()) {
-      std::unique_ptr<WeightedClusterEntry> cluster_entry(new WeightedClusterEntry(
-          this, runtime_key_prefix + "." + cluster.name(), factory_context, cluster));
+      auto cluster_entry = std::make_unique<WeightedClusterEntry>(
+          this, runtime_key_prefix + "." + cluster.name(), factory_context, cluster);
       weighted_clusters_.emplace_back(std::move(cluster_entry));
       total_weight += weighted_clusters_.back()->clusterWeight();
     }
@@ -437,13 +436,6 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
       throw EnvoyException(fmt::format("Sum of weights in the weighted_cluster should add up to {}",
                                        total_cluster_weight_));
     }
-  }
-
-  // add client filter for route entry
-  const auto& pre_client_filters = route.http_pre_client_filters();
-  ENVOY_LOG(debug,"pre client filters size {}",pre_client_filters.size());
-  for (int32_t i = 0; i < pre_client_filters.size(); i++) {
-      processPreClientFilter(pre_client_filters[i], pre_client_filter_factories_);
   }
 
   for (const auto& header_map : route.match().headers()) {
@@ -468,7 +460,7 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
     cors_policy_ =
         std::make_unique<CorsPolicyImpl>(route.route().cors(), factory_context.runtime());
   }
-  for (const auto upgrade_config : route.route().upgrade_configs()) {
+  for (const auto& upgrade_config : route.route().upgrade_configs()) {
     const bool enabled = upgrade_config.has_enabled() ? upgrade_config.enabled().value() : true;
     const bool success =
         upgrade_map_
@@ -479,7 +471,6 @@ RouteEntryImplBase::RouteEntryImplBase(const VirtualHostImpl& vhost,
       throw EnvoyException(fmt::format("Duplicate upgrade {}", upgrade_config.upgrade_type()));
     }
   }
-  ENVOY_LOG(debug,"route entry impl base end");
 }
 
 bool RouteEntryImplBase::evaluateRuntimeMatch(const uint64_t random_value) const {
@@ -489,47 +480,21 @@ bool RouteEntryImplBase::evaluateRuntimeMatch(const uint64_t random_value) const
                                                        random_value);
 }
 
-void RouteEntryImplBase::processPreClientFilter(const envoy::api::v2::route::HttpPreClientFilter& proto_config,
-        Http::PrivateProtoFilterFactoriesList& filter_factories) {
-    const std::string& string_name = proto_config.name();
-
-    ENVOY_LOG(debug, "  pre client filter  name: {}", string_name);
-
-    const Json::ObjectSharedPtr filter_config =
-            MessageUtil::getJsonObjectFromMessage(proto_config.config());
-    ENVOY_LOG(debug, "    config: {}", filter_config->asJsonString());
-
-    // Now see if there is a factory that will accept the config.
-    auto& factory = Envoy::Config::Utility::getAndCheckFactory<Server::Configuration::PrivateProtoNamedHttpFilterConfigFactory>(string_name);
-    ENVOY_LOG(debug, "check factory {}",factory.name());
-
-    Http::PrivateProtoFilterFactoryCb callback;
-    ProtobufTypes::MessagePtr message = Envoy::Config::Utility::translateToFactoryConfig(
-            proto_config, context_.messageValidationVisitor(), factory);
-    callback = factory.createPrivateProtoFilterFactoryFromProto(*message,context_);
-    filter_factories.push_back(callback);
-    ENVOY_LOG(debug, "filter factory size : {}", filter_factories.size());
-}
-
 bool RouteEntryImplBase::matchRoute(const Http::HeaderMap& headers, uint64_t random_value) const {
   bool matches = true;
 
   matches &= evaluateRuntimeMatch(random_value);
   if (!matches) {
-    ENVOY_LOG_MISC(debug,"runtime match false");
     // No need to waste further cycles calculating a route match.
     return false;
   }
 
   if (match_grpc_) {
-    ENVOY_LOG_MISC(debug,"grpc match check");
     matches &= Grpc::Common::hasGrpcContentType(headers);
   }
 
   matches &= Http::HeaderUtility::matchHeaders(headers, config_headers_);
-    ENVOY_LOG_MISC(debug,"match headers result {}",matches);
   if (!config_query_parameters_.empty()) {
-      ENVOY_LOG_MISC(debug,"query parameters match");
     Http::Utility::QueryParams query_parameters =
         Http::Utility::parseQueryString(headers.Path()->value().getStringView());
     matches &= ConfigUtility::matchQueryParams(query_parameters, config_query_parameters_);
@@ -550,6 +515,14 @@ void RouteEntryImplBase::finalizeRequestHeaders(Http::HeaderMap& headers,
   vhost_.globalRouteConfig().requestHeaderParser().evaluateHeaders(headers, stream_info);
   if (!host_rewrite_.empty()) {
     headers.Host()->value(host_rewrite_);
+  } else if (auto_host_rewrite_header_) {
+    Http::HeaderEntry* header = headers.get(*auto_host_rewrite_header_);
+    if (header != nullptr) {
+      absl::string_view header_value = header->value().getStringView();
+      if (!header_value.empty()) {
+        headers.Host()->value(header_value);
+      }
+    }
   }
 
   // Handle path rewrite
@@ -689,7 +662,7 @@ RouteEntryImplBase::parseOpaqueConfig(const envoy::api::v2::route::Route& route)
     if (filter_metadata == route.metadata().filter_metadata().end()) {
       return ret;
     }
-    for (auto it : filter_metadata->second.fields()) {
+    for (const auto& it : filter_metadata->second.fields()) {
       if (it.second.kind_case() == ProtobufWkt::Value::kStringValue) {
         ret.emplace(it.first, it.second.string_value());
       }
@@ -872,14 +845,12 @@ void PrefixRouteEntryImpl::rewritePathHeader(Http::HeaderMap& headers,
 
 RouteConstSharedPtr PrefixRouteEntryImpl::matches(const Http::HeaderMap& headers,
                                                   uint64_t random_value) const {
-  ENVOY_LOG_MISC(debug,"prefix route matches start");
   if (RouteEntryImplBase::matchRoute(headers, random_value) &&
       (case_sensitive_
            ? absl::StartsWith(headers.Path()->value().getStringView(), prefix_)
            : absl::StartsWithIgnoreCase(headers.Path()->value().getStringView(), prefix_))) {
     return clusterEntry(headers, random_value);
   }
-  ENVOY_LOG_MISC(debug,"prefix route matches null");
   return nullptr;
 }
 
@@ -895,7 +866,6 @@ void PathRouteEntryImpl::rewritePathHeader(Http::HeaderMap& headers,
 
 RouteConstSharedPtr PathRouteEntryImpl::matches(const Http::HeaderMap& headers,
                                                 uint64_t random_value) const {
-  ENVOY_LOG_MISC(debug,"PathRoute match start");
   if (RouteEntryImplBase::matchRoute(headers, random_value)) {
     const Http::HeaderString& path = headers.Path()->value();
     absl::string_view query_string = Http::Utility::findQueryStringStart(path);
@@ -946,7 +916,6 @@ void RegexRouteEntryImpl::rewritePathHeader(Http::HeaderMap& headers,
 
 RouteConstSharedPtr RegexRouteEntryImpl::matches(const Http::HeaderMap& headers,
                                                  uint64_t random_value) const {
-    ENVOY_LOG_MISC(debug,"regex route matches start");
   if (RouteEntryImplBase::matchRoute(headers, random_value)) {
     const Http::HeaderString& path = headers.Path()->value();
     const absl::string_view query_string = Http::Utility::findQueryStringStart(path);
@@ -956,7 +925,6 @@ RouteConstSharedPtr RegexRouteEntryImpl::matches(const Http::HeaderMap& headers,
       return clusterEntry(headers, random_value);
     }
   }
-    ENVOY_LOG_MISC(debug,"regex route matches null");
   return nullptr;
 }
 
@@ -1111,10 +1079,8 @@ RouteConstSharedPtr VirtualHostImpl::getRouteFromEntries(const Http::HeaderMap& 
   // bails early (as it rejects a request), so there is no routing is going to happen anyway.
   const auto* forwarded_proto_header = headers.ForwardedProto();
   if (forwarded_proto_header == nullptr) {
-    ENVOY_LOG_MISC(debug,"forwaredproto header is null");
     return nullptr;
   }
-  ENVOY_LOG_MISC(debug,"forwaredproto header {}",forwarded_proto_header->value().getStringView());
 
   // First check for ssl redirect.
   if (ssl_requirements_ == SslRequirements::ALL && forwarded_proto_header->value() != "https") {
@@ -1128,12 +1094,10 @@ RouteConstSharedPtr VirtualHostImpl::getRouteFromEntries(const Http::HeaderMap& 
   for (const RouteEntryImplBaseConstSharedPtr& route : routes_) {
     RouteConstSharedPtr route_entry = route->matches(headers, random_value);
     if (nullptr != route_entry) {
-      ENVOY_LOG_MISC(debug,"header match ok");
       return route_entry;
     }
   }
 
-  ENVOY_LOG_MISC(debug,"header match null");
   return nullptr;
 }
 
@@ -1141,18 +1105,7 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
   // Fast path the case where we only have a default virtual host.
   if (virtual_hosts_.empty() && wildcard_virtual_host_suffixes_.empty() &&
       wildcard_virtual_host_prefixes_.empty()) {
-
-    ENVOY_LOG_MISC(debug,"findVirtualHost return default host");
     return default_virtual_host_.get();
-  }
-
-  //test
-  std::string tmpHost = std::string(headers.Host()->value().getStringView());
-  ENVOY_LOG_MISC(debug,"find virtualHost,header host {}",tmpHost);
-//  const std::unordered_map<std::string, VirtualHostSharedPtr>::iterator  tmpIter;
-  auto tmpIter = virtual_hosts_.begin();
-  for (;tmpIter != virtual_hosts_.end();tmpIter++) {
-      ENVOY_LOG_MISC(debug,"vhost name {}",tmpIter->first);
   }
 
   // TODO (@rshriram) Match Origin header in WebSocket
@@ -1161,12 +1114,9 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
       Http::LowerCaseString(std::string(headers.Host()->value().getStringView())).get();
   const auto& iter = virtual_hosts_.find(host);
   if (iter != virtual_hosts_.end()) {
-    ENVOY_LOG_MISC(debug,"found match vhost,{}", static_cast<void*>(iter->second.get()));
     return iter->second.get();
   }
-
   if (!wildcard_virtual_host_suffixes_.empty()) {
-    ENVOY_LOG_MISC(debug,"find from wildcard virtual host suffix");
     const VirtualHostImpl* vhost = findWildcardVirtualHost(
         host, wildcard_virtual_host_suffixes_,
         [](const std::string& h, int l) -> std::string { return h.substr(h.size() - l); });
@@ -1175,7 +1125,6 @@ const VirtualHostImpl* RouteMatcher::findVirtualHost(const Http::HeaderMap& head
     }
   }
   if (!wildcard_virtual_host_prefixes_.empty()) {
-    ENVOY_LOG_MISC(debug,"find from wildcard virtual host prefix");
     const VirtualHostImpl* vhost = findWildcardVirtualHost(
         host, wildcard_virtual_host_prefixes_,
         [](const std::string& h, int l) -> std::string { return h.substr(0, l); });
@@ -1282,11 +1231,6 @@ PerFilterConfigs::PerFilterConfigs(
 const RouteSpecificFilterConfig* PerFilterConfigs::get(const std::string& name) const {
   auto it = configs_.find(name);
   return it == configs_.end() ? nullptr : it->second.get();
-}
-
-RouteConstSharedPtr NullConfigImpl::route(const Http::HeaderMap&, uint64_t) const{
-    ENVOY_LOG_MISC(debug,"null config impl route return null ptr");
-    return nullptr;
 }
 
 } // namespace Router

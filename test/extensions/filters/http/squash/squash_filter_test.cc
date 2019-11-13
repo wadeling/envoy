@@ -18,6 +18,7 @@
 #include "gtest/gtest.h"
 
 using testing::_;
+using testing::Eq;
 using testing::Invoke;
 using testing::NiceMock;
 using testing::Return;
@@ -63,7 +64,7 @@ TEST(SoloFilterConfigTest, V1ApiConversion) {
 
   Envoy::Json::ObjectSharedPtr json_config = Envoy::Json::Factory::loadFromString(json);
   NiceMock<Envoy::Server::Configuration::MockFactoryContext> factory_context;
-  EXPECT_CALL(factory_context.cluster_manager_, get("fake_cluster")).Times(1);
+  EXPECT_CALL(factory_context.cluster_manager_, get(Eq("fake_cluster"))).Times(1);
 
   auto config = constructSquashFilterConfigFromJson(*json_config, factory_context);
   EXPECT_EQ("fake_cluster", config.clusterName());
@@ -84,7 +85,7 @@ TEST(SoloFilterConfigTest, NoCluster) {
   Envoy::Json::ObjectSharedPtr config = Envoy::Json::Factory::loadFromString(json);
   NiceMock<Envoy::Server::Configuration::MockFactoryContext> factory_context;
 
-  EXPECT_CALL(factory_context.cluster_manager_, get("fake_cluster")).WillOnce(Return(nullptr));
+  EXPECT_CALL(factory_context.cluster_manager_, get(Eq("fake_cluster"))).WillOnce(Return(nullptr));
 
   EXPECT_THROW_WITH_MESSAGE(constructSquashFilterConfigFromJson(*config, factory_context),
                             Envoy::EnvoyException,
@@ -102,7 +103,7 @@ TEST(SoloFilterConfigTest, ParsesEnvironment) {
 
   Envoy::Json::ObjectSharedPtr json_config = Envoy::Json::Factory::loadFromString(json);
   NiceMock<Envoy::Server::Configuration::MockFactoryContext> factory_context;
-  EXPECT_CALL(factory_context.cluster_manager_, get("squash")).Times(1);
+  EXPECT_CALL(factory_context.cluster_manager_, get(Eq("squash"))).Times(1);
 
   auto config = constructSquashFilterConfigFromJson(*json_config, factory_context);
   EXPECT_JSON_EQ(expected_json, config.attachmentJson());
@@ -122,7 +123,7 @@ TEST(SoloFilterConfigTest, ParsesAndEscapesEnvironment) {
 
   Envoy::Json::ObjectSharedPtr json_config = Envoy::Json::Factory::loadFromString(json);
   NiceMock<Envoy::Server::Configuration::MockFactoryContext> factory_context;
-  EXPECT_CALL(factory_context.cluster_manager_, get("squash")).Times(1);
+  EXPECT_CALL(factory_context.cluster_manager_, get(Eq("squash"))).Times(1);
   auto config = constructSquashFilterConfigFromJson(*json_config, factory_context);
   EXPECT_JSON_EQ(expected_json, config.attachmentJson());
 }
@@ -159,7 +160,7 @@ TEST(SoloFilterConfigTest, ParsesEnvironmentInComplexTemplate) {
 
   Envoy::Json::ObjectSharedPtr json_config = Envoy::Json::Factory::loadFromString(json);
   NiceMock<Envoy::Server::Configuration::MockFactoryContext> factory_context;
-  EXPECT_CALL(factory_context.cluster_manager_, get("squash")).Times(1);
+  EXPECT_CALL(factory_context.cluster_manager_, get(Eq("squash"))).Times(1);
   auto config = constructSquashFilterConfigFromJson(*json_config, factory_context);
   EXPECT_JSON_EQ(expected_json, config.attachmentJson());
 }
@@ -208,6 +209,8 @@ protected:
   void doDownstreamRequest() {
     startDownstreamRequest();
 
+    Http::MetadataMap metadata_map{{"metadata", "metadata"}};
+    EXPECT_EQ(Http::FilterMetadataStatus::Continue, filter_->decodeMetadata(metadata_map));
     Envoy::Http::TestHeaderMapImpl trailers{};
     // Complete a full request cycle
     Envoy::Buffer::OwnedImpl buffer("nothing here");
@@ -243,7 +246,7 @@ protected:
   }
 
   Envoy::Http::AsyncClient::Callbacks* popPendingCallback() {
-    if (0 == callbacks_.size()) {
+    if (callbacks_.empty()) {
       // Can't use ASSERT_* as this is not a test function
       throw std::underflow_error("empty deque");
     }
@@ -327,7 +330,7 @@ TEST_F(SquashFilterTest, Timeout) {
   EXPECT_CALL(request_, cancel());
   EXPECT_CALL(filter_callbacks_, continueDecoding());
 
-  attachmentTimeout_timer_->callback_();
+  attachmentTimeout_timer_->invokeCallback();
 
   EXPECT_EQ(Envoy::Http::FilterDataStatus::Continue, filter_->decodeData(buffer, false));
 }
@@ -356,7 +359,7 @@ TEST_F(SquashFilterTest, CheckRetryPollingAttachment) {
 
   // Expect the second get attachment request
   expectAsyncClientSend();
-  retry_timer->callback_();
+  retry_timer->invokeCallback();
   EXPECT_CALL(filter_callbacks_, continueDecoding());
   completeGetStatusRequest("attached");
 }
@@ -375,7 +378,7 @@ TEST_F(SquashFilterTest, CheckRetryPollingAttachmentOnFailure) {
   // Expect the second get attachment request
   expectAsyncClientSend();
 
-  retry_timer->callback_();
+  retry_timer->invokeCallback();
 
   EXPECT_CALL(filter_callbacks_, continueDecoding());
   completeGetStatusRequest("attached");
@@ -427,10 +430,13 @@ TEST_F(SquashFilterTest, TimerExpiresInline) {
   initFilter();
 
   attachmentTimeout_timer_ = new NiceMock<Envoy::Event::MockTimer>(&filter_callbacks_.dispatcher_);
+  // TODO: this is a really synthetic test as the callback can't actually be called under the stack
+  // of enableTimer. It'd be good to clean this up.
   EXPECT_CALL(*attachmentTimeout_timer_, enableTimer(config_->attachmentTimeout()))
       .WillOnce(Invoke([&](const std::chrono::milliseconds&) {
+        attachmentTimeout_timer_->enabled_ = true;
         // timer expires inline
-        attachmentTimeout_timer_->callback_();
+        attachmentTimeout_timer_->invokeCallback();
       }));
 
   EXPECT_CALL(cm_.async_client_, send_(_, _, _))

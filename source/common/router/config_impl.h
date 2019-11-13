@@ -36,7 +36,7 @@ namespace Router {
  */
 class Matchable {
 public:
-  virtual ~Matchable() {}
+  virtual ~Matchable() = default;
 
   /**
    * See if this object matches the incoming headers.
@@ -62,7 +62,7 @@ private:
 };
 
 class RouteEntryImplBase;
-typedef std::shared_ptr<const RouteEntryImplBase> RouteEntryImplBaseConstSharedPtr;
+using RouteEntryImplBaseConstSharedPtr = std::shared_ptr<const RouteEntryImplBase>;
 
 /**
  * Direct response entry that does an SSL redirect.
@@ -133,12 +133,12 @@ private:
   Runtime::Loader& loader_;
   std::list<std::string> allow_origin_;
   std::list<std::regex> allow_origin_regex_;
-  std::string allow_methods_;
-  std::string allow_headers_;
-  std::string expose_headers_;
-  std::string max_age_{};
+  const std::string allow_methods_;
+  const std::string allow_headers_;
+  const std::string expose_headers_;
+  const std::string max_age_;
   absl::optional<bool> allow_credentials_{};
-  bool legacy_enabled_;
+  const bool legacy_enabled_;
 };
 
 class ConfigImpl;
@@ -218,7 +218,7 @@ private:
   const CatchAllVirtualCluster virtual_cluster_catch_all_;
 };
 
-typedef std::shared_ptr<VirtualHostImpl> VirtualHostSharedPtr;
+using VirtualHostSharedPtr = std::shared_ptr<VirtualHostImpl>;
 
 /**
  * Implementation of RetryPolicy that reads from the proto route or virtual host config.
@@ -228,7 +228,7 @@ class RetryPolicyImpl : public RetryPolicy {
 public:
   RetryPolicyImpl(const envoy::api::v2::route::RetryPolicy& retry_policy,
                   ProtobufMessage::ValidationVisitor& validation_visitor);
-  RetryPolicyImpl() {}
+  RetryPolicyImpl() = default;
 
   // Router::RetryPolicy
   std::chrono::milliseconds perTryTimeout() const override { return per_try_timeout_; }
@@ -265,7 +265,7 @@ private:
  */
 class ShadowPolicyImpl : public ShadowPolicy {
 public:
-  ShadowPolicyImpl(const envoy::api::v2::route::RouteAction& config);
+  explicit ShadowPolicyImpl(const envoy::api::v2::route::RouteAction& config);
 
   // Router::ShadowPolicy
   const std::string& cluster() const override { return cluster_; }
@@ -284,8 +284,9 @@ private:
  */
 class HashPolicyImpl : public HashPolicy {
 public:
-  HashPolicyImpl(const Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy>&
-                     hash_policy);
+  explicit HashPolicyImpl(
+      const Protobuf::RepeatedPtrField<envoy::api::v2::route::RouteAction::HashPolicy>&
+          hash_policy);
 
   // Router::HashPolicy
   absl::optional<uint64_t> generateHash(const Network::Address::Instance* downstream_addr,
@@ -294,7 +295,7 @@ public:
 
   class HashMethod {
   public:
-    virtual ~HashMethod() {}
+    virtual ~HashMethod() = default;
     virtual absl::optional<uint64_t> evaluate(const Network::Address::Instance* downstream_addr,
                                               const Http::HeaderMap& headers,
                                               const AddCookieCallback add_cookie) const PURE;
@@ -303,7 +304,7 @@ public:
     virtual bool terminal() const PURE;
   };
 
-  typedef std::unique_ptr<HashMethod> HashMethodPtr;
+  using HashMethodPtr = std::unique_ptr<HashMethod>;
 
 private:
   std::vector<HashMethodPtr> hash_impls_;
@@ -336,7 +337,7 @@ private:
  */
 class DecoratorImpl : public Decorator {
 public:
-  DecoratorImpl(const envoy::api::v2::route::Decorator& decorator);
+  explicit DecoratorImpl(const envoy::api::v2::route::Decorator& decorator);
 
   // Decorator::apply
   void apply(Tracing::Span& span) const override;
@@ -353,7 +354,7 @@ private:
  */
 class RouteTracingImpl : public RouteTracing {
 public:
-  RouteTracingImpl(const envoy::api::v2::route::Tracing& tracing);
+  explicit RouteTracingImpl(const envoy::api::v2::route::Tracing& tracing);
 
   // Tracing::getClientSampling
   const envoy::type::FractionalPercent& getClientSampling() const override;
@@ -395,12 +396,6 @@ public:
     }
     return !host_redirect_.empty() || !path_redirect_.empty() || !prefix_rewrite_redirect_.empty();
   }
-
-  // private proto client filter
-  Server::Configuration::FactoryContext& context_;
-  void processPreClientFilter(
-            const envoy::api::v2::route::HttpPreClientFilter& proto_config,
-            Http::PrivateProtoFilterFactoriesList& filter_factories) override ;
 
   bool matchRoute(const Http::HeaderMap& headers, uint64_t random_value) const;
   void validateClusters(Upstream::ClusterManager& cm) const;
@@ -623,7 +618,7 @@ private:
     PerFilterConfigs per_filter_configs_;
   };
 
-  typedef std::shared_ptr<WeightedClusterEntry> WeightedClusterEntrySharedPtr;
+  using WeightedClusterEntrySharedPtr = std::shared_ptr<WeightedClusterEntry>;
 
   absl::optional<RuntimeData> loadRuntimeData(const envoy::api::v2::route::RouteMatch& route);
 
@@ -652,6 +647,7 @@ private:
   const VirtualHostImpl& vhost_; // See note in RouteEntryImplBase::clusterEntry() on why raw ref
                                  // to virtual host is currently safe.
   const bool auto_host_rewrite_;
+  const absl::optional<Http::LowerCaseString> auto_host_rewrite_header_;
   const std::string cluster_name_;
   const Http::LowerCaseString cluster_header_name_;
   const Http::Code cluster_not_found_response_code_;
@@ -782,10 +778,9 @@ public:
 private:
   const VirtualHostImpl* findVirtualHost(const Http::HeaderMap& headers) const;
 
-  typedef std::map<int64_t, std::unordered_map<std::string, VirtualHostSharedPtr>,
-                   std::greater<int64_t>>
-      WildcardVirtualHosts;
-  typedef std::function<std::string(const std::string&, int)> SubstringFunction;
+  using WildcardVirtualHosts =
+      std::map<int64_t, std::unordered_map<std::string, VirtualHostSharedPtr>, std::greater<>>;
+  using SubstringFunction = std::function<std::string(const std::string&, int)>;
   const VirtualHostImpl* findWildcardVirtualHost(const std::string& host,
                                                  const WildcardVirtualHosts& wildcard_virtual_hosts,
                                                  SubstringFunction substring_function) const;
@@ -847,7 +842,7 @@ private:
 class NullConfigImpl : public Config {
 public:
   // Router::Config
-  RouteConstSharedPtr route(const Http::HeaderMap&, uint64_t) const override; /*{ return nullptr; }*/
+  RouteConstSharedPtr route(const Http::HeaderMap&, uint64_t) const override { return nullptr; }
 
   const std::list<Http::LowerCaseString>& internalOnlyHeaders() const override {
     return internal_only_headers_;

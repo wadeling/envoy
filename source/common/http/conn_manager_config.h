@@ -2,7 +2,6 @@
 
 #include "envoy/config/config_provider.h"
 #include "envoy/http/filter.h"
-#include "envoy/http/private_proto_filter.h"
 #include "envoy/router/rds.h"
 #include "envoy/stats/scope.h"
 
@@ -110,7 +109,7 @@ struct TracingConnectionManagerConfig {
   bool verbose_;
 };
 
-typedef std::unique_ptr<TracingConnectionManagerConfig> TracingConnectionManagerConfigPtr;
+using TracingConnectionManagerConfigPtr = std::unique_ptr<TracingConnectionManagerConfig>;
 
 /**
  * Connection manager per listener stats. @see stats_macros.h
@@ -145,14 +144,14 @@ enum class ForwardClientCertType {
  * Configuration for the fields of the client cert, used for populating the current client cert
  * information to the next hop.
  */
-enum class ClientCertDetailsType { Cert, Subject, URI, DNS };
+enum class ClientCertDetailsType { Cert, Chain, Subject, URI, DNS };
 
 /**
  * Configuration for what addresses should be considered internal beyond the defaults.
  */
 class InternalAddressConfig {
 public:
-  virtual ~InternalAddressConfig() {}
+  virtual ~InternalAddressConfig() = default;
   virtual bool isInternalAddress(const Network::Address::Instance& address) const PURE;
 };
 
@@ -171,7 +170,7 @@ public:
  */
 class ConnectionManagerConfig {
 public:
-  virtual ~ConnectionManagerConfig() {}
+  virtual ~ConnectionManagerConfig() = default;
 
   /**
    *  @return const std::list<AccessLog::InstanceSharedPtr>& the access logs to write to.
@@ -207,14 +206,17 @@ public:
    *         chain.
    */
   virtual FilterChainFactory& filterFactory() PURE;
-  virtual PrivateProtoFilterChainFactory& privateProtoFilterFactory() PURE;
-
 
   /**
    * @return whether the connection manager will generate a fresh x-request-id if the request does
    *         not have one.
    */
   virtual bool generateRequestId() PURE;
+
+  /**
+   * @return whether the x-request-id should not be reset on edge entry inside mesh
+   */
+  virtual bool preserveExternalRequestId() const PURE;
 
   /**
    * @return optional idle timeout for incoming connection manager connections.
@@ -225,6 +227,11 @@ public:
    * @return maximum request headers size the connection manager will accept.
    */
   virtual uint32_t maxRequestHeadersKb() const PURE;
+
+  /**
+   * @return maximum number of request headers the codecs will accept.
+   */
+  virtual uint32_t maxRequestHeadersCount() const PURE;
 
   /**
    * @return per-stream idle timeout for incoming connection manager connections. Zero indicates a
@@ -351,6 +358,12 @@ public:
    * @return if the HttpConnectionManager should normalize url following RFC3986
    */
   virtual bool shouldNormalizePath() const PURE;
+
+  /**
+   * @return if the HttpConnectionManager should merge two or more adjacent slashes in the path into
+   * one.
+   */
+  virtual bool shouldMergeSlashes() const PURE;
 };
 } // namespace Http
 } // namespace Envoy

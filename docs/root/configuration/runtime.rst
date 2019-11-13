@@ -5,7 +5,7 @@ Runtime
 
 The :ref:`runtime configuration <arch_overview_runtime>` specifies a virtual file system tree that
 contains re-loadable configuration elements. This virtual file system can be realized via a series
-of local file system, static bootstrap configuration and admin console derived overlays.
+of local file system, static bootstrap configuration, RTDS and admin console derived overlays.
 
 * :ref:`v2 API reference <envoy_api_msg_config.bootstrap.v2.Runtime>`
 
@@ -27,12 +27,16 @@ be:
 .. code-block:: yaml
 
   layers:
-  - static_layer:
+  - name: static_layer_0
+    static_layer:
       health_check:
         min_interval: 5
-  - disk_layer: { symlink_root: /srv/runtime/current/envoy }
-  - disk_layer: { symlink_root: /srv/runtime/current/envoy_override, append_service_cluster: true }
-  - admin_layer: {}
+  - name: disk_layer_0
+    disk_layer: { symlink_root: /srv/runtime/current, subdirectory: envoy }
+  - name: disk_layer_1
+    disk_layer: { symlink_root: /srv/runtime/current, subdirectory: envoy_override, append_service_cluster: true }
+  - name: admin_layer_0
+    admin_layer: {}
 
 In the deprecated :ref:`runtime <envoy_api_msg_config.bootstrap.v2.Runtime>` bootstrap
 configuration, the layering was implicit and fixed:
@@ -133,6 +137,17 @@ old tree to the new runtime tree, using the equivalent of the following command:
   /srv/runtime:~$ ln -s /srv/runtime/v2 new && mv -Tf new current
 
 It's beyond the scope of this document how the file system data is deployed, garbage collected, etc.
+
+.. _config_runtime_rtds:
+
+Runtime Discovery Service (RTDS)
+++++++++++++++++++++++++++++++++
+
+One or more runtime layers may be specified and delivered by specifying a :ref:`rtds_layer
+<envoy_api_field_config.bootstrap.v2.RuntimeLayer.rtds_layer>`. This points the runtime layer at a
+regular :ref:`xDS <xds_protocol>` endpoint, subscribing to a single xDS resource for the given
+layer. The resource type for these layers is a :ref:`Runtime message
+<envoy_api_msg_service.discovery.v2.Runtime>`.
 
 .. _config_runtime_admin:
 

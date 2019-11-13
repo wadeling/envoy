@@ -11,9 +11,10 @@ def envoy_cc_platform_dep(name):
         "//conditions:default": [name + "_posix"],
     })
 
-def envoy_select_boringssl(if_fips, default = None):
+def envoy_select_boringssl(if_fips, default = None, if_disabled = None):
     return select({
         "@envoy//bazel:boringssl_fips": if_fips,
+        "@envoy//bazel:boringssl_disabled": if_disabled or [],
         "//conditions:default": default or [],
     })
 
@@ -29,4 +30,27 @@ def envoy_select_hot_restart(xs, repository = ""):
     return select({
         repository + "//bazel:disable_hot_restart_or_apple": [],
         "//conditions:default": xs,
+    })
+
+# Selects the given values depending on the WASM runtimes enabbled in the current build.
+def envoy_select_wasm(xs):
+    return select({
+        "@envoy//bazel:wasm_all": xs,
+        "@envoy//bazel:wasm_v8": xs,
+        "@envoy//bazel:wasm_wavm": xs,
+        "//conditions:default": [],
+    })
+
+def envoy_select_wasm_v8(xs):
+    return select({
+        "@envoy//bazel:wasm_all": xs,
+        "@envoy//bazel:wasm_v8": xs,
+        "//conditions:default": [],
+    })
+
+def envoy_select_wasm_wavm(xs):
+    return select({
+        "@envoy//bazel:wasm_all": xs,
+        "@envoy//bazel:wasm_wavm": xs,
+        "//conditions:default": [],
     })

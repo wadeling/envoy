@@ -16,6 +16,7 @@
 #include "common/runtime/uuid_util.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
 
 namespace Envoy {
@@ -40,13 +41,16 @@ std::string ConnectionManagerUtility::determineNextProtocol(Network::Connection&
 ServerConnectionPtr ConnectionManagerUtility::autoCreateCodec(
     Network::Connection& connection, const Buffer::Instance& data,
     ServerConnectionCallbacks& callbacks, Stats::Scope& scope, const Http1Settings& http1_settings,
-    const Http2Settings& http2_settings, const uint32_t max_request_headers_kb) {
+    const Http2Settings& http2_settings, const uint32_t max_request_headers_kb,
+    const uint32_t max_request_headers_count) {
   if (determineNextProtocol(connection, data) == Http2::ALPN_STRING) {
     return std::make_unique<Http2::ServerConnectionImpl>(connection, callbacks, scope,
-                                                         http2_settings, max_request_headers_kb);
+                                                         http2_settings, max_request_headers_kb,
+                                                         max_request_headers_count);
   } else {
-    return std::make_unique<Http1::ServerConnectionImpl>(connection, callbacks, http1_settings,
-                                                         max_request_headers_kb);
+    return std::make_unique<Http1::ServerConnectionImpl>(connection, scope, callbacks,
+                                                         http1_settings, max_request_headers_kb,
+                                                         max_request_headers_count);
   }
 }
 
@@ -206,11 +210,13 @@ Network::Address::InstanceConstSharedPtr ConnectionManagerUtility::mutateRequest
   }
 
   // Generate x-request-id for all edge requests, or if there is none.
-  if (config.generateRequestId() && (edge_request || !request_headers.RequestId())) {
+  if (config.generateRequestId()) {
     // TODO(PiotrSikora) PERF: Write UUID directly to the header map.
-    const std::string uuid = random.uuid();
-    ASSERT(!uuid.empty());
-    request_headers.insertRequestId().value(uuid);
+    if ((!config.preserveExternalRequestId() && edge_request) || !request_headers.RequestId()) {
+      const std::string uuid = random.uuid();
+      ASSERT(!uuid.empty());
+      request_headers.insertRequestId().value(uuid);
+    }
   }
 
   mutateXfccRequestHeader(request_headers, connection, config);
@@ -294,38 +300,45 @@ void ConnectionManagerUtility::mutateXfccRequestHeader(HeaderMap& request_header
       config.forwardClientCert() == ForwardClientCertType::SanitizeSet) {
     const auto uri_sans_local_cert = connection.ssl()->uriSanLocalCertificate();
     if (!uri_sans_local_cert.empty()) {
-      client_cert_details.push_back("By=" + uri_sans_local_cert[0]);
+      client_cert_details.push_back(absl::StrCat("By=", uri_sans_local_cert[0]));
     }
     const std::string cert_digest = connection.ssl()->sha256PeerCertificateDigest();
     if (!cert_digest.empty()) {
-      client_cert_details.push_back("Hash=" + cert_digest);
+      client_cert_details.push_back(absl::StrCat("Hash=", cert_digest));
     }
     for (const auto& detail : config.setCurrentClientCertDetails()) {
       switch (detail) {
       case ClientCertDetailsType::Cert: {
         const std::string peer_cert = connection.ssl()->urlEncodedPemEncodedPeerCertificate();
         if (!peer_cert.empty()) {
-          client_cert_details.push_back("Cert=\"" + peer_cert + "\"");
+          client_cert_details.push_back(absl::StrCat("Cert=\"", peer_cert, "\""));
+        }
+        break;
+      }
+      case ClientCertDetailsType::Chain: {
+        const std::string peer_chain = connection.ssl()->urlEncodedPemEncodedPeerCertificateChain();
+        if (!peer_chain.empty()) {
+          client_cert_details.push_back(absl::StrCat("Chain=\"", peer_chain, "\""));
         }
         break;
       }
       case ClientCertDetailsType::Subject:
         // The "Subject" key still exists even if the subject is empty.
-        client_cert_details.push_back("Subject=\"" + connection.ssl()->subjectPeerCertificate() +
-                                      "\"");
+        client_cert_details.push_back(
+            absl::StrCat("Subject=\"", connection.ssl()->subjectPeerCertificate(), "\""));
         break;
       case ClientCertDetailsType::URI: {
         // The "URI" key still exists even if the URI is empty.
         const auto sans = connection.ssl()->uriSanPeerCertificate();
         const auto& uri_san = sans.empty() ? "" : sans[0];
-        client_cert_details.push_back("URI=" + uri_san);
+        client_cert_details.push_back(absl::StrCat("URI=", uri_san));
         break;
       }
       case ClientCertDetailsType::DNS: {
         const std::vector<std::string> dns_sans = connection.ssl()->dnsSansPeerCertificate();
         if (!dns_sans.empty()) {
           for (const std::string& dns : dns_sans) {
-            client_cert_details.push_back("DNS=" + dns);
+            client_cert_details.push_back(absl::StrCat("DNS=", dns));
           }
         }
         break;
@@ -381,10 +394,15 @@ void ConnectionManagerUtility::mutateResponseHeaders(HeaderMap& response_headers
 bool ConnectionManagerUtility::maybeNormalizePath(HeaderMap& request_headers,
                                                   const ConnectionManagerConfig& config) {
   ASSERT(request_headers.Path());
+  bool is_valid_path = true;
   if (config.shouldNormalizePath()) {
-    return PathUtil::canonicalPath(*request_headers.Path());
+    is_valid_path = PathUtil::canonicalPath(*request_headers.Path());
   }
-  return true;
+  // Merge slashes after path normalization to catch potential edge cases with percent encoding.
+  if (is_valid_path && config.shouldMergeSlashes()) {
+    PathUtil::mergeSlashes(*request_headers.Path());
+  }
+  return is_valid_path;
 }
 
 } // namespace Http

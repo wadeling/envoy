@@ -23,6 +23,7 @@
 #include "common/protobuf/utility.h"
 #include "common/router/rds_impl.h"
 #include "common/router/scoped_rds.h"
+#include "common/runtime/runtime_impl.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -30,8 +31,8 @@ namespace NetworkFilters {
 namespace HttpConnectionManager {
 namespace {
 
-typedef std::list<Http::FilterFactoryCb> FilterFactoriesList;
-typedef std::map<std::string, HttpConnectionManagerConfig::FilterConfig> FilterFactoryMap;
+using FilterFactoriesList = std::list<Http::FilterFactoryCb>;
+using FilterFactoryMap = std::map<std::string, HttpConnectionManagerConfig::FilterConfig>;
 
 HttpConnectionManagerConfig::UpgradeMap::const_iterator
 findUpgradeBoolCaseInsensitive(const HttpConnectionManagerConfig::UpgradeMap& upgrade_map,
@@ -149,12 +150,17 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
       http1_settings_(Http::Utility::parseHttp1Settings(config.http_protocol_options())),
       max_request_headers_kb_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(
           config, max_request_headers_kb, Http::DEFAULT_MAX_REQUEST_HEADERS_KB)),
-      idle_timeout_(PROTOBUF_GET_OPTIONAL_MS(config, idle_timeout)),
+      max_request_headers_count_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+          config.common_http_protocol_options(), max_headers_count,
+          context.runtime().snapshot().getInteger(Http::MaxRequestHeadersCountOverrideKey,
+                                                  Http::DEFAULT_MAX_HEADERS_COUNT))),
+      idle_timeout_(PROTOBUF_GET_OPTIONAL_MS(config.common_http_protocol_options(), idle_timeout)),
       stream_idle_timeout_(
           PROTOBUF_GET_MS_OR_DEFAULT(config, stream_idle_timeout, StreamIdleTimeoutMs)),
       request_timeout_(PROTOBUF_GET_MS_OR_DEFAULT(config, request_timeout, RequestTimeoutMs)),
       drain_timeout_(PROTOBUF_GET_MS_OR_DEFAULT(config, drain_timeout, 5000)),
       generate_request_id_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, generate_request_id, true)),
+      preserve_external_request_id_(config.preserve_external_request_id()),
       date_provider_(date_provider),
       listener_stats_(Http::ConnectionManagerImpl::generateListenerStats(stats_prefix_,
                                                                          context_.listenerScope())),
@@ -162,16 +168,21 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
       delayed_close_timeout_(PROTOBUF_GET_MS_OR_DEFAULT(config, delayed_close_timeout, 1000)),
       normalize_path_(PROTOBUF_GET_WRAPPED_OR_DEFAULT(
           config, normalize_path,
-          // TODO(htuch): we should have a
-          // boolean variant of featureEnabled()
-          // here.
+          // TODO(htuch): we should have a boolean variant of featureEnabled() here.
           context.runtime().snapshot().featureEnabled("http_connection_manager.normalize_path",
 #ifdef ENVOY_NORMALIZE_PATH_BY_DEFAULT
                                                       100
 #else
                                                       0
 #endif
-                                                      ))) {
+                                                      ))),
+      merge_slashes_(config.merge_slashes()) {
+  // If idle_timeout_ was not configured in common_http_protocol_options, use value in deprecated
+  // idle_timeout field.
+  // TODO(asraa): Remove when idle_timeout is removed.
+  if (!idle_timeout_) {
+    idle_timeout_ = PROTOBUF_GET_OPTIONAL_MS(config, idle_timeout);
+  }
   // If scoped RDS is enabled, avoid creating a route config provider. Route config providers will
   // be managed by the scoped routing logic instead.
   switch (config.route_specifier_case()) {
@@ -220,6 +231,9 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
   if (set_current_client_cert_details.cert()) {
     set_current_client_cert_details_.push_back(Http::ClientCertDetailsType::Cert);
   }
+  if (set_current_client_cert_details.chain()) {
+    set_current_client_cert_details_.push_back(Http::ClientCertDetailsType::Chain);
+  }
   if (PROTOBUF_GET_WRAPPED_OR_DEFAULT(set_current_client_cert_details, subject, false)) {
     set_current_client_cert_details_.push_back(Http::ClientCertDetailsType::Subject);
   }
@@ -263,8 +277,9 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
     envoy::type::FractionalPercent random_sampling;
     // TODO: Random sampling historically was an integer and default to out of 10,000. We should
     // deprecate that and move to a straight fractional percent config.
-    random_sampling.set_numerator(
-        tracing_config.has_random_sampling() ? tracing_config.random_sampling().value() : 10000);
+    uint64_t random_sampling_numerator{PROTOBUF_PERCENT_TO_ROUNDED_INTEGER_OR_DEFAULT(
+        tracing_config, random_sampling, 10000, 10000)};
+    random_sampling.set_numerator(random_sampling_numerator);
     random_sampling.set_denominator(envoy::type::FractionalPercent::TEN_THOUSAND);
     envoy::type::FractionalPercent overall_sampling;
     overall_sampling.set_numerator(
@@ -304,16 +319,13 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
 
   const auto& filters = config.http_filters();
   for (int32_t i = 0; i < filters.size(); i++) {
-    processFilter(filters[i], i, "http", filter_factories_);
+    bool is_terminal = false;
+    processFilter(filters[i], i, "http", filter_factories_, is_terminal);
+    Config::Utility::validateTerminalFilters(filters[i].name(), "http", is_terminal,
+                                             i == filters.size() - 1);
   }
 
-  // add pre srv filter cb
-  const auto& pre_srv_filters = config.http_pre_srv_filters();
-  for (int32_t i = 0; i < pre_srv_filters.size(); i++) {
-    processPreSrvFilter(pre_srv_filters[i], pre_srv_filter_factories_);
-  }
-
-  for (auto upgrade_config : config.upgrade_configs()) {
+  for (const auto& upgrade_config : config.upgrade_configs()) {
     const std::string& name = upgrade_config.upgrade_type();
     const bool enabled = upgrade_config.has_enabled() ? upgrade_config.enabled().value() : true;
     if (findUpgradeCaseInsensitive(upgrade_filter_factories_, name) !=
@@ -323,8 +335,12 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
     }
     if (!upgrade_config.filters().empty()) {
       std::unique_ptr<FilterFactoriesList> factories = std::make_unique<FilterFactoriesList>();
-      for (int32_t i = 0; i < upgrade_config.filters().size(); i++) {
-        processFilter(upgrade_config.filters(i), i, name, *factories);
+      for (int32_t j = 0; j < upgrade_config.filters().size(); j++) {
+        bool is_terminal = false;
+        processFilter(upgrade_config.filters(j), j, name, *factories, is_terminal);
+        Config::Utility::validateTerminalFilters(upgrade_config.filters(j).name(), "http upgrade",
+                                                 is_terminal,
+                                                 j == upgrade_config.filters().size() - 1);
       }
       upgrade_filter_factories_.emplace(
           std::make_pair(name, FilterConfig{std::move(factories), enabled}));
@@ -338,7 +354,8 @@ HttpConnectionManagerConfig::HttpConnectionManagerConfig(
 
 void HttpConnectionManagerConfig::processFilter(
     const envoy::config::filter::network::http_connection_manager::v2::HttpFilter& proto_config,
-    int i, absl::string_view prefix, std::list<Http::FilterFactoryCb>& filter_factories) {
+    int i, absl::string_view prefix, std::list<Http::FilterFactoryCb>& filter_factories,
+    bool& is_terminal) {
   const std::string& string_name = proto_config.name();
 
   ENVOY_LOG(debug, "    {} filter #{}", prefix, i);
@@ -354,37 +371,14 @@ void HttpConnectionManagerConfig::processFilter(
           string_name);
   Http::FilterFactoryCb callback;
   if (Config::Utility::allowDeprecatedV1Config(context_.runtime(), *filter_config)) {
-    ENVOY_LOG(debug, "v1  config: createFilterFactory" );
     callback = factory.createFilterFactory(*filter_config->getObject("value", true), stats_prefix_,
                                            context_);
   } else {
-    ENVOY_LOG(debug, "protobuf config: createFilterFactoryFromProto");
     ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
         proto_config, context_.messageValidationVisitor(), factory);
-    ENVOY_LOG(debug, "protobuf config: message {}",message->DebugString());
     callback = factory.createFilterFactoryFromProto(*message, stats_prefix_, context_);
   }
-  filter_factories.push_back(callback);
-}
-
-void HttpConnectionManagerConfig::processPreSrvFilter(
-      const envoy::config::filter::network::http_connection_manager::v2::HttpPreSrvFilter& proto_config,
-      std::list<Http::PrivateProtoFilterFactoryCb>& filter_factories) {
-  const std::string& string_name = proto_config.name();
-
-  ENVOY_LOG(debug, "   pre srv filter name: {}", string_name);
-
-  const Json::ObjectSharedPtr filter_config = MessageUtil::getJsonObjectFromMessage(proto_config.config());
-  ENVOY_LOG(debug, "    config: {}", filter_config->asJsonString());
-
-  // Now see if there is a factory that will accept the config.
-  auto& factory = Config::Utility::getAndCheckFactory<Server::Configuration::PrivateProtoNamedHttpFilterConfigFactory>(string_name);
-  ENVOY_LOG(debug, "    facotory name: {}", factory.name());
-  Http::PrivateProtoFilterFactoryCb callback;
-  ProtobufTypes::MessagePtr message = Config::Utility::translateToFactoryConfig(
-              proto_config, context_.messageValidationVisitor(), factory);
-  callback = factory.createPrivateProtoFilterFactoryFromProto(*message,context_);
-  ENVOY_LOG(debug, "   pre srv  config msg : {}", message->DebugString());
+  is_terminal = factory.isTerminalFilter();
   filter_factories.push_back(callback);
 }
 
@@ -392,19 +386,19 @@ Http::ServerConnectionPtr
 HttpConnectionManagerConfig::createCodec(Network::Connection& connection,
                                          const Buffer::Instance& data,
                                          Http::ServerConnectionCallbacks& callbacks) {
-  ENVOY_LOG(debug, "create server conn,codec_type {}", int(codec_type_));
-
   switch (codec_type_) {
   case CodecType::HTTP1:
     return std::make_unique<Http::Http1::ServerConnectionImpl>(
-        connection, callbacks, http1_settings_, maxRequestHeadersKb());
+        connection, context_.scope(), callbacks, http1_settings_, maxRequestHeadersKb(),
+        maxRequestHeadersCount());
   case CodecType::HTTP2:
     return std::make_unique<Http::Http2::ServerConnectionImpl>(
-        connection, callbacks, context_.scope(), http2_settings_, maxRequestHeadersKb());
+        connection, callbacks, context_.scope(), http2_settings_, maxRequestHeadersKb(),
+        maxRequestHeadersCount());
   case CodecType::AUTO:
-    return Http::ConnectionManagerUtility::autoCreateCodec(connection, data, callbacks,
-                                                           context_.scope(), http1_settings_,
-                                                           http2_settings_, maxRequestHeadersKb());
+    return Http::ConnectionManagerUtility::autoCreateCodec(
+        connection, data, callbacks, context_.scope(), http1_settings_, http2_settings_,
+        maxRequestHeadersKb(), maxRequestHeadersCount());
   }
 
   NOT_REACHED_GCOVR_EXCL_LINE;
@@ -413,13 +407,6 @@ HttpConnectionManagerConfig::createCodec(Network::Connection& connection,
 void HttpConnectionManagerConfig::createFilterChain(Http::FilterChainFactoryCallbacks& callbacks) {
   for (const Http::FilterFactoryCb& factory : filter_factories_) {
     factory(callbacks);
-  }
-}
-
-void HttpConnectionManagerConfig::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {
-  ENVOY_LOG(debug,"create pre srv filter chain");
-  for (const Http::PrivateProtoFilterFactoryCb& factory : pre_srv_filter_factories_) {
-      factory(callbacks);
   }
 }
 

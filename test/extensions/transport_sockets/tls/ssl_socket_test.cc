@@ -879,6 +879,52 @@ TEST_P(SslSocketTest, GetUriWithUriSan) {
                .setExpectedSerialNumber(TEST_SAN_URI_CERT_SERIAL));
 }
 
+// Verify that IP SANs work with an IPv4 address specified in the validation context.
+TEST_P(SslSocketTest, Ipv4San) {
+  const std::string client_ctx_yaml = R"EOF(
+  common_tls_context:
+    validation_context:
+      trusted_ca:
+        filename: "{{ test_rundir }}/test/config/integration/certs/upstreamcacert.pem"
+      verify_subject_alt_name: "127.0.0.1"
+)EOF";
+
+  const std::string server_ctx_yaml = R"EOF(
+  common_tls_context:
+    tls_certificates:
+      certificate_chain:
+        filename: "{{ test_rundir }}/test/config/integration/certs/upstreamlocalhostcert.pem"
+      private_key:
+        filename: "{{ test_rundir }}/test/config/integration/certs/upstreamlocalhostkey.pem"
+)EOF";
+
+  TestUtilOptions test_options(client_ctx_yaml, server_ctx_yaml, true, GetParam());
+  testUtil(test_options);
+}
+
+// Verify that IP SANs work with an IPv6 address specified in the validation context.
+TEST_P(SslSocketTest, Ipv6San) {
+  const std::string client_ctx_yaml = R"EOF(
+  common_tls_context:
+    validation_context:
+      trusted_ca:
+        filename: "{{ test_rundir }}/test/config/integration/certs/upstreamcacert.pem"
+      verify_subject_alt_name: "::1"
+)EOF";
+
+  const std::string server_ctx_yaml = R"EOF(
+  common_tls_context:
+    tls_certificates:
+      certificate_chain:
+        filename: "{{ test_rundir }}/test/config/integration/certs/upstreamlocalhostcert.pem"
+      private_key:
+        filename: "{{ test_rundir }}/test/config/integration/certs/upstreamlocalhostkey.pem"
+)EOF";
+
+  TestUtilOptions test_options(client_ctx_yaml, server_ctx_yaml, true, GetParam());
+  testUtil(test_options);
+}
+
 TEST_P(SslSocketTest, GetNoUriWithDnsSan) {
   const std::string client_ctx_yaml = R"EOF(
   common_tls_context:
@@ -3707,17 +3753,13 @@ TEST_P(SslSocketTest, OverrideRequestedServerNameWithoutSniInUpstreamTlsContext)
 // NotReadySslSocket object to handle downstream connection.
 TEST_P(SslSocketTest, DownstreamNotReadySslSocket) {
   Stats::IsolatedStoreImpl stats_store;
-  testing::NiceMock<Server::Configuration::MockTransportSocketFactoryContext> factory_context;
   NiceMock<LocalInfo::MockLocalInfo> local_info;
-  NiceMock<Event::MockDispatcher> dispatcher;
-  NiceMock<Runtime::MockRandomGenerator> random;
-  NiceMock<Upstream::MockClusterManager> cluster_manager;
+  testing::NiceMock<Server::Configuration::MockTransportSocketFactoryContext> factory_context;
   NiceMock<Init::MockManager> init_manager;
-  EXPECT_CALL(factory_context, localInfo()).WillOnce(ReturnRef(local_info));
+  NiceMock<Event::MockDispatcher> dispatcher;
   EXPECT_CALL(factory_context, dispatcher()).WillOnce(ReturnRef(dispatcher));
-  EXPECT_CALL(factory_context, random()).WillOnce(ReturnRef(random));
+  EXPECT_CALL(factory_context, localInfo()).WillOnce(ReturnRef(local_info));
   EXPECT_CALL(factory_context, stats()).WillOnce(ReturnRef(stats_store));
-  EXPECT_CALL(factory_context, clusterManager()).WillOnce(ReturnRef(cluster_manager));
   EXPECT_CALL(factory_context, initManager()).WillRepeatedly(Return(&init_manager));
 
   envoy::api::v2::auth::DownstreamTlsContext tls_context;
@@ -3747,18 +3789,14 @@ TEST_P(SslSocketTest, DownstreamNotReadySslSocket) {
 // NotReadySslSocket object to handle upstream connection.
 TEST_P(SslSocketTest, UpstreamNotReadySslSocket) {
   Stats::IsolatedStoreImpl stats_store;
-  testing::NiceMock<Server::Configuration::MockTransportSocketFactoryContext> factory_context;
   NiceMock<LocalInfo::MockLocalInfo> local_info;
-  NiceMock<Event::MockDispatcher> dispatcher;
-  NiceMock<Runtime::MockRandomGenerator> random;
-  NiceMock<Upstream::MockClusterManager> cluster_manager;
+  testing::NiceMock<Server::Configuration::MockTransportSocketFactoryContext> factory_context;
   NiceMock<Init::MockManager> init_manager;
+  NiceMock<Event::MockDispatcher> dispatcher;
   EXPECT_CALL(factory_context, localInfo()).WillOnce(ReturnRef(local_info));
-  EXPECT_CALL(factory_context, dispatcher()).WillOnce(ReturnRef(dispatcher));
-  EXPECT_CALL(factory_context, random()).WillOnce(ReturnRef(random));
   EXPECT_CALL(factory_context, stats()).WillOnce(ReturnRef(stats_store));
-  EXPECT_CALL(factory_context, clusterManager()).WillOnce(ReturnRef(cluster_manager));
   EXPECT_CALL(factory_context, initManager()).WillRepeatedly(Return(&init_manager));
+  EXPECT_CALL(factory_context, dispatcher()).WillOnce(ReturnRef(dispatcher));
 
   envoy::api::v2::auth::UpstreamTlsContext tls_context;
   auto sds_secret_configs =

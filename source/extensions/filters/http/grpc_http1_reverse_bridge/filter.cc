@@ -21,7 +21,7 @@ struct RcDetailsValues {
   // The gRPC HTTP/1 bridge encountered an unsupported content type.
   const std::string GrpcBridgeFailedContentType = "grpc_bridge_content_type_wrong";
 };
-typedef ConstSingleton<RcDetailsValues> RcDetails;
+using RcDetails = ConstSingleton<RcDetailsValues>;
 
 namespace {
 Grpc::Status::GrpcStatus grpcStatusFromHeaders(Http::HeaderMap& headers) {
@@ -50,8 +50,6 @@ void adjustContentLength(Http::HeaderMap& headers,
 } // namespace
 
 Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool end_stream) {
-  ENVOY_LOG(debug,"grpc http1 reverse decodeHeaders,end_stream {}",end_stream);
-
   // Short circuit if header only.
   if (end_stream) {
     return Http::FilterHeadersStatus::Continue;
@@ -68,8 +66,6 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
     // We keep track of the original content-type to ensure that we handle
     // gRPC content type variations such as application/grpc+proto.
     content_type_ = std::string(headers.ContentType()->value().getStringView());
-    ENVOY_LOG(debug,"grpc http1 reverse decodeHeaders,has grpc content type {}",content_type_);
-
     headers.ContentType()->value(upstream_content_type_);
     headers.insertAccept().value(upstream_content_type_);
 
@@ -87,10 +83,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
 }
 
 Http::FilterDataStatus Filter::decodeData(Buffer::Instance& buffer, bool) {
-
-    ENVOY_LOG(debug,"grpc http1 reverse decodeData {}",buffer.toString());
-
-    if (enabled_ && withhold_grpc_frames_ && !prefix_stripped_) {
+  if (enabled_ && withhold_grpc_frames_ && !prefix_stripped_) {
     // Fail the request if the body is too small to possibly contain a gRPC frame.
     if (buffer.length() < Grpc::GRPC_FRAME_HEADER_SIZE) {
       decoder_callbacks_->sendLocalReply(Http::Code::OK, "invalid request body", nullptr,
@@ -108,15 +101,12 @@ Http::FilterDataStatus Filter::decodeData(Buffer::Instance& buffer, bool) {
 }
 
 Http::FilterHeadersStatus Filter::encodeHeaders(Http::HeaderMap& headers, bool) {
-  ENVOY_LOG(debug,"grpc http1 reverse encodeHeaders {}",enabled_);
   if (enabled_) {
     auto content_type = headers.ContentType();
 
     // If the response from upstream does not have the correct content-type,
     // perform an early return with a useful error message in grpc-message.
     if (content_type->value().getStringView() != upstream_content_type_) {
-      ENVOY_LOG(error,"grpc http1 reverse encodeHeaders,not match upstream content type {}",upstream_content_type_);
-
       const auto grpc_message = fmt::format("envoy reverse bridge: upstream responded with "
                                             "unsupported content-type {}, status code {}",
                                             content_type->value().getStringView(),
@@ -143,15 +133,12 @@ Http::FilterHeadersStatus Filter::encodeHeaders(Http::HeaderMap& headers, bool) 
     // We can only insert trailers at the end of data, so keep track of this value
     // until then.
     grpc_status_ = grpcStatusFromHeaders(headers);
-
-    ENVOY_LOG(debug,"grpc http1 reverse encodeHeaders grpc_status {}",int(grpc_status_));
   }
 
   return Http::FilterHeadersStatus::Continue;
 }
 
 Http::FilterDataStatus Filter::encodeData(Buffer::Instance& buffer, bool end_stream) {
-  ENVOY_LOG(debug,"grpc http1 reverse encodeData {},end_stream {}",buffer.toString(),end_stream);
   if (!enabled_) {
     return Http::FilterDataStatus::Continue;
   }
@@ -161,24 +148,7 @@ Http::FilterDataStatus Filter::encodeData(Buffer::Instance& buffer, bool end_str
     auto& trailers = encoder_callbacks_->addEncodedTrailers();
     trailers.insertGrpcStatus().value(grpc_status_);
 
-    ENVOY_LOG(debug,"grpc http1 reverse encodeData ,te grpc_status {}",grpc_status_);
-
     if (withhold_grpc_frames_) {
-      ENVOY_LOG(debug,"grpc http1 reverse encodeData ,withhold grpc frames {}",withhold_grpc_frames_);
-
-      //attension,if backend service return not-pb msg , need change to pb format
-      // below is only a test
-      uint8_t  tmp=1;
-      uint8_t  tmp2 = (tmp << 1) | (tmp << 3);
-      uint8_t  tmp3 = buffer.length();
-      std::array<uint8_t,2> tmparr;
-      tmparr[0] = static_cast<uint8_t>(tmp2);
-      tmparr[1] = static_cast<uint8_t>(tmp3);
-      Buffer::OwnedImpl tmpBuff(tmparr.data(),tmparr.size());
-      buffer.prepend(tmpBuff);
-      ENVOY_LOG(debug,"grpc http1 reverse encodeData ,buf to pb buf {},length {},tmparr {}",buffer.toString(),buffer.length(),tmparr.data());
-      // end test
-
       // Compute the size of the payload and construct the length prefix.
       //
       // We do this even if the upstream failed: If the response returned non-200,

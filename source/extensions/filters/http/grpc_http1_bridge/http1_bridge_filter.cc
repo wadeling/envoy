@@ -9,6 +9,7 @@
 #include "common/common/enum_to_int.h"
 #include "common/common/utility.h"
 #include "common/grpc/common.h"
+#include "common/grpc/context_impl.h"
 #include "common/http/headers.h"
 #include "common/http/http1/codec_impl.h"
 
@@ -18,23 +19,18 @@ namespace HttpFilters {
 namespace GrpcHttp1Bridge {
 
 void Http1BridgeFilter::chargeStat(const Http::HeaderMap& headers) {
-  context_.chargeStat(*cluster_, Grpc::Common::Protocol::Grpc, *request_names_,
+  context_.chargeStat(*cluster_, Grpc::Context::Protocol::Grpc, *request_names_,
                       headers.GrpcStatus());
 }
 
 Http::FilterHeadersStatus Http1BridgeFilter::decodeHeaders(Http::HeaderMap& headers, bool) {
   const bool grpc_request = Grpc::Common::hasGrpcContentType(headers);
-  ENVOY_LOG(trace,"grpc request {}",grpc_request);
-
   if (grpc_request) {
     setupStatTracking(headers);
   }
 
   const absl::optional<Http::Protocol>& protocol = decoder_callbacks_->streamInfo().protocol();
   ASSERT(protocol);
-
-  ENVOY_LOG(trace,"protocol value {}",int(protocol.value()));
-
   if (protocol.value() != Http::Protocol::Http2 && grpc_request) {
     do_bridging_ = true;
   }
@@ -42,19 +38,11 @@ Http::FilterHeadersStatus Http1BridgeFilter::decodeHeaders(Http::HeaderMap& head
   return Http::FilterHeadersStatus::Continue;
 }
 
-//void Http1BridgeFilte::dumpHeaders(Http::HeaderMap& headers) {
-//    ENVOY_LOG(trace,"dump headers");
-//    std::map<std::string,std::string>::iterator iter;
-//    for (iter = headers.begin(); iter != headers.end() ; ++iter) {
-//        ENVOY_LOG(trace,"header field: {},value {}",iter->first,iter->second);
-//    }
-//}
 Http::FilterHeadersStatus Http1BridgeFilter::encodeHeaders(Http::HeaderMap& headers,
                                                            bool end_stream) {
   if (doStatTracking()) {
     chargeStat(headers);
   }
-  ENVOY_LOG(trace,"grpc encode headers do_bridging {},end_stream {}",do_bridging_,end_stream);
 
   if (!do_bridging_ || end_stream) {
     return Http::FilterHeadersStatus::Continue;
@@ -65,7 +53,6 @@ Http::FilterHeadersStatus Http1BridgeFilter::encodeHeaders(Http::HeaderMap& head
 }
 
 Http::FilterDataStatus Http1BridgeFilter::encodeData(Buffer::Instance&, bool end_stream) {
-  ENVOY_LOG(trace,"grpc encode data do_bridging {},end_stream {}",do_bridging_,end_stream);
   if (!do_bridging_ || end_stream) {
     return Http::FilterDataStatus::Continue;
   } else {
@@ -79,8 +66,6 @@ Http::FilterTrailersStatus Http1BridgeFilter::encodeTrailers(Http::HeaderMap& tr
     chargeStat(trailers);
   }
 
-  ENVOY_LOG(trace,"grpc encode trailers do_bridging {}",do_bridging_);
-
   if (do_bridging_) {
     // Here we check for grpc-status. If it's not zero, we change the response code. We assume
     // that if a reset comes in and we disconnect the HTTP/1.1 client it will raise some type
@@ -93,15 +78,11 @@ Http::FilterTrailersStatus Http1BridgeFilter::encodeTrailers(Http::HeaderMap& tr
         response_headers_->Status()->value(enumToInt(Http::Code::ServiceUnavailable));
       }
       response_headers_->insertGrpcStatus().value(*grpc_status_header);
-
-      ENVOY_LOG(trace,"grpc encode trailers grpc status code {}",grpc_status_code);
     }
 
     const Http::HeaderEntry* grpc_message_header = trailers.GrpcMessage();
     if (grpc_message_header) {
       response_headers_->insertGrpcMessage().value(*grpc_message_header);
-
-      ENVOY_LOG(trace,"grpc encode trailers grpc message header {}",grpc_message_header->value().getStringView());
     }
 
     // Since we are buffering, set content-length so that HTTP/1.1 callers can better determine
@@ -120,7 +101,6 @@ void Http1BridgeFilter::setupStatTracking(const Http::HeaderMap& headers) {
   if (!cluster_) {
     return;
   }
-
   request_names_ = context_.resolveServiceAndMethod(headers.Path());
 }
 

@@ -34,7 +34,7 @@ public:
                Upstream::ResourcePriority priority,
                const Network::ConnectionSocket::OptionsSharedPtr& options);
 
-  ~ConnPoolImpl();
+  ~ConnPoolImpl() override;
 
   // ConnectionPool::Instance
   Http::Protocol protocol() const override { return Http::Protocol::Http11; }
@@ -42,8 +42,7 @@ public:
   void drainConnections() override;
   bool hasActiveConnections() const override;
   ConnectionPool::Cancellable* newStream(StreamDecoder& response_decoder,
-                                         ConnectionPool::Callbacks& callbacks,
-                                         const Http::PrivateProtoFilterFactoriesList& factory_list) override;
+                                         ConnectionPool::Callbacks& callbacks) override;
   Upstream::HostDescriptionConstSharedPtr host() const override { return host_; };
 
   // ConnPoolImplBase
@@ -56,7 +55,7 @@ protected:
                          public StreamDecoderWrapper,
                          public StreamCallbacks {
     StreamWrapper(StreamDecoder& response_decoder, ActiveClient& parent);
-    ~StreamWrapper();
+    ~StreamWrapper() override;
 
     // StreamEncoderWrapper
     void onEncodeComplete() override;
@@ -79,13 +78,13 @@ protected:
     bool decode_complete_{};
   };
 
-  typedef std::unique_ptr<StreamWrapper> StreamWrapperPtr;
+  using StreamWrapperPtr = std::unique_ptr<StreamWrapper>;
 
   struct ActiveClient : LinkedObject<ActiveClient>,
                         public Network::ConnectionCallbacks,
                         public Event::DeferredDeletable {
     ActiveClient(ConnPoolImpl& parent);
-    ~ActiveClient();
+    ~ActiveClient() override;
 
     void onConnectTimeout();
 
@@ -105,7 +104,7 @@ protected:
     uint64_t remaining_requests_;
   };
 
-  typedef std::unique_ptr<ActiveClient> ActiveClientPtr;
+  using ActiveClientPtr = std::unique_ptr<ActiveClient>;
 
   void attachRequestToClient(ActiveClient& client, StreamDecoder& response_decoder,
                              ConnectionPool::Callbacks& callbacks);

@@ -17,6 +17,9 @@ load(
     _envoy_select_boringssl = "envoy_select_boringssl",
     _envoy_select_google_grpc = "envoy_select_google_grpc",
     _envoy_select_hot_restart = "envoy_select_hot_restart",
+    _envoy_select_wasm = "envoy_select_wasm",
+    _envoy_select_wasm_v8 = "envoy_select_wasm_v8",
+    _envoy_select_wasm_wavm = "envoy_select_wasm_wavm",
 )
 load(
     ":envoy_test.bzl",
@@ -129,12 +132,13 @@ def envoy_proto_descriptor(name, out, srcs = [], external_deps = []):
     include_paths = [".", native.package_name()]
 
     if "api_httpbody_protos" in external_deps:
-        srcs.append("@googleapis//:api_httpbody_protos_src")
-        include_paths.append("external/googleapis")
+        srcs.append("@com_google_googleapis//google/api:httpbody.proto")
+        include_paths.append("external/com_google_googleapis")
 
     if "http_api_protos" in external_deps:
-        srcs.append("@googleapis//:http_api_protos_src")
-        include_paths.append("external/googleapis")
+        srcs.append("@com_google_googleapis//google/api:annotations.proto")
+        srcs.append("@com_google_googleapis//google/api:http.proto")
+        include_paths.append("external/com_google_googleapis")
 
     if "well_known_protos" in external_deps:
         srcs.append("@com_google_protobuf//:well_known_protos")
@@ -166,6 +170,9 @@ def envoy_google_grpc_external_deps():
 envoy_select_boringssl = _envoy_select_boringssl
 envoy_select_google_grpc = _envoy_select_google_grpc
 envoy_select_hot_restart = _envoy_select_hot_restart
+envoy_select_wasm = _envoy_select_wasm
+envoy_select_wasm_v8 = _envoy_select_wasm_v8
+envoy_select_wasm_wavm = _envoy_select_wasm_wavm
 
 # Binary wrappers (from envoy_binary.bzl)
 envoy_cc_binary = _envoy_cc_binary

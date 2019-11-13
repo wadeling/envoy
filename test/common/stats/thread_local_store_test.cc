@@ -43,7 +43,7 @@ public:
     store_->addSink(sink_);
   }
 
-  void resetStoreWithAlloc(StatDataAllocator& alloc) {
+  void resetStoreWithAlloc(Allocator& alloc) {
     store_ = std::make_unique<ThreadLocalStoreImpl>(alloc);
     store_->addSink(sink_);
   }
@@ -51,7 +51,7 @@ public:
   Stats::FakeSymbolTableImpl symbol_table_;
   NiceMock<Event::MockDispatcher> main_thread_dispatcher_;
   NiceMock<ThreadLocal::MockInstance> tls_;
-  HeapStatDataAllocator alloc_;
+  AllocatorImpl alloc_;
   MockSink sink_;
   std::unique_ptr<ThreadLocalStoreImpl> store_;
 };
@@ -169,7 +169,7 @@ public:
   FakeSymbolTableImpl symbol_table_;
   NiceMock<Event::MockDispatcher> main_thread_dispatcher_;
   NiceMock<ThreadLocal::MockInstance> tls_;
-  HeapStatDataAllocator alloc_;
+  AllocatorImpl alloc_;
   MockSink sink_;
   std::unique_ptr<ThreadLocalStoreImpl> store_;
   InSequence s;
@@ -387,7 +387,7 @@ TEST_F(StatsThreadLocalStoreTest, NestedScopes) {
 
   ScopePtr scope2 = scope1->createScope("foo.");
   Counter& c2 = scope2->counter("bar");
-  EXPECT_NE(&c1, &c2);
+  EXPECT_EQ(&c1, &c2);
   EXPECT_EQ("scope1.foo.bar", c2.name());
   StatNameManagedStorage c2_name("scope1.foo.bar", symbol_table_);
   auto found_counter2 = store_->findCounter(c2_name.statName());
@@ -417,7 +417,7 @@ TEST_F(StatsThreadLocalStoreTest, OverlappingScopes) {
   // We will call alloc twice, but they should point to the same backing storage.
   Counter& c1 = scope1->counter("c");
   Counter& c2 = scope2->counter("c");
-  EXPECT_NE(&c1, &c2);
+  EXPECT_EQ(&c1, &c2);
   c1.inc();
   EXPECT_EQ(1UL, c1.value());
   EXPECT_EQ(1UL, c2.value());
@@ -431,7 +431,7 @@ TEST_F(StatsThreadLocalStoreTest, OverlappingScopes) {
   // Gauges should work the same way.
   Gauge& g1 = scope1->gauge("g", Gauge::ImportMode::Accumulate);
   Gauge& g2 = scope2->gauge("g", Gauge::ImportMode::Accumulate);
-  EXPECT_NE(&g1, &g2);
+  EXPECT_EQ(&g1, &g2);
   g1.set(5);
   EXPECT_EQ(5UL, g1.value());
   EXPECT_EQ(5UL, g2.value());
@@ -461,7 +461,7 @@ public:
   StatName makeStatName(absl::string_view name) { return pool_.add(name); }
 
   Stats::FakeSymbolTableImpl symbol_table_;
-  HeapStatDataAllocator alloc_;
+  AllocatorImpl alloc_;
   ThreadLocalStoreImpl store_;
   StatNamePool pool_;
 };
@@ -715,7 +715,7 @@ public:
   void testAcceptsAll(const LookupStatFn lookup_stat) {
     InSequence s;
 
-    MockStatsMatcher* matcher = new MockStatsMatcher;
+    auto* matcher = new MockStatsMatcher;
     matcher->accepts_all_ = true;
     StatsMatcherPtr matcher_ptr(matcher);
     store_.setStatsMatcher(std::move(matcher_ptr));
@@ -758,13 +758,13 @@ public:
   Stats::FakeSymbolTableImpl symbol_table_;
   NiceMock<Event::MockDispatcher> main_thread_dispatcher_;
   NiceMock<ThreadLocal::MockInstance> tls_;
-  HeapStatDataAllocator heap_alloc_;
+  AllocatorImpl heap_alloc_;
   ThreadLocalStoreImpl store_;
   ScopePtr scope_;
 };
 
-INSTANTIATE_TEST_CASE_P(RememberStatsMatcherTest, RememberStatsMatcherTest,
-                        testing::ValuesIn({false, true}));
+INSTANTIATE_TEST_SUITE_P(RememberStatsMatcherTest, RememberStatsMatcherTest,
+                         testing::ValuesIn({false, true}));
 
 // Tests that the logic for remembering rejected stats works properly, both
 // with and without threading.
@@ -847,60 +847,43 @@ TEST_F(StatsThreadLocalStoreTest, NonHotRestartNoTruncation) {
 
 // Tests how much memory is consumed allocating 100k stats.
 TEST(StatsThreadLocalStoreTestNoFixture, MemoryWithoutTls) {
-  if (!TestUtil::hasDeterministicMallocStats()) {
-    return;
-  }
-
   MockSink sink;
   Stats::FakeSymbolTableImpl symbol_table;
-  HeapStatDataAllocator alloc(symbol_table);
-  auto store = std::make_unique<ThreadLocalStoreImpl>(alloc);
-  store->addSink(sink);
+  AllocatorImpl alloc(symbol_table);
+  ThreadLocalStoreImpl store(alloc);
+  store.addSink(sink);
 
   // Use a tag producer that will produce tags.
   envoy::config::metrics::v2::StatsConfig stats_config;
-  store->setTagProducer(std::make_unique<TagProducerImpl>(stats_config));
+  store.setTagProducer(std::make_unique<TagProducerImpl>(stats_config));
 
-  const size_t start_mem = Memory::Stats::totalCurrentlyAllocated();
-  if (start_mem == 0) {
-    // Skip this test for platforms where we can't measure memory.
-    return;
-  }
+  TestUtil::MemoryTest memory_test;
   TestUtil::forEachSampleStat(
-      1000, [&store](absl::string_view name) { store->counter(std::string(name)); });
-  const size_t end_mem = Memory::Stats::totalCurrentlyAllocated();
-  EXPECT_LT(start_mem, end_mem);
+      1000, [&store](absl::string_view name) { store.counter(std::string(name)); });
   const size_t million = 1000 * 1000;
-  EXPECT_LT(end_mem - start_mem, 20 * million); // actual value: 19601552 as of March 14, 2019
+  EXPECT_MEMORY_EQ(memory_test.consumedBytes(), 15268336); // June 30, 2019
+  EXPECT_MEMORY_LE(memory_test.consumedBytes(), 16 * million);
 }
 
 TEST(StatsThreadLocalStoreTestNoFixture, MemoryWithTls) {
-  if (!TestUtil::hasDeterministicMallocStats()) {
-    return;
-  }
   Stats::FakeSymbolTableImpl symbol_table;
-  HeapStatDataAllocator alloc(symbol_table);
-  auto store = std::make_unique<ThreadLocalStoreImpl>(alloc);
+  AllocatorImpl alloc(symbol_table);
+  NiceMock<Event::MockDispatcher> main_thread_dispatcher;
+  NiceMock<ThreadLocal::MockInstance> tls;
+  ThreadLocalStoreImpl store(alloc);
 
   // Use a tag producer that will produce tags.
   envoy::config::metrics::v2::StatsConfig stats_config;
-  store->setTagProducer(std::make_unique<TagProducerImpl>(stats_config));
+  store.setTagProducer(std::make_unique<TagProducerImpl>(stats_config));
 
-  NiceMock<Event::MockDispatcher> main_thread_dispatcher;
-  NiceMock<ThreadLocal::MockInstance> tls;
-  store->initializeThreading(main_thread_dispatcher, tls);
-  const size_t start_mem = Memory::Stats::totalCurrentlyAllocated();
-  if (start_mem == 0) {
-    // Skip this test for platforms where we can't measure memory.
-    return;
-  }
+  store.initializeThreading(main_thread_dispatcher, tls);
+  TestUtil::MemoryTest memory_test;
   TestUtil::forEachSampleStat(
-      1000, [&store](absl::string_view name) { store->counter(std::string(name)); });
-  const size_t end_mem = Memory::Stats::totalCurrentlyAllocated();
-  EXPECT_LT(start_mem, end_mem);
+      1000, [&store](absl::string_view name) { store.counter(std::string(name)); });
   const size_t million = 1000 * 1000;
-  EXPECT_LT(end_mem - start_mem, 23 * million); // actual value: 22880912 as of March 14, 2019
-  store->shutdownThreading();
+  EXPECT_MEMORY_EQ(memory_test.consumedBytes(), 17496848); // June 30, 2019
+  EXPECT_MEMORY_LE(memory_test.consumedBytes(), 18 * million);
+  store.shutdownThreading();
   tls.shutdownThread();
 }
 
@@ -950,7 +933,7 @@ TEST(ThreadLocalStoreThreadTest, ConstructDestruct) {
   Api::ApiPtr api = Api::createApiForTest();
   Event::DispatcherPtr dispatcher = api->allocateDispatcher();
   NiceMock<ThreadLocal::MockInstance> tls;
-  HeapStatDataAllocator alloc(symbol_table);
+  AllocatorImpl alloc(symbol_table);
   ThreadLocalStoreImpl store(alloc);
 
   store.initializeThreading(*dispatcher, tls);

@@ -2,9 +2,8 @@
 
 #include "envoy/http/filter.h"
 #include "envoy/upstream/cluster_manager.h"
-#include "common/common/logger.h"
 
-#include "common/grpc/common.h"
+#include "common/grpc/context_impl.h"
 
 namespace Envoy {
 namespace Extensions {
@@ -13,8 +12,7 @@ namespace GrpcHttp1Bridge {
 /**
  * See docs/configuration/http_filters/grpc_http1_bridge_filter.rst
  */
-class Http1BridgeFilter : public Logger::Loggable<Logger::Id::filter>,
-                          public Http::StreamFilter {
+class Http1BridgeFilter : public Http::StreamFilter {
 public:
   explicit Http1BridgeFilter(Grpc::Context& context) : context_(context) {}
 

@@ -90,6 +90,7 @@ ConnectionHandlerImpl::ActiveListenerBase::ActiveListenerBase(ConnectionHandlerI
     : parent_(parent), listener_(std::move(listener)),
       stats_(generateStats(config.listenerScope())),
       listener_filters_timeout_(config.listenerFiltersTimeout()),
+      continue_on_listener_filters_timeout_(config.continueOnListenerFiltersTimeout()),
       listener_tag_(config.listenerTag()), config_(config) {}
 
 ConnectionHandlerImpl::ActiveTcpListener::ActiveTcpListener(ConnectionHandlerImpl& parent,
@@ -160,6 +161,9 @@ ConnectionHandlerImpl::findActiveListenerByAddress(const Network::Address::Insta
 void ConnectionHandlerImpl::ActiveSocket::onTimeout() {
   listener_.stats_.downstream_pre_cx_timeout_.inc();
   ASSERT(inserted());
+  if (listener_.continue_on_listener_filters_timeout_) {
+    newConnection();
+  }
   unlink();
 }
 
@@ -195,37 +199,43 @@ void ConnectionHandlerImpl::ActiveSocket::continueFilterChain(bool success) {
       }
     }
     // Successfully ran all the accept filters.
-
-    // Check if the socket may need to be redirected to another listener.
-    ActiveListenerBase* new_listener = nullptr;
-
-    if (hand_off_restored_destination_connections_ && socket_->localAddressRestored()) {
-      // Find a listener associated with the original destination address.
-      new_listener = listener_.parent_.findActiveListenerByAddress(*socket_->localAddress());
-    }
-    if (new_listener != nullptr) {
-      // TODO(sumukhs): Try to avoid dynamic_cast by coming up with a better interface design
-      ActiveTcpListener* tcp_listener = dynamic_cast<ActiveTcpListener*>(new_listener);
-      ASSERT(tcp_listener != nullptr, "ActiveSocket listener is expected to be tcp");
-      // Hands off connections redirected by iptables to the listener associated with the
-      // original destination address. Pass 'hand_off_restored_destination_connections' as false to
-      // prevent further redirection.
-      tcp_listener->onAccept(std::move(socket_),
-                             false /* hand_off_restored_destination_connections */);
-    } else {
-      // Set default transport protocol if none of the listener filters did it.
-      if (socket_->detectedTransportProtocol().empty()) {
-        socket_->setDetectedTransportProtocol(
-            Extensions::TransportSockets::TransportSocketNames::get().RawBuffer);
-      }
-      // Create a new connection on this listener.
-      listener_.newConnection(std::move(socket_));
-    }
+    newConnection();
   }
 
   // Filter execution concluded, unlink and delete this ActiveSocket if it was linked.
   if (inserted()) {
     unlink();
+  }
+}
+
+void ConnectionHandlerImpl::ActiveSocket::newConnection() {
+  // Check if the socket may need to be redirected to another listener.
+  ActiveListenerBase* new_listener = nullptr;
+
+  if (hand_off_restored_destination_connections_ && socket_->localAddressRestored()) {
+    // Find a listener associated with the original destination address.
+    new_listener = listener_.parent_.findActiveListenerByAddress(*socket_->localAddress());
+  }
+  if (new_listener != nullptr) {
+    // TODO(sumukhs): Try to avoid dynamic_cast by coming up with a better interface design
+    ActiveTcpListener* tcp_listener = dynamic_cast<ActiveTcpListener*>(new_listener);
+    ASSERT(tcp_listener != nullptr, "ActiveSocket listener is expected to be tcp");
+    // Hands off connections redirected by iptables to the listener associated with the
+    // original destination address. Pass 'hand_off_restored_destination_connections' as false to
+    // prevent further redirection.
+    tcp_listener->onAccept(std::move(socket_),
+                           false /* hand_off_restored_destination_connections */);
+  } else {
+    // Set default transport protocol if none of the listener filters did it.
+    if (socket_->detectedTransportProtocol().empty()) {
+      socket_->setDetectedTransportProtocol(
+          Extensions::TransportSockets::TransportSocketNames::get().RawBuffer);
+    }
+    // Erase accept filter states because accept filters may not get the opportunity to clean up.
+    // Particularly the assigned events need to reset before assigning new events in the follow up.
+    accept_filters_.clear();
+    // Create a new connection on this listener.
+    listener_.newConnection(std::move(socket_));
   }
 }
 
@@ -248,8 +258,6 @@ void ConnectionHandlerImpl::ActiveTcpListener::onAccept(
 
 void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
     Network::ConnectionSocketPtr&& socket) {
-  ENVOY_LOG_TO_LOGGER(parent_.logger_, debug, "ActiveTcpListener::newConnection");
-
   // Find matching filter chain.
   const auto filter_chain = config_.filterChainManager().findFilterChain(*socket);
   if (filter_chain == nullptr) {
@@ -259,11 +267,7 @@ void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
     socket->close();
     return;
   }
-
-  ENVOY_LOG_TO_LOGGER(parent_.logger_, debug, "ActiveTcpListener::newConnection createTransportSocket");
   auto transport_socket = filter_chain->transportSocketFactory().createTransportSocket(nullptr);
-
-  ENVOY_LOG_TO_LOGGER(parent_.logger_, debug, "ActiveTcpListener::newConnection createServerConnection");
   Network::ConnectionPtr new_connection =
       parent_.dispatcher_.createServerConnection(std::move(socket), std::move(transport_socket));
   new_connection->setBufferLimits(config_.perConnectionBufferLimitBytes());
@@ -277,7 +281,6 @@ void ConnectionHandlerImpl::ActiveTcpListener::newConnection(
     return;
   }
 
-  ENVOY_LOG_TO_LOGGER(parent_.logger_, debug, "ActiveTcpListener::newConnection onNewConnection");
   onNewConnection(std::move(new_connection));
 }
 
@@ -352,7 +355,7 @@ void ConnectionHandlerImpl::ActiveUdpListener::onWriteReady(const Network::Socke
 }
 
 void ConnectionHandlerImpl::ActiveUdpListener::onReceiveError(
-    const Network::UdpListenerCallbacks::ErrorCode&, int) {
+    const Network::UdpListenerCallbacks::ErrorCode&, Api::IoError::IoErrorCode) {
   // TODO(sumukhs): Determine what to do on receive error.
   // Would the filters need to know on error? Can't foresee a scenario where they
   // would take an action

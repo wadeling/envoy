@@ -9,7 +9,6 @@
 #include "envoy/http/codec.h"
 #include "envoy/http/codes.h"
 #include "envoy/http/filter.h"
-#include "envoy/http/private_proto_filter.h"
 #include "envoy/local_info/local_info.h"
 #include "envoy/router/shadow_writer.h"
 #include "envoy/runtime/runtime.h"
@@ -26,7 +25,6 @@
 #include "common/common/logger.h"
 #include "common/config/well_known_names.h"
 #include "common/http/utility.h"
-#include "common/http/codec_client.h"
 #include "common/router/config_impl.h"
 #include "common/stats/symbol_table_impl.h"
 #include "common/stream_info/stream_info_impl.h"
@@ -45,7 +43,8 @@ namespace Router {
   COUNTER(rq_redirect)                                                                             \
   COUNTER(rq_direct_response)                                                                      \
   COUNTER(rq_total)                                                                                \
-  COUNTER(rq_reset_after_downstream_response_started)
+  COUNTER(rq_reset_after_downstream_response_started)                                              \
+  COUNTER(rq_retry_skipped_request_not_complete)
 // clang-format on
 
 /**
@@ -67,6 +66,51 @@ public:
 
   struct HedgingParams {
     bool hedge_on_per_try_timeout_;
+  };
+
+  class StrictHeaderChecker {
+  public:
+    struct HeaderCheckResult {
+      bool valid_ = true;
+      const Http::HeaderEntry* entry_;
+    };
+
+    /**
+     * Determine whether a given header's value passes the strict validation
+     * defined for that header.
+     * @param headers supplies the headers from which to get the target header.
+     * @param target_header is the header to be validated.
+     * @return HeaderCheckResult containing the entry for @param target_header
+     *         and valid_ set to FALSE if @param target_header is set to an
+     *         invalid value. If @param target_header doesn't appear in
+     *         @param headers, return a result with valid_ set to TRUE.
+     */
+    static const HeaderCheckResult checkHeader(Http::HeaderMap& headers,
+                                               const Http::LowerCaseString& target_header);
+
+    using ParseRetryFlagsFunc = std::function<std::pair<uint32_t, bool>(absl::string_view)>;
+
+  private:
+    static HeaderCheckResult hasValidRetryFields(Http::HeaderEntry* header_entry,
+                                                 const ParseRetryFlagsFunc& parseFn) {
+      HeaderCheckResult r;
+      if (header_entry) {
+        const auto flags_and_validity = parseFn(header_entry->value().getStringView());
+        r.valid_ = flags_and_validity.second;
+        r.entry_ = header_entry;
+      }
+      return r;
+    }
+
+    static HeaderCheckResult isInteger(Http::HeaderEntry* header_entry) {
+      HeaderCheckResult r;
+      if (header_entry) {
+        uint64_t out;
+        r.valid_ = absl::SimpleAtoi(header_entry->value().getStringView(), &out);
+        r.entry_ = header_entry;
+      }
+      return r;
+    }
   };
 
   /**
@@ -117,6 +161,7 @@ public:
                Stats::Scope& scope, Upstream::ClusterManager& cm, Runtime::Loader& runtime,
                Runtime::RandomGenerator& random, ShadowWriterPtr&& shadow_writer,
                bool emit_dynamic_stats, bool start_child_span, bool suppress_envoy_headers,
+               const Protobuf::RepeatedPtrField<std::string>& strict_check_headers,
                TimeSource& time_source, Http::Context& http_context)
       : scope_(scope), local_info_(local_info), cm_(cm), runtime_(runtime),
         random_(random), stats_{ALL_ROUTER_STATS(POOL_COUNTER_PREFIX(scope, stat_prefix))},
@@ -125,7 +170,14 @@ public:
         stat_name_pool_(scope_.symbolTable()), retry_(stat_name_pool_.add("retry")),
         zone_name_(stat_name_pool_.add(local_info_.zoneName())),
         empty_stat_name_(stat_name_pool_.add("")), shadow_writer_(std::move(shadow_writer)),
-        time_source_(time_source) {}
+        time_source_(time_source) {
+    if (!strict_check_headers.empty()) {
+      strict_check_headers_ = std::make_unique<HeaderVector>();
+      for (const auto& header : strict_check_headers) {
+        strict_check_headers_->emplace_back(Http::LowerCaseString(header));
+      }
+    }
+  }
 
   FilterConfig(const std::string& stat_prefix, Server::Configuration::FactoryContext& context,
                ShadowWriterPtr&& shadow_writer,
@@ -134,11 +186,14 @@ public:
                      context.runtime(), context.random(), std::move(shadow_writer),
                      PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, dynamic_stats, true),
                      config.start_child_span(), config.suppress_envoy_headers(),
-                     context.api().timeSource(), context.httpContext()) {
+                     config.strict_check_headers(), context.api().timeSource(),
+                     context.httpContext()) {
     for (const auto& upstream_log : config.upstream_log()) {
       upstream_logs_.push_back(AccessLog::AccessLogFactory::fromProto(upstream_log, context));
     }
   }
+  using HeaderVector = std::vector<Http::LowerCaseString>;
+  using HeaderVectorPtr = std::unique_ptr<HeaderVector>;
 
   ShadowWriter& shadowWriter() { return *shadow_writer_; }
   TimeSource& timeSource() { return time_source_; }
@@ -152,6 +207,8 @@ public:
   const bool emit_dynamic_stats_;
   const bool start_child_span_;
   const bool suppress_envoy_headers_;
+  // TODO(xyu-stripe): Make this a bitset to keep cluster memory footprint down.
+  HeaderVectorPtr strict_check_headers_;
   std::list<AccessLog::InstanceSharedPtr> upstream_logs_;
   Http::Context& http_context_;
   Stats::StatNamePool stat_name_pool_;
@@ -164,7 +221,7 @@ private:
   TimeSource& time_source_;
 };
 
-typedef std::shared_ptr<FilterConfig> FilterConfigSharedPtr;
+using FilterConfigSharedPtr = std::shared_ptr<FilterConfig>;
 
 /**
  * Service routing filter.
@@ -178,7 +235,7 @@ public:
         downstream_end_stream_(false), do_shadowing_(false), is_retry_(false),
         attempting_internal_redirect_with_complete_stream_(false) {}
 
-  ~Filter();
+  ~Filter() override;
 
   // Http::StreamFilterBase
   void onDestroy() override;
@@ -187,6 +244,7 @@ public:
   Http::FilterHeadersStatus decodeHeaders(Http::HeaderMap& headers, bool end_stream) override;
   Http::FilterDataStatus decodeData(Buffer::Instance& data, bool end_stream) override;
   Http::FilterTrailersStatus decodeTrailers(Http::HeaderMap& trailers) override;
+  Http::FilterMetadataStatus decodeMetadata(Http::MetadataMap& metadata_map) override;
   void setDecoderFilterCallbacks(Http::StreamDecoderFilterCallbacks& callbacks) override;
 
   // Upstream::LoadBalancerContext
@@ -300,14 +358,12 @@ private:
                            public Http::ConnectionPool::Callbacks,
                            public LinkedObject<UpstreamRequest> {
     UpstreamRequest(Filter& parent, Http::ConnectionPool::Instance& pool);
-    ~UpstreamRequest();
-
-    // private proto filter encode data
-    void encodeDataWithFilter(Buffer::Instance& data, bool end_stream,Http::CodecClient& codec_client,Http::StreamEncoder& request_encoder);
+    ~UpstreamRequest() override;
 
     void encodeHeaders(bool end_stream);
     void encodeData(Buffer::Instance& data, bool end_stream);
     void encodeTrailers(const Http::HeaderMap& trailers);
+    void encodeMetadata(Http::MetadataMapPtr&& metadata_map_ptr);
 
     void resetStream();
     void setupPerTryTimeout();
@@ -371,8 +427,7 @@ private:
                        absl::string_view transport_failure_reason,
                        Upstream::HostDescriptionConstSharedPtr host) override;
     void onPoolReady(Http::StreamEncoder& request_encoder,
-                     Upstream::HostDescriptionConstSharedPtr host,
-                     Http::CodecClient& codec_client) override;
+                     Upstream::HostDescriptionConstSharedPtr host) override;
 
     void setRequestEncoder(Http::StreamEncoder& request_encoder);
     void clearRequestEncoder();
@@ -388,9 +443,6 @@ private:
     };
 
     void readEnable();
-
-    // private proto
-
 
     Filter& parent_;
     Http::ConnectionPool::Instance& conn_pool_;
@@ -409,6 +461,7 @@ private:
     // access logging is configured.
     Http::HeaderMapPtr upstream_headers_;
     Http::HeaderMapPtr upstream_trailers_;
+    Http::MetadataMapVector downstream_metadata_map_vector_;
 
     bool calling_encode_headers_ : 1;
     bool upstream_canary_ : 1;
@@ -423,7 +476,7 @@ private:
     bool create_per_try_timeout_on_request_complete_ : 1;
   };
 
-  typedef std::unique_ptr<UpstreamRequest> UpstreamRequestPtr;
+  using UpstreamRequestPtr = std::unique_ptr<UpstreamRequest>;
 
   StreamInfo::ResponseFlag streamResetReasonToResponseFlag(Http::StreamResetReason reset_reason);
 
@@ -474,9 +527,11 @@ private:
   // for the remaining upstream requests to return.
   void resetOtherUpstreams(UpstreamRequest& upstream_request);
   void sendNoHealthyUpstreamResponse();
+  // TODO(soya3129): Save metadata for retry, redirect and shadowing case.
   bool setupRetry();
   bool setupRedirect(const Http::HeaderMap& headers, UpstreamRequest& upstream_request);
-  void updateOutlierDetection(Http::Code code, UpstreamRequest& upstream_request);
+  void updateOutlierDetection(Upstream::Outlier::Result result, UpstreamRequest& upstream_request,
+                              absl::optional<uint64_t> code);
   void doRetry();
   // Called immediately after a non-5xx header is received from upstream, performs stats accounting
   // and handle difference between gRPC and non-gRPC requests.

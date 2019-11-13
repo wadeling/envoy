@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 
 using testing::_;
+using testing::Eq;
 using testing::InSequence;
 using testing::Invoke;
 using testing::Return;
@@ -58,7 +59,7 @@ protected:
   ClientSslAuthFilterTest()
       : request_(&cm_.async_client_), interval_timer_(new Event::MockTimer(&dispatcher_)),
         api_(Api::createApiForTest(stats_store_)) {}
-  ~ClientSslAuthFilterTest() { tls_.shutdownThread(); }
+  ~ClientSslAuthFilterTest() override { tls_.shutdownThread(); }
 
   void setup() {
     std::string yaml = R"EOF(
@@ -73,7 +74,7 @@ ip_white_list:
 
     envoy::config::filter::network::client_ssl_auth::v2::ClientSSLAuth proto_config{};
     TestUtility::loadFromYaml(yaml, proto_config);
-    EXPECT_CALL(cm_, get("vpn"));
+    EXPECT_CALL(cm_, get(Eq("vpn")));
     setupRequest();
     config_ =
         ClientSslAuthConfig::create(proto_config, tls_, cm_, dispatcher_, stats_store_, random_);
@@ -125,7 +126,7 @@ stat_prefix: bad_cluster
 
   envoy::config::filter::network::client_ssl_auth::v2::ClientSSLAuth proto_config{};
   TestUtility::loadFromYaml(yaml, proto_config);
-  EXPECT_CALL(cm_, get("bad_cluster")).WillOnce(Return(nullptr));
+  EXPECT_CALL(cm_, get(Eq("bad_cluster"))).WillOnce(Return(nullptr));
   EXPECT_THROW(
       ClientSslAuthConfig::create(proto_config, tls_, cm_, dispatcher_, stats_store_, random_),
       EnvoyException);
@@ -220,7 +221,7 @@ TEST_F(ClientSslAuthFilterTest, Ssl) {
 
   // Interval timer fires.
   setupRequest();
-  interval_timer_->callback_();
+  interval_timer_->invokeCallback();
 
   // Error response.
   EXPECT_CALL(*interval_timer_, enableTimer(_));
@@ -230,7 +231,7 @@ TEST_F(ClientSslAuthFilterTest, Ssl) {
 
   // Interval timer fires.
   setupRequest();
-  interval_timer_->callback_();
+  interval_timer_->invokeCallback();
 
   // Parsing error
   EXPECT_CALL(*interval_timer_, enableTimer(_));
@@ -241,7 +242,7 @@ TEST_F(ClientSslAuthFilterTest, Ssl) {
 
   // Interval timer fires.
   setupRequest();
-  interval_timer_->callback_();
+  interval_timer_->invokeCallback();
 
   // No response failure.
   EXPECT_CALL(*interval_timer_, enableTimer(_));
@@ -258,7 +259,7 @@ TEST_F(ClientSslAuthFilterTest, Ssl) {
             return nullptr;
           }));
   EXPECT_CALL(*interval_timer_, enableTimer(_));
-  interval_timer_->callback_();
+  interval_timer_->invokeCallback();
 
   EXPECT_EQ(4U, stats_store_.counter("auth.clientssl.vpn.update_failure").value());
 }

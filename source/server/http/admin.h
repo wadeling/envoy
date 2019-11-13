@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "envoy/admin/v2alpha/clusters.pb.h"
+#include "envoy/admin/v2alpha/listeners.pb.h"
 #include "envoy/http/filter.h"
 #include "envoy/network/filter.h"
 #include "envoy/network/listen_socket.h"
@@ -37,6 +38,11 @@
 namespace Envoy {
 namespace Server {
 
+namespace Utility {
+envoy::admin::v2alpha::ServerInfo::State serverState(Init::Manager::State state,
+                                                     bool health_check_failed);
+} // namespace Utility
+
 class AdminInternalAddressConfig : public Http::InternalAddressConfig {
   bool isInternalAddress(const Network::Address::Instance&) const override { return false; }
 };
@@ -48,7 +54,6 @@ class AdminImpl : public Admin,
                   public Network::FilterChainManager,
                   public Network::FilterChainFactory,
                   public Http::FilterChainFactory,
-                  public Http::PrivateProtoFilterChainFactory,
                   public Http::ConnectionManagerConfig,
                   Logger::Loggable<Logger::Id::admin> {
 public:
@@ -71,6 +76,7 @@ public:
 
   void startHttpListener(const std::string& access_log_path, const std::string& address_out_path,
                          Network::Address::InstanceConstSharedPtr address,
+                         const Network::Socket::OptionsSharedPtr& socket_options,
                          Stats::ScopePtr&& listener_scope) override;
 
   // Network::FilterChainManager
@@ -95,8 +101,6 @@ public:
     return false;
   }
 
-  void createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) override ;
-
   // Http::ConnectionManagerConfig
   const std::list<AccessLog::InstanceSharedPtr>& accessLogs() override { return access_logs_; }
   Http::ServerConnectionPtr createCodec(Network::Connection& connection,
@@ -105,10 +109,11 @@ public:
   Http::DateProvider& dateProvider() override { return date_provider_; }
   std::chrono::milliseconds drainTimeout() override { return std::chrono::milliseconds(100); }
   Http::FilterChainFactory& filterFactory() override { return *this; }
-  Http::PrivateProtoFilterChainFactory& privateProtoFilterFactory() override { return *this; }
   bool generateRequestId() override { return false; }
+  bool preserveExternalRequestId() const override { return false; }
   absl::optional<std::chrono::milliseconds> idleTimeout() const override { return idle_timeout_; }
   uint32_t maxRequestHeadersKb() const override { return max_request_headers_kb_; }
+  uint32_t maxRequestHeadersCount() const override { return max_request_headers_count_; }
   std::chrono::milliseconds streamIdleTimeout() const override { return {}; }
   std::chrono::milliseconds requestTimeout() const override { return {}; }
   std::chrono::milliseconds delayedCloseTimeout() const override { return {}; }
@@ -139,6 +144,7 @@ public:
   bool proxy100Continue() const override { return false; }
   const Http::Http1Settings& http1Settings() const override { return http1_settings_; }
   bool shouldNormalizePath() const override { return true; }
+  bool shouldMergeSlashes() const override { return true; }
   Http::Code request(absl::string_view path_and_query, absl::string_view method,
                      Http::HeaderMap& response_headers, std::string& body) override;
   void closeSocket();
@@ -214,21 +220,25 @@ private:
   void writeClustersAsJson(Buffer::Instance& response);
   void writeClustersAsText(Buffer::Instance& response);
 
-  static bool shouldShowMetric(const std::shared_ptr<Stats::Metric>& metric, const bool used_only,
+  /**
+   * Helper methods for the /listeners url handler.
+   */
+  void writeListenersAsJson(Buffer::Instance& response);
+  void writeListenersAsText(Buffer::Instance& response);
+
+  template <class StatType>
+  static bool shouldShowMetric(const StatType& metric, const bool used_only,
                                const absl::optional<std::regex>& regex) {
-    return ((!used_only || metric->used()) &&
-            (!regex.has_value() || std::regex_search(metric->name(), regex.value())));
+    return ((!used_only || metric.used()) &&
+            (!regex.has_value() || std::regex_search(metric.name(), regex.value())));
   }
   static std::string statsAsJson(const std::map<std::string, uint64_t>& all_stats,
                                  const std::vector<Stats::ParentHistogramSharedPtr>& all_histograms,
                                  bool used_only,
                                  const absl::optional<std::regex> regex = absl::nullopt,
                                  bool pretty_print = false);
-  static std::string
-  runtimeAsJson(const std::vector<std::pair<std::string, Runtime::Snapshot::Entry>>& entries);
+
   std::vector<const UrlHandler*> sortedHandlers() const;
-  static const std::vector<std::pair<std::string, Runtime::Snapshot::Entry>>
-  sortedRuntime(const std::unordered_map<std::string, const Runtime::Snapshot::Entry>& entries);
   envoy::admin::v2alpha::ServerInfo::State serverState();
   /**
    * URL handlers.
@@ -287,10 +297,6 @@ private:
   Http::Code handlerRuntimeModify(absl::string_view path_and_query,
                                   Http::HeaderMap& response_headers, Buffer::Instance& response,
                                   AdminStream&);
-  // perf test
-  Http::Code handlerPerf(absl::string_view path_and_query,
-                                    Http::HeaderMap& response_headers, Buffer::Instance& response,
-                                    AdminStream&);
   bool isFormUrlEncoded(const Http::HeaderEntry* content_type) const;
 
   class AdminListener : public Network::ListenerConfig {
@@ -310,6 +316,7 @@ private:
     std::chrono::milliseconds listenerFiltersTimeout() const override {
       return std::chrono::milliseconds();
     }
+    bool continueOnListenerFiltersTimeout() const override { return false; }
     Stats::Scope& listenerScope() override { return *scope_; }
     uint64_t listenerTag() const override { return 0; }
     const std::string& name() const override { return name_; }
@@ -323,7 +330,9 @@ private:
 
   class AdminFilterChain : public Network::FilterChain {
   public:
-    AdminFilterChain() {}
+    // We can't use the default constructor because transport_socket_factory_ doesn't have a
+    // default constructor.
+    AdminFilterChain() {} // NOLINT(modernize-use-equals-default)
 
     // Network::FilterChain
     const Network::TransportSocketFactory& transportSocketFactory() const override {
@@ -351,6 +360,7 @@ private:
   NullScopedRouteConfigProvider scoped_route_config_provider_;
   std::list<UrlHandler> handlers_;
   const uint32_t max_request_headers_kb_{Http::DEFAULT_MAX_REQUEST_HEADERS_KB};
+  const uint32_t max_request_headers_count_{Http::DEFAULT_MAX_HEADERS_COUNT};
   absl::optional<std::chrono::milliseconds> idle_timeout_;
   absl::optional<std::string> user_agent_;
   Http::SlowDateProviderImpl date_provider_;
@@ -421,7 +431,8 @@ public:
   static uint64_t statsAsPrometheus(const std::vector<Stats::CounterSharedPtr>& counters,
                                     const std::vector<Stats::GaugeSharedPtr>& gauges,
                                     const std::vector<Stats::ParentHistogramSharedPtr>& histograms,
-                                    Buffer::Instance& response, const bool used_only);
+                                    Buffer::Instance& response, const bool used_only,
+                                    const absl::optional<std::regex>& regex);
   /**
    * Format the given tags, returning a string as a comma-separated list
    * of <tag_name>="<tag_value>" pairs.
@@ -442,8 +453,11 @@ private:
    * Determine whether a metric has never been emitted and choose to
    * not show it if we only wanted used metrics.
    */
-  static bool shouldShowMetric(const std::shared_ptr<Stats::Metric>& metric, const bool used_only) {
-    return !used_only || metric->used();
+  template <class StatType>
+  static bool shouldShowMetric(const StatType& metric, const bool used_only,
+                               const absl::optional<std::regex>& regex) {
+    return ((!used_only || metric.used()) &&
+            (!regex.has_value() || std::regex_search(metric.name(), regex.value())));
   }
 };
 

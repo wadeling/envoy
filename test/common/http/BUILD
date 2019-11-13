@@ -211,6 +211,7 @@ envoy_cc_test(
         "//test/mocks/ssl:ssl_mocks",
         "//test/mocks/tracing:tracing_mocks",
         "//test/mocks/upstream:upstream_mocks",
+        "//test/test_common:logging_lib",
         "//test/test_common:test_time_lib",
     ],
 )
@@ -252,6 +253,7 @@ envoy_cc_test(
     srcs = ["header_map_impl_test.cc"],
     deps = [
         "//source/common/http:header_map_lib",
+        "//source/common/http:header_utility_lib",
         "//test/test_common:utility_lib",
     ],
 )
@@ -333,6 +335,7 @@ envoy_cc_test(
         "//test/mocks/http:http_mocks",
         "//test/mocks/upstream:upstream_mocks",
         "//test/test_common:utility_lib",
+        "@envoy_api//envoy/api/v2/core:protocol_cc",
     ],
 )
 

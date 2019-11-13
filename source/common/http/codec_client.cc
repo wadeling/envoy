@@ -8,7 +8,6 @@
 #include "common/http/http1/codec_impl.h"
 #include "common/http/http2/codec_impl.h"
 #include "common/http/utility.h"
-//#include "common/perf/perf.h"
 
 namespace Envoy {
 namespace Http {
@@ -20,7 +19,6 @@ CodecClient::CodecClient(Type type, Network::ClientConnectionPtr&& connection,
       idle_timeout_(host_->cluster().idleTimeout()) {
   // Make sure upstream connections process data and then the FIN, rather than processing
   // TCP disconnects immediately. (see https://github.com/envoyproxy/envoy/issues/1679 for details)
-  ENVOY_LOG(debug, "new CodecClient");
   connection_->detectEarlyCloseWhenReadDisabled(false);
   connection_->addConnectionCallbacks(*this);
   connection_->addReadFilter(Network::ReadFilterSharedPtr{new CodecReadFilter(*this)});
@@ -38,33 +36,7 @@ CodecClient::CodecClient(Type type, Network::ClientConnectionPtr&& connection,
   connection_->noDelay(true);
 }
 
-CodecClient::~CodecClient() {}
-
-void CodecClient::setPrivateProtoFilterFactoriesList(const PrivateProtoFilterFactoriesList pre_client_factories_list) {
-   pre_client_factories_list_ = pre_client_factories_list;
-}
-
-void CodecClient::createPreSrvFilterChain(Http::PrivateProtoFilterChainFactoryCallbacks& callbacks) {
-    for (const Http::PrivateProtoFilterFactoryCb& factory : pre_client_factories_list_) {
-        factory(callbacks);
-    }
-}
-
-void CodecClient::addClientFilter(Http::PrivateProtoFilterSharedPtr filter) {
-    // set callback
-//    privateProtoFilterPtr filterCallbackPtr(new privateProtoFilterCallbacks(*this));
-//    filter->setDecoderFilterCallbacks(*filterCallbackPtr);
-//    filter->setEncoderFilterCallbacks(*filterCallbackPtr);
-
-    ClientStreamFilterPtr wrapper(new ClientStreamFilter(*this, filter));
-    filter->setDecoderFilterCallbacks(*wrapper);
-    filter->setEncoderFilterCallbacks(*wrapper);
-    wrapper->moveIntoListBack(std::move(wrapper), pre_client_filters_);
-}
-
-Network::Connection& CodecClient::ClientStreamFilter::connection() {
-    return *codec_client_.connection_;
-}
+CodecClient::~CodecClient() = default;
 
 void CodecClient::close() { connection_->close(Network::ConnectionCloseType::NoFlush); }
 
@@ -79,8 +51,6 @@ void CodecClient::deleteRequest(ActiveRequest& request) {
 }
 
 StreamEncoder& CodecClient::newStream(StreamDecoder& response_decoder) {
-  ENVOY_CONN_LOG(trace, "codec client newstream", *connection_);
-
   ActiveRequestPtr request(new ActiveRequest(*this, response_decoder));
   request->encoder_ = &codec_->newStream(*request);
   request->encoder_->getStream().addCallbacks(*request);
@@ -98,11 +68,6 @@ void CodecClient::onEvent(Network::ConnectionEvent event) {
   if (event == Network::ConnectionEvent::RemoteClose) {
     remote_closed_ = true;
   }
-
-  int tmpSize = int(active_requests_.size());
-  int tmpType = int(type_);
-  int tmpEvent = int(event);
-  ENVOY_CONN_LOG(trace, "CodecClient onEvent:type {} event {} active_requests size {}", *connection_,tmpType,tmpEvent,tmpSize);
 
   // HTTP/1 can signal end of response by disconnecting. We need to handle that case.
   if (type_ == Type::HTTP1 && event == Network::ConnectionEvent::RemoteClose &&
@@ -145,31 +110,7 @@ void CodecClient::onReset(ActiveRequest& request, StreamResetReason reason) {
   deleteRequest(request);
 }
 
-void CodecClient::decodePrivateProtoData(Buffer::Instance& data, bool end_stream) {
-    std::list<ClientStreamFilterPtr>::iterator entry = pre_client_filters_.begin();
-
-    for (; entry != pre_client_filters_.end(); entry++) {
-        PrivateProtoFilterDataStatus status = (*entry)->handle_->decodeClientData(data, end_stream);
-        ENVOY_LOG(debug, "decode private proto client data called: filter={} status={}",
-                  static_cast<const void*>((*entry).get()), static_cast<uint64_t>(status));
-        if (status == PrivateProtoFilterDataStatus::StopIteration) {
-            return;
-        }
-    }
-}
-
 void CodecClient::onData(Buffer::Instance& data) {
-  Network::Address::InstanceConstSharedPtr addr = connection_->localAddress();
-  Network::Address::InstanceConstSharedPtr remoteAddr = connection_->remoteAddress();
-
-  ENVOY_CONN_LOG(debug, "CodeClient onData,local addr {},remote {} ",*connection_,addr->asString(),remoteAddr->asString());
-
-  //perf check
-//  ENVOY::recordTimePoint(data,ENVOY::Client_Rcv_Time);
-
-  // private proto data
-  decodePrivateProtoData(data, false);
-
   bool protocol_error = false;
   try {
     codec_->dispatch(data);
@@ -197,17 +138,17 @@ CodecClientProd::CodecClientProd(Type type, Network::ClientConnectionPtr&& conne
                                  Upstream::HostDescriptionConstSharedPtr host,
                                  Event::Dispatcher& dispatcher)
     : CodecClient(type, std::move(connection), host, dispatcher) {
-
-  ENVOY_LOG(trace,"codec client prod,type {}",int(type));
   switch (type) {
   case Type::HTTP1: {
-    codec_ = std::make_unique<Http1::ClientConnectionImpl>(*connection_, *this);
+    codec_ = std::make_unique<Http1::ClientConnectionImpl>(
+        *connection_, host->cluster().statsScope(), *this,
+        host->cluster().maxResponseHeadersCount());
     break;
   }
   case Type::HTTP2: {
     codec_ = std::make_unique<Http2::ClientConnectionImpl>(
         *connection_, *this, host->cluster().statsScope(), host->cluster().http2Settings(),
-        Http::DEFAULT_MAX_REQUEST_HEADERS_KB);
+        Http::DEFAULT_MAX_REQUEST_HEADERS_KB, host->cluster().maxResponseHeadersCount());
     break;
   }
   }

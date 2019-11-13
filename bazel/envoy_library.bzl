@@ -38,7 +38,9 @@ def envoy_cc_library(
         linkstamp = None,
         tags = [],
         deps = [],
-        strip_include_prefix = None):
+        strip_include_prefix = None,
+        textual_hdrs = None,
+        **kargs):
     if tcmalloc_dep:
         deps += _tcmalloc_external_deps(repository)
 
@@ -49,6 +51,7 @@ def envoy_cc_library(
         copts = envoy_copts(repository) + copts,
         visibility = visibility,
         tags = tags,
+        textual_hdrs = textual_hdrs,
         deps = deps + [envoy_external_dep_path(dep) for dep in external_deps] + [
             repository + "//include/envoy/common:base_includes",
             repository + "//source/common/common:fmt_lib",
@@ -66,6 +69,7 @@ def envoy_cc_library(
             "//conditions:default": linkstamp,
         }),
         strip_include_prefix = strip_include_prefix,
+        **kargs
     )
 
 # Used to specify a library that only builds on POSIX
@@ -111,8 +115,8 @@ def envoy_proto_library(name, external_deps = [], **kwargs):
     external_proto_deps = []
     external_cc_proto_deps = []
     if "api_httpbody_protos" in external_deps:
-        external_cc_proto_deps.append("@googleapis//:api_httpbody_protos")
-        external_proto_deps.append("@googleapis//:api_httpbody_protos_proto")
+        external_cc_proto_deps.append("@com_google_googleapis//google/api:httpbody_cc_proto")
+        external_proto_deps.append("@com_google_googleapis//google/api:httpbody_proto")
     api_proto_library(
         name,
         external_cc_proto_deps = external_cc_proto_deps,

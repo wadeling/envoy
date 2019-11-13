@@ -63,6 +63,7 @@ public:
     addr_ = std::make_shared<Network::Address::Ipv4Instance>("1.2.3.4", 1111);
   }
 
+  NiceMock<Stats::MockIsolatedStatsStore> stats_store_;
   FilterConfigSharedPtr config_;
   Filters::Common::ExtAuthz::MockClient* client_;
   std::unique_ptr<Filter> filter_;
@@ -70,7 +71,6 @@ public:
   Filters::Common::ExtAuthz::RequestCallbacks* request_callbacks_;
   Http::TestHeaderMapImpl request_headers_;
   Buffer::OwnedImpl data_;
-  NiceMock<Stats::MockIsolatedStatsStore> stats_store_;
   NiceMock<Runtime::MockLoader> runtime_;
   NiceMock<Upstream::MockClusterManager> cm_;
   NiceMock<LocalInfo::MockLocalInfo> local_info_;
@@ -806,6 +806,8 @@ TEST_F(HttpFilterTestParam, ContextExtensions) {
 
   // Engage the filter so that check is called.
   filter_->decodeHeaders(request_headers_, false);
+  Http::MetadataMap metadata_map{{"metadata", "metadata"}};
+  EXPECT_EQ(Http::FilterMetadataStatus::Continue, filter_->decodeMetadata(metadata_map));
 
   // Make sure that the extensions appear in the check request issued by the filter.
   EXPECT_EQ("value_vhost", check_request.attributes().context_extensions().at("key_vhost"));

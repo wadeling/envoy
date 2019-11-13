@@ -250,8 +250,23 @@ Utility::parseHttp2Settings(const envoy::api::v2::core::Http2ProtocolOptions& co
   ret.initial_connection_window_size_ =
       PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, initial_connection_window_size,
                                       Http::Http2Settings::DEFAULT_INITIAL_CONNECTION_WINDOW_SIZE);
+  ret.max_outbound_frames_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      config, max_outbound_frames, Http::Http2Settings::DEFAULT_MAX_OUTBOUND_FRAMES);
+  ret.max_outbound_control_frames_ =
+      PROTOBUF_GET_WRAPPED_OR_DEFAULT(config, max_outbound_control_frames,
+                                      Http::Http2Settings::DEFAULT_MAX_OUTBOUND_CONTROL_FRAMES);
+  ret.max_consecutive_inbound_frames_with_empty_payload_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      config, max_consecutive_inbound_frames_with_empty_payload,
+      Http::Http2Settings::DEFAULT_MAX_CONSECUTIVE_INBOUND_FRAMES_WITH_EMPTY_PAYLOAD);
+  ret.max_inbound_priority_frames_per_stream_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      config, max_inbound_priority_frames_per_stream,
+      Http::Http2Settings::DEFAULT_MAX_INBOUND_PRIORITY_FRAMES_PER_STREAM);
+  ret.max_inbound_window_update_frames_per_data_frame_sent_ = PROTOBUF_GET_WRAPPED_OR_DEFAULT(
+      config, max_inbound_window_update_frames_per_data_frame_sent,
+      Http::Http2Settings::DEFAULT_MAX_INBOUND_WINDOW_UPDATE_FRAMES_PER_DATA_FRAME_SENT);
   ret.allow_connect_ = config.allow_connect();
   ret.allow_metadata_ = config.allow_metadata();
+  ret.stream_error_on_invalid_http_messaging_ = config.stream_error_on_invalid_http_messaging();
   return ret;
 }
 
@@ -422,7 +437,7 @@ MessagePtr Utility::prepareHeaders(const ::envoy::api::v2::core::HttpUri& http_u
 std::string Utility::queryParamsToString(const QueryParams& params) {
   std::string out;
   std::string delim = "?";
-  for (auto p : params) {
+  for (const auto& p : params) {
     absl::StrAppend(&out, delim, p.first, "=", p.second);
     delim = "&";
   }
@@ -597,60 +612,6 @@ std::string Utility::PercentEncoding::decode(absl::string_view encoded) {
     decoded.push_back(ch);
   }
   return decoded;
-}
-
-bool Utility::isPrivateProtoHeader(const HeaderMap& headers) {
-    const Http::HeaderEntry* entry = headers.get(PrivateProtoKey);
-    return entry != nullptr;
-}
-
-bool Utility::encapHttpRequest(std::string path,std::string host,HeaderMap& headers,
-                                Buffer::Instance& body,Buffer::Instance& request) {
-    std::stringstream stream;
-    stream << "POST " << path;
-    stream << " HTTP/1.1\r\n";
-    stream << "Host: "<< host << "\r\n";
-    stream << "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
-    headers.iterate(
-        [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
-            *static_cast<std::stringstream*>(context) << header.key().getStringView() << ": " << header.value().getStringView() << "\r\n";
-            return HeaderMap::Iterate::Continue;
-        },
-    &stream);
-    // add special key to indicate this inner encap pkg
-    stream << PrivateProtoKey.get() << ": true\r\n";
-    stream << "Content-Type:application/octet-stream\n";
-    stream << "Content-Length:" << body.length()<<"\r\n";
-    stream << "Connection:close\r\n\r\n";
-    if (body.length() != 0) {
-        stream << body.toString();
-    }
-
-    request.prepend(stream.str());
-    return true;
-}
-
-bool Utility::encapHttpResponse(HeaderMap& headers,Buffer::Instance& body,Buffer::Instance& response) {
-    std::stringstream stream;
-    stream << "HTTP/1.1 200 OK\r\n";
-    stream << "Server: envoy\r\n";
-    stream << "Content-Type:application/octet-stream\r\n";
-    stream << "Connection: close\r\n";
-    stream << "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3\r\n";
-    headers.iterate(
-        [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
-            *static_cast<std::stringstream*>(context) << header.key().getStringView() << ": " << header.value().getStringView() << "\r\n";
-            return HeaderMap::Iterate::Continue;
-        },
-    &stream);
-    stream << PrivateProtoKey.get() << ": true\r\n";
-    stream << "Content-Length:" << body.length()<<"\r\n";
-    stream << "Connection: close\r\n\r\n";
-    if (body.length() != 0) {
-        stream << body.toString();
-    }
-    response.prepend(stream.str());
-    return true;
 }
 
 } // namespace Http

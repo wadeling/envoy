@@ -3,11 +3,16 @@
 #include "envoy/config/bootstrap/v2/bootstrap.pb.h"
 #include "envoy/config/bootstrap/v2/bootstrap.pb.validate.h"
 
+#include "common/common/base64.h"
+#include "common/protobuf/message_validator_impl.h"
 #include "common/protobuf/protobuf.h"
 #include "common/protobuf/utility.h"
 #include "common/runtime/runtime_impl.h"
 #include "common/stats/isolated_store_impl.h"
 
+#include "test/mocks/init/mocks.h"
+#include "test/mocks/local_info/mocks.h"
+#include "test/mocks/protobuf/mocks.h"
 #include "test/mocks/server/mocks.h"
 #include "test/proto/deprecated.pb.h"
 #include "test/test_common/environment.h"
@@ -110,6 +115,26 @@ TEST_F(ProtobufUtilityTest, evaluateFractionalPercent) {
 }
 
 } // namespace ProtobufPercentHelper
+
+TEST_F(ProtobufUtilityTest, MessageUtilHash) {
+  ProtobufWkt::Struct s;
+  (*s.mutable_fields())["ab"].set_string_value("fgh");
+  (*s.mutable_fields())["cde"].set_string_value("ij");
+
+  ProtobufWkt::Any a1;
+  a1.PackFrom(s);
+  // The two base64 encoded Struct to test map is identical to the struct above, this tests whether
+  // a map is deterministically serialized and hashed.
+  ProtobufWkt::Any a2 = a1;
+  a2.set_value(Base64::decode("CgsKA2NkZRIEGgJpagoLCgJhYhIFGgNmZ2g="));
+  ProtobufWkt::Any a3 = a1;
+  a3.set_value(Base64::decode("CgsKAmFiEgUaA2ZnaAoLCgNjZGUSBBoCaWo="));
+
+  EXPECT_EQ(MessageUtil::hash(a1), MessageUtil::hash(a2));
+  EXPECT_EQ(MessageUtil::hash(a2), MessageUtil::hash(a3));
+  EXPECT_NE(0, MessageUtil::hash(a1));
+  EXPECT_NE(MessageUtil::hash(s), MessageUtil::hash(a1));
+}
 
 TEST_F(ProtobufUtilityTest, RepeatedPtrUtilDebugString) {
   Protobuf::RepeatedPtrField<ProtobufWkt::UInt32Value> repeated;
@@ -292,7 +317,7 @@ TEST_F(ProtobufUtilityTest, HashedValue) {
   EXPECT_EQ(hv1, hv2);
   EXPECT_NE(hv1, hv3);
 
-  HashedValue copy(hv1);
+  HashedValue copy(hv1); // NOLINT(performance-unnecessary-copy-initialization)
   EXPECT_EQ(hv1, copy);
 }
 
@@ -455,7 +480,8 @@ protected:
     envoy::config::bootstrap::v2::LayeredRuntime config;
     config.add_layers()->mutable_admin_layer();
     loader_ = std::make_unique<Runtime::ScopedLoaderSingleton>(Runtime::LoaderPtr{
-        new Runtime::LoaderImpl(dispatcher_, tls_, config, "", store_, generator_, *api_)});
+        new Runtime::LoaderImpl(dispatcher_, tls_, config, local_info_, init_manager_, store_,
+                                generator_, validation_visitor_, *api_)});
   }
 
   Event::MockDispatcher dispatcher_;
@@ -466,6 +492,9 @@ protected:
   Runtime::MockRandomGenerator rand_;
   std::unique_ptr<Runtime::ScopedLoaderSingleton> loader_;
   Stats::Counter& runtime_deprecated_feature_use_;
+  NiceMock<LocalInfo::MockLocalInfo> local_info_;
+  Init::MockManager init_manager_;
+  NiceMock<ProtobufMessage::MockValidationVisitor> validation_visitor_;
 };
 
 TEST_F(DeprecatedFieldsTest, NoCrashIfRuntimeMissing) {

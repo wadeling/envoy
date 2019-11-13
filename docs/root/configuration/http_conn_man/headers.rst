@@ -133,9 +133,10 @@ The following keys are supported:
 1. ``By`` The Subject Alternative Name (URI type) of the current proxy's certificate.
 2. ``Hash`` The SHA 256 digest of the current client certificate.
 3. ``Cert`` The entire client certificate in URL encoded PEM format.
-4. ``Subject`` The Subject field of the current client certificate. The value is always double-quoted.
-5. ``URI`` The URI type Subject Alternative Name field of the current client certificate.
-6. ``DNS`` The DNS type Subject Alternative Name field of the current client certificate. A client certificate may contain multiple DNS type Subject Alternative Names, each will be a separate key-value pair.
+4. ``Chain`` The entire client certificate chain (including the leaf certificate) in URL encoded PEM format.
+5. ``Subject`` The Subject field of the current client certificate. The value is always double-quoted.
+6. ``URI`` The URI type Subject Alternative Name field of the current client certificate.
+7. ``DNS`` The DNS type Subject Alternative Name field of the current client certificate. A client certificate may contain multiple DNS type Subject Alternative Names, each will be a separate key-value pair.
 
 A client certificate may contain multiple Subject Alternative Name types. For details on different Subject Alternative Name types, please refer `RFC 2459`_.
 
@@ -601,6 +602,10 @@ Supported variable names are:
     namespace and key(s) are specified as a JSON array of strings. Finally, percent symbols in the
     parameters **do not** need to be escaped by doubling them.
 
+%UPSTREAM_REMOTE_ADDRESS%
+    Remote address of the upstream host. If the address is an IP address it includes both address
+    and port.
+
 %PER_REQUEST_STATE(reverse.dns.data.name)%
     Populates the header with values set on the stream info filterState() object. To be
     usable in custom request/response headers, these values must be of type
@@ -617,8 +622,8 @@ Supported variable names are:
 
       route:
         cluster: www
-        request_headers_to_add:
-          - header:
-              key: "x-request-start"
-              value: "%START_TIME(%s.%3f)%"
-            append: true
+      request_headers_to_add:
+        - header:
+            key: "x-request-start"
+            value: "%START_TIME(%s.%3f)%"
+          append: true

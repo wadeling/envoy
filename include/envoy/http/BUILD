@@ -42,7 +42,6 @@ envoy_cc_library(
         ":codec_interface",
         "//include/envoy/event:deferred_deletable",
         "//include/envoy/upstream:upstream_interface",
-        "//source/common/http:codec_client_lib",
     ],
 )
 
@@ -63,6 +62,7 @@ envoy_cc_library(
         ":codec_interface",
         ":header_map_interface",
         "//include/envoy/access_log:access_log_interface",
+        "//include/envoy/common:scope_tracker_interface",
         "//include/envoy/event:dispatcher_interface",
         "//include/envoy/grpc:status",
         "//include/envoy/router:router_interface",
@@ -71,13 +71,6 @@ envoy_cc_library(
     ],
 )
 
-envoy_cc_library(
-    name = "private_proto_filter_interface",
-    hdrs = ["private_proto_filter.h"],
-    deps = [
-         "//include/envoy/network:connection_interface",
-     ],
-)
 envoy_cc_library(
     name = "header_map_interface",
     hdrs = ["header_map.h"],

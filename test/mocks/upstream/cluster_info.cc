@@ -22,16 +22,16 @@ MockLoadBalancerSubsetInfo::MockLoadBalancerSubsetInfo() {
   ON_CALL(*this, fallbackPolicy())
       .WillByDefault(Return(envoy::api::v2::Cluster::LbSubsetConfig::ANY_ENDPOINT));
   ON_CALL(*this, defaultSubset()).WillByDefault(ReturnRef(ProtobufWkt::Struct::default_instance()));
-  ON_CALL(*this, subsetKeys()).WillByDefault(ReturnRef(subset_keys_));
+  ON_CALL(*this, subsetSelectors()).WillByDefault(ReturnRef(subset_selectors_));
 }
 
-MockLoadBalancerSubsetInfo::~MockLoadBalancerSubsetInfo() {}
+MockLoadBalancerSubsetInfo::~MockLoadBalancerSubsetInfo() = default;
 
 MockIdleTimeEnabledClusterInfo::MockIdleTimeEnabledClusterInfo() {
   ON_CALL(*this, idleTimeout()).WillByDefault(Return(std::chrono::milliseconds(1000)));
 }
 
-MockIdleTimeEnabledClusterInfo::~MockIdleTimeEnabledClusterInfo() {}
+MockIdleTimeEnabledClusterInfo::~MockIdleTimeEnabledClusterInfo() = default;
 
 MockClusterInfo::MockClusterInfo()
     : stats_(ClusterInfoImpl::generateStats(stats_store_)),
@@ -48,11 +48,17 @@ MockClusterInfo::MockClusterInfo()
   ON_CALL(*this, eds_service_name()).WillByDefault(ReturnPointee(&eds_service_name_));
   ON_CALL(*this, http2Settings()).WillByDefault(ReturnRef(http2_settings_));
   ON_CALL(*this, extensionProtocolOptions(_)).WillByDefault(Return(extension_protocol_options_));
+  ON_CALL(*this, maxResponseHeadersCount())
+      .WillByDefault(ReturnPointee(&max_response_headers_count_));
   ON_CALL(*this, maxRequestsPerConnection())
       .WillByDefault(ReturnPointee(&max_requests_per_connection_));
   ON_CALL(*this, stats()).WillByDefault(ReturnRef(stats_));
   ON_CALL(*this, statsScope()).WillByDefault(ReturnRef(stats_store_));
-  ON_CALL(*this, transportSocketFactory()).WillByDefault(ReturnRef(*transport_socket_factory_));
+  // TODO(mattklein123): The following is a hack because it's not possible to directly embed
+  // a mock transport socket factory due to circular dependencies. Fix this up in a follow up.
+  ON_CALL(*this, transportSocketFactory())
+      .WillByDefault(Invoke(
+          [this]() -> Network::TransportSocketFactory& { return *transport_socket_factory_; }));
   ON_CALL(*this, loadReportStats()).WillByDefault(ReturnRef(load_report_stats_));
   ON_CALL(*this, sourceAddress()).WillByDefault(ReturnRef(source_address_));
   ON_CALL(*this, resourceManager(_))
@@ -78,7 +84,7 @@ MockClusterInfo::MockClusterInfo()
   ON_CALL(*this, clusterType()).WillByDefault(ReturnRef(cluster_type_));
 }
 
-MockClusterInfo::~MockClusterInfo() {}
+MockClusterInfo::~MockClusterInfo() = default;
 
 } // namespace Upstream
 } // namespace Envoy

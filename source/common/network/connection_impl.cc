@@ -56,15 +56,13 @@ ConnectionImpl::ConnectionImpl(Event::Dispatcher& dispatcher, ConnectionSocketPt
   // condition and just crash.
   RELEASE_ASSERT(ioHandle().fd() != -1, "");
 
-  ENVOY_LOG(debug,"new ConnectionImpl");
   if (!connected) {
     connecting_ = true;
   }
 
   // We never ask for both early close and read at the same time. If we are reading, we want to
   // consume all available data.
-  file_event_ =
-          dispatcher_.createFileEvent(
+  file_event_ = dispatcher_.createFileEvent(
       ioHandle().fd(), [this](uint32_t events) -> void { onFileEvent(events); },
       Event::FileTriggerType::Edge, Event::FileReadyType::Read | Event::FileReadyType::Write);
 
@@ -86,13 +84,9 @@ void ConnectionImpl::addWriteFilter(WriteFilterSharedPtr filter) {
   filter_manager_.addWriteFilter(filter);
 }
 
-void ConnectionImpl::addFilter(FilterSharedPtr filter) {
-  ENVOY_LOG(debug,"ConnectionImpl::addFilter");
-  filter_manager_.addFilter(filter);
-}
+void ConnectionImpl::addFilter(FilterSharedPtr filter) { filter_manager_.addFilter(filter); }
 
 void ConnectionImpl::addReadFilter(ReadFilterSharedPtr filter) {
-    ENVOY_LOG(debug,"ConnectionImpl::addReadFilter");
   filter_manager_.addReadFilter(filter);
 }
 
@@ -124,6 +118,8 @@ void ConnectionImpl::close(ConnectionCloseType type) {
       if (!inDelayedClose()) {
         initializeDelayedCloseTimer();
         delayed_close_state_ = DelayedCloseState::CloseAfterFlushAndWait;
+        // Monitor for the peer closing the connection.
+        file_event_->setEnabled(enable_half_close_ ? 0 : Event::FileReadyType::Closed);
       }
     } else {
       closeSocket(ConnectionEvent::LocalClose);
@@ -335,14 +331,10 @@ void ConnectionImpl::readDisable(bool disable) {
 }
 
 void ConnectionImpl::raiseEvent(ConnectionEvent event) {
-  ENVOY_CONN_LOG(trace, "raiseEvent: event={}", *this,int(event));
-
   for (ConnectionCallbacks* callback : callbacks_) {
     // TODO(mattklein123): If we close while raising a connected event we should not raise further
     // connected events.
-    ENVOY_CONN_LOG(trace, "raiseEvent,then callback", *this);
     callback->onEvent(event);
-    ENVOY_CONN_LOG(trace, "raiseEvent,then callback end", *this);
   }
   // We may have pending data in the write buffer on transport handshake
   // completion, which may also have completed in the context of onReadReady(),
@@ -351,7 +343,6 @@ void ConnectionImpl::raiseEvent(ConnectionEvent event) {
   // this if we're still open (the above callbacks may have closed).
   if (state() == State::Open && event == ConnectionEvent::Connected &&
       write_buffer_->length() > 0) {
-    ENVOY_CONN_LOG(trace, "connected and has write buff,trigger onWriteReady", *this);
     onWriteReady();
   }
 }
@@ -400,7 +391,7 @@ void ConnectionImpl::write(Buffer::Instance& data, bool end_stream, bool through
 
   write_end_stream_ = end_stream;
   if (data.length() > 0 || end_stream) {
-    ENVOY_CONN_LOG(trace, "writing {} bytes, end_stream {},data {}", *this, data.length(), end_stream,data.toString());
+    ENVOY_CONN_LOG(trace, "writing {} bytes, end_stream {}", *this, data.length(), end_stream);
     // TODO(mattklein123): All data currently gets moved from the source buffer to the write buffer.
     // This can lead to inefficient behavior if writing a bunch of small chunks. In this case, it
     // would likely be more efficient to copy data below a certain size. VERY IMPORTANT: If this is
@@ -549,7 +540,7 @@ ConnectionImpl::unixSocketPeerCredentials() const {
 }
 
 void ConnectionImpl::onWriteReady() {
-  ENVOY_CONN_LOG(trace, "write ready, ready write to socket", *this);
+  ENVOY_CONN_LOG(trace, "write ready", *this);
 
   if (connecting_) {
     int error;
@@ -572,8 +563,6 @@ void ConnectionImpl::onWriteReady() {
       return;
     }
   }
-
-  ENVOY_CONN_LOG(trace,"write buffer:{},length {}",*this,write_buffer_->toString(),write_buffer_->length());
 
   IoResult result = transport_socket_->doWrite(*write_buffer_, write_end_stream_);
   ASSERT(!result.end_stream_read_); // The interface guarantees that only read operations set this.

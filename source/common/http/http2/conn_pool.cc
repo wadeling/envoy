@@ -101,19 +101,13 @@ void ConnPoolImpl::newClientStream(Http::StreamDecoder& response_decoder,
     host_->cluster().stats().upstream_rq_active_.inc();
     host_->cluster().resourceManager(priority_).requests().inc();
     callbacks.onPoolReady(primary_client_->client_->newStream(response_decoder),
-                          primary_client_->real_host_description_,*primary_client_->client_);
+                          primary_client_->real_host_description_);
   }
 }
 
 ConnectionPool::Cancellable* ConnPoolImpl::newStream(Http::StreamDecoder& response_decoder,
-                                                     ConnectionPool::Callbacks& callbacks,
-                                                     const Http::PrivateProtoFilterFactoriesList& factory_list) {
+                                                     ConnectionPool::Callbacks& callbacks) {
   ASSERT(drained_callbacks_.empty());
-
-  ENVOY_LOG(debug,"http2 connpool new stream");
-
-  // set factory list
-  setPreClientFactoriesList(factory_list);
 
   // First see if we need to handle max streams rollover.
   uint64_t max_streams = host_->cluster().maxRequestsPerConnection();
@@ -276,21 +270,12 @@ void ConnPoolImpl::onUpstreamReady() {
 ConnPoolImpl::ActiveClient::ActiveClient(ConnPoolImpl& parent)
     : parent_(parent),
       connect_timer_(parent_.dispatcher_.createTimer([this]() -> void { onConnectTimeout(); })) {
-
-  ENVOY_LOG(debug,"new http2 active client ");
-
   parent_.conn_connect_ms_ = std::make_unique<Stats::Timespan>(
       parent_.host_->cluster().stats().upstream_cx_connect_ms_, parent_.dispatcher_.timeSource());
   Upstream::Host::CreateConnectionData data =
       parent_.host_->createConnection(parent_.dispatcher_, parent_.socket_options_, nullptr);
   real_host_description_ = data.host_description_;
   client_ = parent_.createCodecClient(data);
-
-  // set private proto filters
-  client_->setPrivateProtoFilterFactoriesList(parent.pre_client_factory_list_);
-  // init private filters
-  client_->createPreSrvFilterChain(*client_);
-
   client_->addConnectionCallbacks(*this);
   client_->setCodecClientCallbacks(*this);
   client_->setCodecConnectionCallbacks(*this);

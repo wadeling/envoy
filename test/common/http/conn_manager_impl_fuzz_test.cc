@@ -79,7 +79,9 @@ public:
   std::chrono::milliseconds drainTimeout() override { return std::chrono::milliseconds(100); }
   FilterChainFactory& filterFactory() override { return filter_factory_; }
   bool generateRequestId() override { return true; }
+  bool preserveExternalRequestId() const override { return false; }
   uint32_t maxRequestHeadersKb() const override { return max_request_headers_kb_; }
+  uint32_t maxRequestHeadersCount() const override { return max_request_headers_count_; }
   absl::optional<std::chrono::milliseconds> idleTimeout() const override { return idle_timeout_; }
   std::chrono::milliseconds streamIdleTimeout() const override { return stream_idle_timeout_; }
   std::chrono::milliseconds requestTimeout() const override { return request_timeout_; }
@@ -109,6 +111,7 @@ public:
   bool proxy100Continue() const override { return proxy_100_continue_; }
   const Http::Http1Settings& http1Settings() const override { return http1_settings_; }
   bool shouldNormalizePath() const override { return false; }
+  bool shouldMergeSlashes() const override { return false; }
 
   const envoy::config::filter::network::http_connection_manager::v2::HttpConnectionManager config_;
   std::list<AccessLog::InstanceSharedPtr> access_logs_;
@@ -126,6 +129,7 @@ public:
   ConnectionManagerTracingStats tracing_stats_;
   ConnectionManagerListenerStats listener_stats_;
   uint32_t max_request_headers_kb_{Http::DEFAULT_MAX_REQUEST_HEADERS_KB};
+  uint32_t max_request_headers_count_{Http::DEFAULT_MAX_HEADERS_COUNT};
   absl::optional<std::chrono::milliseconds> idle_timeout_;
   std::chrono::milliseconds stream_idle_timeout_{};
   std::chrono::milliseconds request_timeout_{};
@@ -137,6 +141,7 @@ public:
   absl::optional<std::string> user_agent_;
   TracingConnectionManagerConfigPtr tracing_config_;
   bool proxy_100_continue_{true};
+  bool preserve_external_request_id_{false};
   Http::Http1Settings http1_settings_;
   Http::DefaultInternalAddressConfig internal_address_config_;
   bool normalize_path_{true};
@@ -373,7 +378,7 @@ public:
   StreamState response_state_;
 };
 
-typedef std::unique_ptr<FuzzStream> FuzzStreamPtr;
+using FuzzStreamPtr = std::unique_ptr<FuzzStream>;
 
 DEFINE_PROTO_FUZZER(const test::common::http::ConnManagerImplTestCase& input) {
   FuzzConfig config;
