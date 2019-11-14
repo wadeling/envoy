@@ -27,6 +27,7 @@
 #include "common/http/date_provider_impl.h"
 #include "common/http/default_server_string.h"
 #include "common/http/utility.h"
+#include "common/perf/perf.h"
 #include "common/network/raw_buffer_socket.h"
 #include "common/router/scoped_config_impl.h"
 #include "common/stats/isolated_store_impl.h"
@@ -297,6 +298,17 @@ private:
   Http::Code handlerRuntimeModify(absl::string_view path_and_query,
                                   Http::HeaderMap& response_headers, Buffer::Instance& response,
                                   AdminStream&);
+    // perf test
+  Http::Code handlerPerf(absl::string_view path_and_query,
+                         Http::HeaderMap& response_headers, Buffer::Instance& response,
+                         AdminStream&);
+  Http::Code handlerPerfReset(absl::string_view path_and_query,
+                              Http::HeaderMap& response_headers, Buffer::Instance& response,
+                              AdminStream&);
+  Http::Code handlerPerfExtra(absl::string_view path_and_query,
+                              Http::HeaderMap& response_headers, Buffer::Instance& response,
+                              AdminStream&);
+
   bool isFormUrlEncoded(const Http::HeaderEntry* content_type) const;
 
   class AdminListener : public Network::ListenerConfig {

@@ -1148,6 +1148,51 @@ Http::Code AdminImpl::handlerRuntimeModify(absl::string_view url, Http::HeaderMa
   return Http::Code::OK;
 }
 
+
+Http::Code AdminImpl::handlerPerf(absl::string_view url , Http::HeaderMap&,
+                                  Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+    int start = 0;
+    if (params.find("start") != params.end()) {
+        start = atoi(params["start"].c_str());
+    }
+    int end = 0;
+    if (params.find("end") != params.end() ) {
+        end = atoi(params["end"].c_str());
+    }
+
+    std::string file = "perf_latency.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+
+    std::string result = ENVOY::dumpLatency(start,end,file);
+    response.add("perf test OK\n");
+  response.add(result);
+
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerPerfReset(absl::string_view url ABSL_ATTRIBUTE_UNUSED, Http::HeaderMap&,
+                                       Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
+    ENVOY::resetSta();
+    response.add("reset perf stat end.\n");
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerPerfExtra(absl::string_view url , Http::HeaderMap&,
+                                       Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+    std::string file = "extra.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+
+    ENVOY::dumpExtra(file);
+    response.add("dump extra end.\n");
+    return Http::Code::OK;
+}
+
 ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
 
 void AdminFilter::onComplete() {
@@ -1242,6 +1287,9 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/runtime", "print runtime values", MAKE_ADMIN_HANDLER(handlerRuntime), false, false},
           {"/runtime_modify", "modify runtime values", MAKE_ADMIN_HANDLER(handlerRuntimeModify),
            false, true},
+          {"/perf_reset", "reset perf latency check result", MAKE_ADMIN_HANDLER(handlerPerfReset), false, false},
+          {"/perf", "print perf latency check result", MAKE_ADMIN_HANDLER(handlerPerf), false, false},
+          {"/perf_extra", "dump perf latency check duplicateid and other info", MAKE_ADMIN_HANDLER(handlerPerfExtra), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}
