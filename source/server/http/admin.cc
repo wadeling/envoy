@@ -1165,10 +1165,14 @@ Http::Code AdminImpl::handlerPerf(absl::string_view url , Http::HeaderMap&,
     if (params.find("file") != params.end()) {
         file = params["file"];
     }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
 
-    std::string result = ENVOY::dumpLatency(start,end,file);
+    std::string result = ENVOY::dumpLatency(start,end,file,path);
     response.add("perf test OK\n");
-  response.add(result);
+//    response.add(result);
 
     return Http::Code::OK;
 }
@@ -1187,8 +1191,11 @@ Http::Code AdminImpl::handlerPerfExtra(absl::string_view url , Http::HeaderMap&,
     if (params.find("file") != params.end()) {
         file = params["file"];
     }
-
-    ENVOY::dumpExtra(file);
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+    ENVOY::dumpExtra(file,path);
     response.add("dump extra end.\n");
     return Http::Code::OK;
 }

@@ -30,12 +30,27 @@ namespace ENVOY {
         uint64_t client_rcv_time;
     };
 
+    inline std::string intToStr(int i) {
+        std::ostringstream tmpStream;
+        tmpStream << i ;
+        return tmpStream.str();
+    }
+
+    typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::microseconds> usType;
+    inline uint64_t getCurrentTime() {
+        usType tp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
+        return tp.time_since_epoch().count();
+//        std::chrono::steady_clock::duration d = std::chrono::steady_clock::now().time_since_epoch();
+//        std::chrono::microseconds mic = std::chrono::duration_cast<std::chrono::microseconds>(d);
+//        return mic.count();
+    }
+
     extern int recordTimePoint(Envoy::Buffer::Instance& data,Record_Type_Enum type) ;
 
-    extern std::string dumpLatency(int start,int end,std::string file) ;
+    extern std::string dumpLatency(int start,int end,std::string file,std::string path) ;
 
-    extern int dumpDuplicateId(std::string file);
-    extern int dumpExtra(std::string file);
+    extern int dumpDuplicateId(std::string file,std::string path);
+    extern int dumpExtra(std::string file,std::string path);
     extern void resetSta();
 
     extern int BufferToSmallCount;

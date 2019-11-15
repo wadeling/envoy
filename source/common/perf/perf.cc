@@ -1,17 +1,21 @@
 #include "common/perf/perf.h"
 
 namespace ENVOY {
-    typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::microseconds> usType;
 
     std::vector<LatencyRecord> LatencyRecordArr(MAX_RECORD_NUM);
     std::vector<int> DuplicateIdArr(MAX_RECORD_NUM);
 
+
     int BufferToSmallCount = 0;
 
-    std::string intToStr(int i) {
-        std::ostringstream tmpStream;
-        tmpStream << i ;
-        return tmpStream.str();
+    int LatencyRecordSize = MAX_RECORD_NUM;
+    int initLatencyRecord(int size) {
+        if (size > MAX_RECORD_NUM) {
+            printf("latency record size too larg\r\n");
+            return 0;
+        }
+        LatencyRecordSize = size;
+        return 0;
     }
 
     int checkDuplicateId(int id) {
@@ -23,14 +27,6 @@ namespace ENVOY {
             return -1;
         }
         return 0;
-    }
-
-    uint64_t getCurrentTime() {
-        usType tp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
-        return tp.time_since_epoch().count();
-//        std::chrono::steady_clock::duration d = std::chrono::steady_clock::now().time_since_epoch();
-//        std::chrono::microseconds mic = std::chrono::duration_cast<std::chrono::microseconds>(d);
-//        return mic.count();
     }
 
     int getXId(Envoy::Buffer::Instance& data,const std::string& key) {
@@ -107,18 +103,25 @@ namespace ENVOY {
         return 0;
     }
 
-    void flushToFile(std::string& result,std::string file) {
+    void flushToFile(std::string& result,std::string file,std::string path) {
+        std::string outfile;
+        if (path.length()) {
+            outfile = path + "/" + file;
+        } else {
+            outfile = file;
+        }
+
         // write file
-        std::ofstream out(file.c_str());
+        std::ofstream out(outfile.c_str());
         if (out.is_open()) {
             out << result;
             out.close();
         } else {
-            printf("[error] can not open file %s\r\n",file.c_str());
+            printf("[error] can not open file %s\r\n",outfile.c_str());
         }
     }
 
-    std::string dumpLatency(int start,int end,std::string file) {
+    std::string dumpLatency(int start,int end,std::string file,std::string path) {
         std::string result;
         int array_len = int(LatencyRecordArr.size());
         int start_index = start > array_len ? array_len: start;
@@ -140,19 +143,19 @@ namespace ENVOY {
             result += tmpStream.str();
         }
 //        result += "dump end";
-       printf("result size %lu\r\n",result.length());
+        printf("result size %lu\r\n",result.length());
 
-        flushToFile(result,file);
+        flushToFile(result,file,path);
 
         return result;
     }
 
-    int dumpExtra(std::string file) {
-        dumpDuplicateId(file) ;
+    int dumpExtra(std::string file,std::string path) {
+        dumpDuplicateId(file,path) ;
         return 0;
     }
 
-    int dumpDuplicateId(std::string file) {
+    int dumpDuplicateId(std::string file,std::string path) {
         std::string result;
         for (int i = 0; i < int(DuplicateIdArr.size()); ++i) {
             if (DuplicateIdArr[i] != 0) {
@@ -160,7 +163,7 @@ namespace ENVOY {
             }
         }
         result += " not found xid num:" + intToStr(BufferToSmallCount) ;
-        flushToFile(result,file);
+        flushToFile(result,file,path);
         printf("dump duplicate id end.\r\n");
         return 0;
     }

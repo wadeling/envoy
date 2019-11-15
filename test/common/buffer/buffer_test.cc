@@ -59,6 +59,68 @@ bool sliceMatches(const SlicePtr& slice, const std::string& expected) {
          memcmp(slice->data(), expected.data(), expected.size()) == 0;
 }
 
+TEST(BufferFindTest,Find) {
+    printf("buffer find test start.\r\n");
+    const char data[] =
+            "POST /joyent/http-parser HTTP/1.1\r\n"
+            "Host: github.com\r\n"
+            "DNT: 1\r\n"
+            "Accept-Encoding: gzip, deflate, sdch\r\n"
+            "Accept-Language: ru-RU,ru;q=0.8,en-US;q=0.6,en;q=0.4\r\n"
+            "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/39.0.2171.65 Safari/537.36\r\n"
+            "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,"
+            "image/webp,*/*;q=0.8\r\n"
+            "Referer: https://github.com/joyent/http-parser\r\n"
+            "Connection: keep-alive\r\n"
+            "x-id: 123\r\n"
+            "Transfer-Encoding: chunked\r\n"
+            "Cache-Control: max-age=0\r\n\r\n";
+    const size_t data_len = sizeof(data) - 1;
+    fprintf(stdout, "req_len=%d\n", static_cast<int>(data_len));
+
+    std::string key="x-id";
+    Buffer::OwnedImpl buffer(data,data_len);
+
+    struct timeval start;
+    struct timeval end;
+    int err;
+    err = gettimeofday(&start, NULL);
+
+    uint64_t iter_count= 1LL << 25;
+    for (uint64_t  i = 0; i < iter_count; i++) {
+        ssize_t pos = buffer.search(key.c_str(),key.size(),0);
+        if (pos == -1) {
+            printf("find err.\r\n");
+            break;
+        }
+    }
+
+    double elapsed;
+    double bw;
+    double total;
+
+    err = gettimeofday(&end, NULL);
+    fprintf(stdout, "Benchmark result:\n");
+    elapsed = static_cast<double>(end.tv_sec - start.tv_sec) +
+              (end.tv_usec - start.tv_usec) * 1e-6f;
+
+    total = static_cast<double>(iter_count * data_len);
+    bw =static_cast<double>(total / elapsed);
+
+    fprintf(stdout, "%.2f mb | %.2f mb/s | %llu iterator count | %.2f req/sec | %.2f us/req | %.2f s\n",
+            static_cast<double>( total / (1024 * 1024) ),
+            bw / (1024 * 1024),
+            iter_count,
+            static_cast<double>(iter_count / elapsed),
+            (elapsed / static_cast<double>( iter_count))*1000*1000 ,
+            elapsed);
+    fflush(stdout);
+
+    EXPECT_EQ(1,1);
+}
+
 TEST_F(OwnedSliceTest, Create) {
   static constexpr uint64_t Sizes[] = {0, 1, 64, 4096 - sizeof(OwnedSlice), 65535};
   for (const auto size : Sizes) {
