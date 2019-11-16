@@ -1,21 +1,21 @@
 #include "common/perf/perf.h"
 
-namespace ENVOY {
+namespace Envoy {
 
     std::vector<LatencyRecord> LatencyRecordArr(MAX_RECORD_NUM);
     std::vector<int> DuplicateIdArr(MAX_RECORD_NUM);
 
-
+    // not find "x-id" 's num
     int BufferToSmallCount = 0;
 
-    int LatencyRecordSize = MAX_RECORD_NUM;
-    int initLatencyRecord(int size) {
-        if (size > MAX_RECORD_NUM) {
-            printf("latency record size too larg\r\n");
-            return 0;
-        }
-        LatencyRecordSize = size;
-        return 0;
+    // perf switch: 1-on (default),0-of
+    int PerfSwitch = 1;
+    void perfOn() {
+        PerfSwitch = 1;
+    }
+
+    void perfOff() {
+        PerfSwitch = 0;
     }
 
     int checkDuplicateId(int id) {
@@ -24,20 +24,22 @@ namespace ENVOY {
             && LatencyRecordArr[id].client_rcv_time !=0
             && LatencyRecordArr[id].server_send_time !=0 ) {
             DuplicateIdArr[id]++;
+            ENVOY_LOG_MISC(trace,"find duplicate id {}",id);
             return -1;
         }
         return 0;
     }
 
     int getXId(Envoy::Buffer::Instance& data,const std::string& key) {
+//        ENVOY_LOG_MISC(trace,"get xid.data: {},key: {}",data.toString(),key);
         ssize_t pos = data.search(key.c_str(),key.size(),0);
         if (pos == -1) {
-//            printf("not find x-id in data.\r\n");
+            ENVOY_LOG_MISC(trace,"not find x-id");
             return -1;
         }
         ssize_t pos2 = data.search(XID_END.c_str(),XID_END.size(),pos);
         if (pos2 == -1) {
-//            printf("not find x-id end in data.\r\n");
+            ENVOY_LOG_MISC(trace,"not find x-id end character");
             return -2;
         }
 
@@ -48,7 +50,10 @@ namespace ENVOY {
     }
 
     int recordTimePoint(Envoy::Buffer::Instance& data,Record_Type_Enum type) {
-//        return 0;
+        if (PerfSwitch == 0) {
+            ENVOY_LOG_MISC(trace,"perf switch off,not record time");
+            return 0;
+        }
 //        int id= getXId(data,XID_ALTER);
 //        if ( id == -1) {
 //           // serach another
@@ -59,13 +64,16 @@ namespace ENVOY {
 //            }
 //        }
         int id= getXId(data,XID);
-        if ( id == -1) {
+        if ( id < 0) {
+            ENVOY_LOG_MISC(trace,"not find x-id.{}",data.toString());
             BufferToSmallCount++;
             return -1;
         }
-//        printf("get xid %d \r\n",id);
+
+        ENVOY_LOG_MISC(trace,"get xid {},record time type {}",id,type);
 
         if (id + 1 >= MAX_RECORD_NUM) {
+            ENVOY_LOG_MISC(trace,"x-id over upper limit ");
             return -1;
         }
 
@@ -75,11 +83,11 @@ namespace ENVOY {
         }
 
         uint64_t cur_time = getCurrentTime();
-//        printf("get cur_time %llu \r\n",cur_time);
+        ENVOY_LOG_MISC(trace,"get cur time {}",cur_time);
 
         if (type == Server_Rcv_Time) {
             if (LatencyRecordArr[id].server_rcv_time != 0) {
-//                printf("change to clint recv time \r\n");
+                ENVOY_LOG_MISC(trace,"change to client recv time ");
                 LatencyRecordArr[id].client_rcv_time = cur_time;
             } else {
                 LatencyRecordArr[id].server_rcv_time = cur_time;
@@ -88,7 +96,7 @@ namespace ENVOY {
             LatencyRecordArr[id].server_send_time = cur_time;
         } else if ( type == Client_Send_Time) {
             if (LatencyRecordArr[id].client_send_time != 0) {
-//                printf("change to server send time \r\n");
+                ENVOY_LOG_MISC(trace,"change to server send time ");
                 LatencyRecordArr[id].server_send_time = cur_time;
             } else {
                 LatencyRecordArr[id].client_send_time = cur_time;
@@ -96,7 +104,7 @@ namespace ENVOY {
         } else if ( type == Client_Rcv_Time) {
             LatencyRecordArr[id].client_rcv_time = cur_time;
         } else {
-            printf("type err\r\n");
+            ENVOY_LOG_MISC(error,"time type err {}",type);
             return -2;
         }
 

@@ -16,14 +16,15 @@ IoResult RawBufferSocket::doRead(Buffer::Instance& buffer) {
   PostIoAction action = PostIoAction::KeepOpen;
   uint64_t bytes_read = 0;
   bool end_stream = false;
+
+  ENVOY_CONN_LOG(trace, "do read", callbacks_->connection());
   do {
     // 16K read is arbitrary. TODO(mattklein123) PERF: Tune the read size.
     Api::IoCallUint64Result result = buffer.read(callbacks_->ioHandle(), 16384);
 
-      // perf test
-      ENVOY::recordTimePoint(buffer,ENVOY::Server_Rcv_Time);
-
     if (result.ok()) {
+      // perf test
+      Envoy::recordTimePoint(buffer,Envoy::Server_Rcv_Time);
       ENVOY_CONN_LOG(trace, "read returns: {}", callbacks_->connection(), result.rc_);
       if (result.rc_ == 0) {
         // Remote close.
@@ -46,10 +47,13 @@ IoResult RawBufferSocket::doRead(Buffer::Instance& buffer) {
     }
   } while (true);
 
+  ENVOY_CONN_LOG(trace, "do read end", callbacks_->connection());
   return {action, bytes_read, end_stream};
 }
 
 IoResult RawBufferSocket::doWrite(Buffer::Instance& buffer, bool end_stream) {
+  ENVOY_CONN_LOG(trace, "write data: {}", callbacks_->connection(), buffer.toString());
+
   PostIoAction action;
   uint64_t bytes_written = 0;
   ASSERT(!shutdown_ || buffer.length() == 0);
@@ -64,11 +68,11 @@ IoResult RawBufferSocket::doWrite(Buffer::Instance& buffer, bool end_stream) {
       action = PostIoAction::KeepOpen;
       break;
     }
+
+    // record time,must before buffer.write which will clear buff
+    Envoy::recordTimePoint(buffer,Envoy::Client_Send_Time);
+
     Api::IoCallUint64Result result = buffer.write(callbacks_->ioHandle());
-
-      // record time
-      ENVOY::recordTimePoint(buffer,ENVOY::Client_Send_Time);
-
     if (result.ok()) {
       ENVOY_CONN_LOG(trace, "write returns: {}", callbacks_->connection(), result.rc_);
       bytes_written += result.rc_;

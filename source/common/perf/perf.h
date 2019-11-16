@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include "envoy/buffer/buffer.h"
+#include "common/common/logger.h"
 
 #define  MAX_RECORD_NUM     (60*4*60*1000)  // 60 concurrency,4 min,60sec,1000qps
 
@@ -15,7 +16,8 @@ const std::string XID= "x-id";
 const std::string XID_ALTER= "X-Id";
 const std::string XID_END= "\r\n";
 
-namespace ENVOY {
+namespace Envoy {
+
     enum Record_Type_Enum {
         Server_Rcv_Time = 0,
         Server_Send_Time = 1,
@@ -52,6 +54,8 @@ namespace ENVOY {
     extern int dumpDuplicateId(std::string file,std::string path);
     extern int dumpExtra(std::string file,std::string path);
     extern void resetSta();
+    extern void perfOn();
+    extern void perfOff();
 
     extern int BufferToSmallCount;
 

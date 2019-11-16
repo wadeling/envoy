@@ -14,6 +14,7 @@ envoy_cc_library(
     hdrs = ["perf.h"],
     deps = [
         "//include/envoy/buffer:buffer_interface",
+        "//source/common/common:minimal_logger_lib",
     ],
 )
 

@@ -94,7 +94,9 @@ TEST(BufferFindTest,Find) {
         if (pos == -1) {
             printf("find err.\r\n");
             break;
-        }
+        }/* else {
+            printf("find x-id\r\n");
+        }*/
     }
 
     double elapsed;

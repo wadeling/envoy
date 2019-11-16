@@ -1170,7 +1170,7 @@ Http::Code AdminImpl::handlerPerf(absl::string_view url , Http::HeaderMap&,
         path = params["path"];
     }
 
-    std::string result = ENVOY::dumpLatency(start,end,file,path);
+    std::string result = Envoy::dumpLatency(start,end,file,path);
     response.add("perf test OK\n");
 //    response.add(result);
 
@@ -1179,7 +1179,7 @@ Http::Code AdminImpl::handlerPerf(absl::string_view url , Http::HeaderMap&,
 
 Http::Code AdminImpl::handlerPerfReset(absl::string_view url ABSL_ATTRIBUTE_UNUSED, Http::HeaderMap&,
                                        Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
-    ENVOY::resetSta();
+    Envoy::resetSta();
     response.add("reset perf stat end.\n");
     return Http::Code::OK;
 }
@@ -1195,10 +1195,35 @@ Http::Code AdminImpl::handlerPerfExtra(absl::string_view url , Http::HeaderMap&,
     if (params.find("path") != params.end()) {
         path = params["path"];
     }
-    ENVOY::dumpExtra(file,path);
+    Envoy::dumpExtra(file,path);
     response.add("dump extra end.\n");
     return Http::Code::OK;
 }
+
+Http::Code AdminImpl::handlerPerfSwitch(absl::string_view url , Http::HeaderMap&,
+                                       Buffer::Instance& response, AdminStream& ) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+    std::string perfSwitch;
+    if (params.find("switch") != params.end()) {
+        perfSwitch = params["switch"];
+    }
+
+    std::string msg;
+    if (perfSwitch == "1") {
+        msg = "turn perf on\n";
+        Envoy::perfOn();
+    } else if (perfSwitch == "0") {
+        msg = "turn perf off\n";
+        Envoy::perfOff();
+    } else {
+        msg = "switch param err.should be '1' or '0'";
+    }
+
+    response.add(msg);
+
+    return Http::Code::OK;
+}
+
 
 ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
 
@@ -1296,6 +1321,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
            false, true},
           {"/perf_reset", "reset perf latency check result", MAKE_ADMIN_HANDLER(handlerPerfReset), false, false},
           {"/perf", "print perf latency check result", MAKE_ADMIN_HANDLER(handlerPerf), false, false},
+          {"/perf_switch", "turn perf on or off", MAKE_ADMIN_HANDLER(handlerPerfSwitch), false, false},
           {"/perf_extra", "dump perf latency check duplicateid and other info", MAKE_ADMIN_HANDLER(handlerPerfExtra), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
