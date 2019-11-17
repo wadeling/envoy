@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <list>
 #include <chrono>
 #include <sstream>
 #include <fstream>
@@ -56,6 +57,9 @@ namespace Envoy {
     extern void resetSta();
     extern void perfOn();
     extern void perfOff();
+
+    extern void recordHeaderCompleteTime(std::pair<uint64_t,uint64_t>& );
+    extern void dumpHeaderCompleteTime(std::string file,std::string path);
 
     extern int BufferToSmallCount;
 

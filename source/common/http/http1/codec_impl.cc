@@ -18,6 +18,8 @@
 #include "common/http/utility.h"
 #include "common/runtime/runtime_impl.h"
 
+#include "common/perf/perf.h"
+
 namespace Envoy {
 namespace Http {
 namespace Http1 {
@@ -479,6 +481,8 @@ void ConnectionImpl::onHeaderValue(const char* data, size_t length) {
 }
 
 int ConnectionImpl::onHeadersCompleteBase() {
+  uint64_t start = Envoy::getCurrentTime();
+
   ENVOY_CONN_LOG(trace, "headers complete", connection_);
   completeLastHeader();
   // Validate that the completed HeaderMap's cached byte size exists and is correct.
@@ -518,6 +522,11 @@ int ConnectionImpl::onHeadersCompleteBase() {
   int rc = onHeadersComplete(std::move(current_header_map_));
   current_header_map_.reset();
   header_parsing_state_ = HeaderParsingState::Done;
+
+  //time perf
+  uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordHeaderCompleteTime(t);
 
   // Returning 2 informs http_parser to not expect a body or further data on this connection.
   return handling_upgrade_ ? 2 : rc;

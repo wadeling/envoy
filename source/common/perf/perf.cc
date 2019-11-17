@@ -1,6 +1,7 @@
 #include "common/perf/perf.h"
 
 namespace Envoy {
+    std::list<std::pair<uint64_t,uint64_t> > HeaderCompleteTimeList;
 
     std::vector<LatencyRecord> LatencyRecordArr(MAX_RECORD_NUM);
     std::vector<int> DuplicateIdArr(MAX_RECORD_NUM);
@@ -17,6 +18,11 @@ namespace Envoy {
     void perfOff() {
         PerfSwitch = 0;
     }
+
+    void recordHeaderCompleteTime(std::pair<uint64_t,uint64_t>& t) {
+        HeaderCompleteTimeList.push_back(t);
+    }
+
 
     int checkDuplicateId(int id) {
         if ( LatencyRecordArr[id].server_rcv_time != 0
@@ -188,4 +194,17 @@ namespace Envoy {
         }
         BufferToSmallCount = 0;
     }
+
+    void dumpHeaderCompleteTime(std::string file,std::string path) {
+        std::string result;
+        std::list<std::pair<uint64_t ,uint64_t > >::iterator iter = HeaderCompleteTimeList.begin();
+        for (; iter != HeaderCompleteTimeList.end() ; iter++) {
+            int take_time = iter->second - iter->first;
+            result += intToStr(iter->first)+ "\t" + intToStr(iter->second) +  "\t" + intToStr(take_time) + "\r\n";
+        }
+
+        flushToFile(result,file,path);
+        printf("dump header complete time end\r\n");
+    }
+
 }

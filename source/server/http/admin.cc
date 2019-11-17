@@ -1224,8 +1224,29 @@ Http::Code AdminImpl::handlerPerfSwitch(absl::string_view url , Http::HeaderMap&
     return Http::Code::OK;
 }
 
+Http::Code AdminImpl::handlerHeaderCompleteTime(absl::string_view url,
+                                     Http::HeaderMap& , Buffer::Instance& response,
+                                     AdminStream&) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
 
-ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
+    std::string file = "header_complete_time.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+
+    Envoy::dumpHeaderCompleteTime(file,path);
+
+    response.add("dump end\n");
+
+    return Http::Code::OK;
+}
+
+
+    ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
 
 void AdminFilter::onComplete() {
   absl::string_view path = request_headers_->Path()->value().getStringView();
@@ -1323,6 +1344,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/perf", "print perf latency check result", MAKE_ADMIN_HANDLER(handlerPerf), false, false},
           {"/perf_switch", "turn perf on or off", MAKE_ADMIN_HANDLER(handlerPerfSwitch), false, false},
           {"/perf_extra", "dump perf latency check duplicateid and other info", MAKE_ADMIN_HANDLER(handlerPerfExtra), false, false},
+          {"/perf_dump_header_time", "dump header complete process time", MAKE_ADMIN_HANDLER(handlerHeaderCompleteTime), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}

@@ -33,6 +33,7 @@ envoy_cc_library(
         "//source/common/http:headers_lib",
         "//source/common/http:utility_lib",
         "//source/common/runtime:runtime_lib",
+        "//source/common/perf:perf_lib",
     ],
 )
 
