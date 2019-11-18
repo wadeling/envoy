@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <thread>
 
 #include "envoy/admin/v2alpha/certs.pb.h"
 #include "envoy/admin/v2alpha/clusters.pb.h"
@@ -1170,7 +1171,11 @@ Http::Code AdminImpl::handlerPerf(absl::string_view url , Http::HeaderMap&,
         path = params["path"];
     }
 
-    std::string result = Envoy::dumpLatency(start,end,file,path);
+    std::thread t1([start,end,file,path]{
+        Envoy::dumpLatency(start,end,file,path);
+    });
+    t1.detach();
+
     response.add("perf test OK\n");
 //    response.add(result);
 

@@ -481,7 +481,7 @@ void ConnectionImpl::onHeaderValue(const char* data, size_t length) {
 }
 
 int ConnectionImpl::onHeadersCompleteBase() {
-  uint64_t start = Envoy::getCurrentTime();
+//  uint64_t start = Envoy::getCurrentTime();
 
   ENVOY_CONN_LOG(trace, "headers complete", connection_);
   completeLastHeader();
@@ -524,9 +524,9 @@ int ConnectionImpl::onHeadersCompleteBase() {
   header_parsing_state_ = HeaderParsingState::Done;
 
   //time perf
-  uint64_t end = Envoy::getCurrentTime();
-  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
-  Envoy::recordHeaderCompleteTime(t);
+//  uint64_t end = Envoy::getCurrentTime();
+//  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+//  Envoy::recordHeaderCompleteTime(t);
 
   // Returning 2 informs http_parser to not expect a body or further data on this connection.
   return handling_upgrade_ ? 2 : rc;
