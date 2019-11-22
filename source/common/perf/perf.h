@@ -39,6 +39,18 @@ namespace Envoy {
         return tmpStream.str();
     }
 
+    inline std::string uint64ToStr(uint64_t i) {
+        std::ostringstream tmpStream;
+        tmpStream << i ;
+        return tmpStream.str();
+    }
+
+    inline std::string doubleToStr(double i) {
+        std::ostringstream tmpStream;
+        tmpStream << i ;
+        return tmpStream.str();
+    }
+
     typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::microseconds> usType;
     inline uint64_t getCurrentTime() {
         usType tp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
@@ -60,6 +72,12 @@ namespace Envoy {
 
     extern void recordHeaderCompleteTime(std::pair<uint64_t,uint64_t>& );
     extern void dumpHeaderCompleteTime(std::string file,std::string path);
+
+    extern void recordServerMsgCompleteTime(std::pair<uint64_t,uint64_t>& );
+    extern void dumpServerMsgCompleteTime(std::string file,std::string path);
+
+    extern void recordClientMsgCompleteTime(std::pair<uint64_t,uint64_t>& );
+    extern void dumpClientMsgCompleteTime(std::string file,std::string path);
 
     extern int BufferToSmallCount;
 

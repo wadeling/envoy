@@ -481,7 +481,7 @@ void ConnectionImpl::onHeaderValue(const char* data, size_t length) {
 }
 
 int ConnectionImpl::onHeadersCompleteBase() {
-//  uint64_t start = Envoy::getCurrentTime();
+  uint64_t start = Envoy::getCurrentTime();
 
   ENVOY_CONN_LOG(trace, "headers complete", connection_);
   completeLastHeader();
@@ -524,15 +524,17 @@ int ConnectionImpl::onHeadersCompleteBase() {
   header_parsing_state_ = HeaderParsingState::Done;
 
   //time perf
-//  uint64_t end = Envoy::getCurrentTime();
-//  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
-//  Envoy::recordHeaderCompleteTime(t);
+  uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordHeaderCompleteTime(t);
 
+  ENVOY_CONN_LOG(trace, "headers complete end", connection_);
   // Returning 2 informs http_parser to not expect a body or further data on this connection.
   return handling_upgrade_ ? 2 : rc;
 }
 
 void ConnectionImpl::onMessageCompleteBase() {
+
   ENVOY_CONN_LOG(trace, "message complete", connection_);
   if (handling_upgrade_) {
     // If this is an upgrade request, swallow the onMessageComplete. The
@@ -543,6 +545,9 @@ void ConnectionImpl::onMessageCompleteBase() {
     return;
   }
   onMessageComplete();
+
+
+  ENVOY_CONN_LOG(trace, "message complete end", connection_);
 }
 
 void ConnectionImpl::onMessageBeginBase() {
@@ -690,6 +695,8 @@ void ServerConnectionImpl::onBody(const char* data, size_t length) {
 }
 
 void ServerConnectionImpl::onMessageComplete() {
+  uint64_t start = Envoy::getCurrentTime();
+
   if (active_request_) {
     Buffer::OwnedImpl buffer;
     active_request_->remote_complete_ = true;
@@ -707,6 +714,12 @@ void ServerConnectionImpl::onMessageComplete() {
   // back pressure. However this means that the calling code needs to detect if there is more data
   // in the buffer and dispatch it again.
   http_parser_pause(&parser_, 1);
+
+  //time perf
+  uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordServerMsgCompleteTime(t);
+
 }
 
 void ServerConnectionImpl::onResetStream(StreamResetReason reason) {
@@ -812,7 +825,9 @@ void ClientConnectionImpl::onBody(const char* data, size_t length) {
 }
 
 void ClientConnectionImpl::onMessageComplete() {
-  ENVOY_CONN_LOG(trace, "message complete", connection_);
+  uint64_t start = Envoy::getCurrentTime();
+
+  ENVOY_CONN_LOG(trace, "client message complete", connection_);
   if (ignore_message_complete_for_100_continue_) {
     ignore_message_complete_for_100_continue_ = false;
     return;
@@ -842,6 +857,12 @@ void ClientConnectionImpl::onMessageComplete() {
       response.decoder_->decodeData(buffer, true);
     }
   }
+
+  //time perf
+  uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordClientMsgCompleteTime(t);
+
 }
 
 void ClientConnectionImpl::onResetStream(StreamResetReason reason) {

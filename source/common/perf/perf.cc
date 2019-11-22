@@ -2,6 +2,8 @@
 
 namespace Envoy {
     std::list<std::pair<uint64_t,uint64_t> > HeaderCompleteTimeList;
+    std::list<std::pair<uint64_t,uint64_t> > ServerMsgCompleteTimeList;
+    std::list<std::pair<uint64_t,uint64_t> > ClientMsgCompleteTimeList;
 
     std::vector<LatencyRecord> LatencyRecordArr(MAX_RECORD_NUM);
     std::vector<int> DuplicateIdArr(MAX_RECORD_NUM);
@@ -23,6 +25,13 @@ namespace Envoy {
         HeaderCompleteTimeList.push_back(t);
     }
 
+    void recordServerMsgCompleteTime(std::pair<uint64_t,uint64_t>& t) {
+        ServerMsgCompleteTimeList.push_back(t);
+    }
+
+    void recordClientMsgCompleteTime(std::pair<uint64_t,uint64_t>& t) {
+        ClientMsgCompleteTimeList.push_back(t);
+    }
 
     int checkDuplicateId(int id) {
         if ( LatencyRecordArr[id].server_rcv_time != 0
@@ -195,16 +204,33 @@ namespace Envoy {
         BufferToSmallCount = 0;
     }
 
-    void dumpHeaderCompleteTime(std::string file,std::string path) {
+    void dumpTimeList(std::string file,std::string path,std::list<std::pair<uint64_t,uint64_t> >& list) {
+        uint64_t total_time = 0;
         std::string result;
-        std::list<std::pair<uint64_t ,uint64_t > >::iterator iter = HeaderCompleteTimeList.begin();
-        for (; iter != HeaderCompleteTimeList.end() ; iter++) {
-            int take_time = iter->second - iter->first;
-            result += intToStr(iter->first)+ "\t" + intToStr(iter->second) +  "\t" + intToStr(take_time) + "\r\n";
+        std::list<std::pair<uint64_t ,uint64_t > >::iterator iter = list.begin();
+        for (; iter != list.end() ; iter++) {
+            uint64_t take_time = iter->second - iter->first;
+            total_time += take_time;
+            result += uint64ToStr(iter->first)+ "\t" + uint64ToStr(iter->second) +  "\t" + uint64ToStr(take_time) + "\r\n";
         }
+        double average_time = static_cast<double>(total_time)/ static_cast<double>(HeaderCompleteTimeList.size());
+        result += "average time :"  + doubleToStr(average_time) + "us \r\n";
 
         flushToFile(result,file,path);
+    }
+
+    void dumpHeaderCompleteTime(std::string file,std::string path) {
+        dumpTimeList(file,path,HeaderCompleteTimeList);
         printf("dump header complete time end\r\n");
     }
 
+    void dumpServerMsgCompleteTime(std::string file,std::string path) {
+        dumpTimeList(file,path,ServerMsgCompleteTimeList);
+        printf("dump Server Msg complete time end\r\n");
+    }
+
+    void dumpClientMsgCompleteTime(std::string file,std::string path) {
+        dumpTimeList(file,path,ClientMsgCompleteTimeList);
+        printf("dump Server Msg complete time end\r\n");
+    }
 }

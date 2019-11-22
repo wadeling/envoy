@@ -316,6 +316,14 @@ private:
                                  Http::HeaderMap& response_headers, Buffer::Instance& response,
                                  AdminStream&);
 
+  Http::Code handlerServerMsgCompleteTime(absl::string_view path_and_query,
+                                         Http::HeaderMap& response_headers, Buffer::Instance& response,
+                                         AdminStream&);
+
+  Http::Code handlerClientMsgCompleteTime(absl::string_view path_and_query,
+                                            Http::HeaderMap& response_headers, Buffer::Instance& response,
+                                            AdminStream&);
+
 
   bool isFormUrlEncoded(const Http::HeaderEntry* content_type) const;
 
