@@ -35,6 +35,8 @@
 #include "common/network/utility.h"
 #include "common/runtime/runtime_impl.h"
 
+#include "common/perf/perf.h"
+
 #include "absl/strings/escaping.h"
 #include "absl/strings/match.h"
 
@@ -753,6 +755,9 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
   }
   ASSERT(stream_info_.downstreamRemoteAddress() != nullptr);
 
+
+  uint64_t start = Envoy::getCurrentTime();
+
   ASSERT(!cached_route_);
   refreshCachedRoute();
 
@@ -807,6 +812,12 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
 
   // Reset it here for both global and overridden cases.
   resetIdleTimer();
+
+  //time perf
+  uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordStreamDecodeHeaderTime(t);
+
 }
 
 void ConnectionManagerImpl::ActiveStream::traceRequest() {

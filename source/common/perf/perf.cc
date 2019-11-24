@@ -4,6 +4,7 @@ namespace Envoy {
     std::list<std::pair<uint64_t,uint64_t> > HeaderCompleteTimeList;
     std::list<std::pair<uint64_t,uint64_t> > ServerMsgCompleteTimeList;
     std::list<std::pair<uint64_t,uint64_t> > ClientMsgCompleteTimeList;
+    std::list<std::pair<uint64_t,uint64_t> > StreamDecodeHeaderTimeList;
 
     std::vector<LatencyRecord> LatencyRecordArr(MAX_RECORD_NUM);
     std::vector<int> DuplicateIdArr(MAX_RECORD_NUM);
@@ -31,6 +32,10 @@ namespace Envoy {
 
     void recordClientMsgCompleteTime(std::pair<uint64_t,uint64_t>& t) {
         ClientMsgCompleteTimeList.push_back(t);
+    }
+
+    void recordStreamDecodeHeaderTime(std::pair<uint64_t,uint64_t>& t) {
+        StreamDecodeHeaderTimeList.push_back(t);
     }
 
     int checkDuplicateId(int id) {
@@ -213,7 +218,9 @@ namespace Envoy {
             total_time += take_time;
             result += uint64ToStr(iter->first)+ "\t" + uint64ToStr(iter->second) +  "\t" + uint64ToStr(take_time) + "\r\n";
         }
-        double average_time = static_cast<double>(total_time)/ static_cast<double>(HeaderCompleteTimeList.size());
+        double average_time = static_cast<double>(total_time)/ static_cast<double>(list.size());
+        result += "total time: " + uint64ToStr(total_time) + " us\r\n";
+        result += "count:" + uint64ToStr(list.size()) + " us\r\n";
         result += "average time :"  + doubleToStr(average_time) + "us \r\n";
 
         flushToFile(result,file,path);
@@ -231,6 +238,10 @@ namespace Envoy {
 
     void dumpClientMsgCompleteTime(std::string file,std::string path) {
         dumpTimeList(file,path,ClientMsgCompleteTimeList);
-        printf("dump Server Msg complete time end\r\n");
+        printf("dump client Msg complete time end\r\n");
+    }
+    void dumpStreamDecodeHeaderTime(std::string file,std::string path) {
+        dumpTimeList(file,path,StreamDecodeHeaderTimeList);
+        printf("dump Stream Decode Header time end\r\n");
     }
 }

@@ -79,6 +79,9 @@ namespace Envoy {
     extern void recordClientMsgCompleteTime(std::pair<uint64_t,uint64_t>& );
     extern void dumpClientMsgCompleteTime(std::string file,std::string path);
 
+    extern void recordStreamDecodeHeaderTime(std::pair<uint64_t,uint64_t>& );
+    extern void dumpStreamDecodeHeaderTime(std::string file,std::string path);
+
     extern int BufferToSmallCount;
 
 }
