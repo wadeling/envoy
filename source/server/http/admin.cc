@@ -1292,6 +1292,27 @@ Http::Code AdminImpl::handlerClientMsgCompleteTime(absl::string_view url,
     return Http::Code::OK;
 }
 
+Http::Code AdminImpl::handlerStreamDecodeHeaderTime(absl::string_view url,
+                                                   Http::HeaderMap& , Buffer::Instance& response,
+                                                   AdminStream&) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+
+    std::string file = "stream_decode_header_time.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+
+    Envoy::dumpStreamDecodeHeaderTime(file,path);
+
+    response.add("dump end\n");
+
+    return Http::Code::OK;
+}
+
 ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
 
 void AdminFilter::onComplete() {
@@ -1393,6 +1414,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/perf_dump_header_time", "dump header complete process time", MAKE_ADMIN_HANDLER(handlerHeaderCompleteTime), false, false},
           {"/perf_dump_srv_msg_time", "dump srv msg complete process time", MAKE_ADMIN_HANDLER(handlerServerMsgCompleteTime), false, false},
           {"/perf_dump_client_msg_time", "dump client msg complete process time", MAKE_ADMIN_HANDLER(handlerClientMsgCompleteTime), false, false},
+          {"/perf_dump_stream_decode_header_time", "dump stream decode header time", MAKE_ADMIN_HANDLER(handlerStreamDecodeHeaderTime), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}
