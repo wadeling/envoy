@@ -319,7 +319,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
   ASSERT(headers.Method());
   ASSERT(headers.Host());
 
-  uint64_t start = Envoy::getCurrentTime();
+//  uint64_t start = Envoy::getCurrentTime();
 
   downstream_headers_ = &headers;
 
@@ -520,6 +520,8 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
 
   // Hang onto the modify_headers function for later use in handling upstream responses.
   modify_headers_ = modify_headers;
+
+  uint64_t start = Envoy::getCurrentTime();
 
   UpstreamRequestPtr upstream_request = std::make_unique<UpstreamRequest>(*this, *conn_pool);
   upstream_request->moveIntoList(std::move(upstream_request), upstream_requests_);
