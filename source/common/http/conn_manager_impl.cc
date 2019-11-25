@@ -807,7 +807,7 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
     traceRequest();
   }
 
-  uint64_t start = Envoy::getCurrentTime();
+//  uint64_t start = Envoy::getCurrentTime();
 
   decodeHeaders(nullptr, *request_headers_, end_stream);
 
@@ -815,9 +815,9 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
   resetIdleTimer();
 
   //time perf
-  uint64_t end = Envoy::getCurrentTime();
-  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
-  Envoy::recordStreamDecodeHeaderTime(t);
+//  uint64_t end = Envoy::getCurrentTime();
+//  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+//  Envoy::recordStreamDecodeHeaderTime(t);
 
 }
 

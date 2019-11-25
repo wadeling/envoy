@@ -29,6 +29,8 @@
 #include "common/router/retry_state_impl.h"
 #include "common/tracing/http_tracer_impl.h"
 
+#include "common/perf/perf.h"
+
 #include "extensions/filters/http/well_known_names.h"
 
 namespace Envoy {
@@ -317,6 +319,8 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
   ASSERT(headers.Method());
   ASSERT(headers.Host());
 
+  uint64_t start = Envoy::getCurrentTime();
+
   downstream_headers_ = &headers;
 
   // Extract debug configuration from filter state. This is used further along to determine whether
@@ -523,6 +527,10 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
   if (end_stream) {
     onRequestComplete();
   }
+
+  uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordStreamDecodeHeaderTime(t);
 
   return Http::FilterHeadersStatus::StopIteration;
 }
