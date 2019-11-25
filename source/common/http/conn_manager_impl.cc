@@ -755,8 +755,7 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
   }
   ASSERT(stream_info_.downstreamRemoteAddress() != nullptr);
 
-
-  uint64_t start = Envoy::getCurrentTime();
+//  uint64_t start = Envoy::getCurrentTime();
 
   ASSERT(!cached_route_);
   refreshCachedRoute();
@@ -807,6 +806,8 @@ void ConnectionManagerImpl::ActiveStream::decodeHeaders(HeaderMapPtr&& headers, 
   if (connection_manager_.config_.tracingConfig()) {
     traceRequest();
   }
+
+  uint64_t start = Envoy::getCurrentTime();
 
   decodeHeaders(nullptr, *request_headers_, end_stream);
 
