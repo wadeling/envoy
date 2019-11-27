@@ -266,6 +266,7 @@ envoy_cc_library(
         "//source/common/stream_info:stream_info_lib",
         "//source/common/tracing:http_tracer_lib",
         "//source/common/upstream:load_balancer_lib",
+	"//source/common/perf:perf_lib",
         "@envoy_api//envoy/config/filter/http/router/v2:pkg_cc_proto",
     ],
 )

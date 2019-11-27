@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <thread>
 
 #include "envoy/admin/v2alpha/certs.pb.h"
 #include "envoy/admin/v2alpha/clusters.pb.h"
@@ -1200,6 +1201,170 @@ Http::Code AdminImpl::handlerRuntimeModify(absl::string_view url, Http::HeaderMa
   return Http::Code::OK;
 }
 
+
+Http::Code AdminImpl::handlerPerf(absl::string_view url , Http::HeaderMap&,
+                                  Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+    int start = 0;
+    if (params.find("start") != params.end()) {
+        start = atoi(params["start"].c_str());
+    }
+    int end = 0;
+    if (params.find("end") != params.end() ) {
+        end = atoi(params["end"].c_str());
+    }
+
+    std::string file = "perf_latency.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+
+    std::thread t1([start,end,file,path]{
+        Envoy::dumpLatency(start,end,file,path);
+    });
+    t1.detach();
+
+    response.add("perf test OK\n");
+//    response.add(result);
+
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerPerfReset(absl::string_view url ABSL_ATTRIBUTE_UNUSED, Http::HeaderMap&,
+                                       Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
+    Envoy::resetSta();
+    response.add("reset perf stat end.\n");
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerPerfExtra(absl::string_view url , Http::HeaderMap&,
+                                       Buffer::Instance& response, AdminStream& admin_stream ABSL_ATTRIBUTE_UNUSED) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+    std::string file = "extra.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+    Envoy::dumpExtra(file,path);
+    response.add("dump extra end.\n");
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerPerfSwitch(absl::string_view url , Http::HeaderMap&,
+                                       Buffer::Instance& response, AdminStream& ) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+    std::string perfSwitch;
+    if (params.find("switch") != params.end()) {
+        perfSwitch = params["switch"];
+    }
+
+    std::string msg;
+    if (perfSwitch == "1") {
+        msg = "turn perf on\n";
+        Envoy::perfOn();
+    } else if (perfSwitch == "0") {
+        msg = "turn perf off\n";
+        Envoy::perfOff();
+    } else {
+        msg = "switch param err.should be '1' or '0'";
+    }
+
+    response.add(msg);
+
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerHeaderCompleteTime(absl::string_view url,
+                                     Http::HeaderMap& , Buffer::Instance& response,
+                                     AdminStream&) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+
+    std::string file = "header_complete_time.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+
+    Envoy::dumpHeaderCompleteTime(file,path);
+
+    response.add("dump end\n");
+
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerServerMsgCompleteTime(absl::string_view url,
+                                                Http::HeaderMap& , Buffer::Instance& response,
+                                                AdminStream&) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+
+    std::string file = "srv_msg_complete_time.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+
+    Envoy::dumpServerMsgCompleteTime(file,path);
+
+    response.add("dump end\n");
+
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerClientMsgCompleteTime(absl::string_view url,
+                                                Http::HeaderMap& , Buffer::Instance& response,
+                                                AdminStream&) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+
+    std::string file = "client_msg_complete_time.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+
+    Envoy::dumpClientMsgCompleteTime(file,path);
+
+    response.add("dump end\n");
+
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerStreamDecodeHeaderTime(absl::string_view url,
+                                                   Http::HeaderMap& , Buffer::Instance& response,
+                                                   AdminStream&) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+
+    std::string file = "stream_decode_header_time.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+
+    Envoy::dumpStreamDecodeHeaderTime(file,path);
+
+    response.add("dump end\n");
+
+    return Http::Code::OK;
+}
+
 ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
 
 void AdminFilter::onComplete() {
@@ -1304,6 +1469,14 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/runtime", "print runtime values", MAKE_ADMIN_HANDLER(handlerRuntime), false, false},
           {"/runtime_modify", "modify runtime values", MAKE_ADMIN_HANDLER(handlerRuntimeModify),
            false, true},
+          {"/perf_reset", "reset perf latency check result", MAKE_ADMIN_HANDLER(handlerPerfReset), false, false},
+          {"/perf", "print perf latency check result", MAKE_ADMIN_HANDLER(handlerPerf), false, false},
+          {"/perf_switch", "turn perf on or off", MAKE_ADMIN_HANDLER(handlerPerfSwitch), false, false},
+          {"/perf_extra", "dump perf latency check duplicateid and other info", MAKE_ADMIN_HANDLER(handlerPerfExtra), false, false},
+          {"/perf_dump_header_time", "dump header complete process time", MAKE_ADMIN_HANDLER(handlerHeaderCompleteTime), false, false},
+          {"/perf_dump_srv_msg_time", "dump srv msg complete process time", MAKE_ADMIN_HANDLER(handlerServerMsgCompleteTime), false, false},
+          {"/perf_dump_client_msg_time", "dump client msg complete process time", MAKE_ADMIN_HANDLER(handlerClientMsgCompleteTime), false, false},
+          {"/perf_dump_stream_decode_header_time", "dump stream decode header time", MAKE_ADMIN_HANDLER(handlerStreamDecodeHeaderTime), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}
