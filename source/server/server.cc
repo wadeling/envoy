@@ -174,7 +174,7 @@ void InstanceUtil::flushMetricsToSinks(const std::list<Stats::SinkPtr>& sinks,
 }
 
 void InstanceImpl::flushStats() {
-  ENVOY_LOG(debug, "flushing stats");
+//  ENVOY_LOG(debug, "flushing stats");
   // If Envoy is not fully initialized, workers will not be started and mergeHistograms
   // completion callback is not called immediately. As a result of this server stats will
   // not be updated and flushed to stat sinks. So skip mergeHistograms call if workers are
