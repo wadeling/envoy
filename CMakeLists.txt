@@ -614,6 +614,8 @@ add_executable(envoy
     source/common/upstream/load_stats_reporter.h
     source/common/upstream/logical_dns_cluster.cc
     source/common/upstream/logical_dns_cluster.h
+    source/common/upstream/static_cluster.h
+    source/common/upstream/static_cluster.cc
     source/common/upstream/maglev_lb.cc
     source/common/upstream/maglev_lb.h
     source/common/upstream/original_dst_cluster.cc
