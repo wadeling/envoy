@@ -579,7 +579,7 @@ public:
   absl::optional<std::string> eds_service_name() const override { return eds_service_name_; }
 
 private:
-  struct ResourceManagers {
+  struct ResourceManagers:public Logger::Loggable<Logger::Id::upstream> {
     ResourceManagers(const envoy::api::v2::Cluster& config, Runtime::Loader& runtime,
                      const std::string& cluster_name, Stats::Scope& stats_scope);
     ResourceManagerImplPtr load(const envoy::api::v2::Cluster& config, Runtime::Loader& runtime,

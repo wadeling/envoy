@@ -118,6 +118,7 @@ add_executable(envoy
     api/udpa/service/orca/v1/orca.proto
     api/xds_protocol.rst
 
+    include/spdlog/logger.h
     include/envoy/access_log/access_log.h
     include/envoy/api/api.h
     include/envoy/api/io_error.h

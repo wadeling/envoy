@@ -1229,6 +1229,8 @@ void ConnectionManagerImpl::ActiveStream::sendLocalReply(
     } else {
         ENVOY_STREAM_LOG(debug, "Sending local reply with details {},grpc status null", *this, details);
     }
+//    test
+sleep(10);
 
   ASSERT(response_headers_ == nullptr);
   // For early error handling, do a best-effort attempt to create a filter chain

@@ -114,8 +114,13 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_dec
   }
 
   if (host_->cluster().resourceManager(priority_).pendingRequests().canCreate()) {
+    ENVOY_LOG(debug, "can create pending request");
+
     bool can_create_connection =
         host_->cluster().resourceManager(priority_).connections().canCreate();
+    ENVOY_LOG(debug, "can create connections {},priority {},max num {}",can_create_connection, static_cast<int>(priority_),
+            host_->cluster().resourceManager(priority_).connections().max());
+
     if (!can_create_connection) {
       host_->cluster().stats().upstream_cx_overflow_.inc();
     }

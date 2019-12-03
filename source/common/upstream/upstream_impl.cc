@@ -940,6 +940,8 @@ ClusterInfoImpl::ResourceManagers::load(const envoy::api::v2::Cluster& config,
       });
   if (it != thresholds.cend()) {
     max_connections = PROTOBUF_GET_WRAPPED_OR_DEFAULT(*it, max_connections, max_connections);
+    ENVOY_LOG(debug,"set max_connections to {}",max_connections);
+
     max_pending_requests =
         PROTOBUF_GET_WRAPPED_OR_DEFAULT(*it, max_pending_requests, max_pending_requests);
     max_requests = PROTOBUF_GET_WRAPPED_OR_DEFAULT(*it, max_requests, max_requests);
