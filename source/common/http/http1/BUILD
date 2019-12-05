@@ -62,5 +62,6 @@ envoy_cc_library(
         "//source/common/network:utility_lib",
         "//source/common/runtime:runtime_lib",
         "//source/common/upstream:upstream_lib",
+        "//source/common/perf:perf_lib",
     ],
 )

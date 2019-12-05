@@ -82,6 +82,12 @@ namespace Envoy {
     extern void recordStreamDecodeHeaderTime(std::pair<uint64_t,uint64_t>& );
     extern void dumpStreamDecodeHeaderTime(std::string file,std::string path);
 
+    extern std::string getPendingReqCount();
+    extern void incPendingReqCount();
+
+    extern void incUsingExistConnCount();
+    extern std::string getUsingExistConnCount();
+
     extern int BufferToSmallCount;
 
 }

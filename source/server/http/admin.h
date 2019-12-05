@@ -326,6 +326,12 @@ private:
   Http::Code handlerStreamDecodeHeaderTime(absl::string_view path_and_query,
                                             Http::HeaderMap& response_headers, Buffer::Instance& response,
                                             AdminStream&);
+ Http::Code handlerPendingReqCount(absl::string_view path_and_query,
+                                         Http::HeaderMap& response_headers, Buffer::Instance& response,
+                                             AdminStream&);
+ Http::Code handlerUsingExistConnCount(absl::string_view path_and_query,
+                                      Http::HeaderMap& response_headers, Buffer::Instance& response,
+                                      AdminStream&);
 
 
   bool isFormUrlEncoded(const Http::HeaderEntry* content_type) const;

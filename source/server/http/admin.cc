@@ -1313,6 +1313,26 @@ Http::Code AdminImpl::handlerStreamDecodeHeaderTime(absl::string_view url,
     return Http::Code::OK;
 }
 
+Http::Code AdminImpl::handlerPendingReqCount(absl::string_view ,
+                                      Http::HeaderMap& , Buffer::Instance& response,
+                                      AdminStream&) {
+    std::string result = "pending req count " + Envoy::getPendingReqCount() + "\n";
+
+    response.add(result);
+
+    return Http::Code::OK;
+}
+
+Http::Code AdminImpl::handlerUsingExistConnCount(absl::string_view ,
+                                          Http::HeaderMap& , Buffer::Instance& response,
+                                          AdminStream&) {
+    std::string result = "using exist conn count " + Envoy::getUsingExistConnCount() + "\n";
+
+    response.add(result);
+
+    return Http::Code::OK;
+}
+
 ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
 
 void AdminFilter::onComplete() {
@@ -1415,6 +1435,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/perf_dump_srv_msg_time", "dump srv msg complete process time", MAKE_ADMIN_HANDLER(handlerServerMsgCompleteTime), false, false},
           {"/perf_dump_client_msg_time", "dump client msg complete process time", MAKE_ADMIN_HANDLER(handlerClientMsgCompleteTime), false, false},
           {"/perf_dump_stream_decode_header_time", "dump stream decode header time", MAKE_ADMIN_HANDLER(handlerStreamDecodeHeaderTime), false, false},
+          {"/perf_dump_pending_req_count", "dump pending req count", MAKE_ADMIN_HANDLER(handlerPendingReqCount), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}

@@ -6,6 +6,9 @@ namespace Envoy {
     std::list<std::pair<uint64_t,uint64_t> > ClientMsgCompleteTimeList;
     std::list<std::pair<uint64_t,uint64_t> > StreamDecodeHeaderTimeList;
 
+    uint64_t PendingReqCount = 0 ;
+    uint64_t UsingExistConnCount= 0 ;
+
     std::vector<LatencyRecord> LatencyRecordArr(MAX_RECORD_NUM);
     std::vector<int> DuplicateIdArr(MAX_RECORD_NUM);
 
@@ -36,6 +39,13 @@ namespace Envoy {
 
     void recordStreamDecodeHeaderTime(std::pair<uint64_t,uint64_t>& t) {
         StreamDecodeHeaderTimeList.push_back(t);
+    }
+
+    void incPendingReqCount() {
+        PendingReqCount++;
+    }
+    void incUsingExistConnCount() {
+        UsingExistConnCount++;
     }
 
     int checkDuplicateId(int id) {
@@ -243,5 +253,12 @@ namespace Envoy {
     void dumpStreamDecodeHeaderTime(std::string file,std::string path) {
         dumpTimeList(file,path,StreamDecodeHeaderTimeList);
         printf("dump Stream Decode Header time end\r\n");
+    }
+
+    std::string getPendingReqCount() {
+        return uint64ToStr(PendingReqCount);
+    }
+    std::string getUsingExistConnCount() {
+        return uint64ToStr(UsingExistConnCount);
     }
 }

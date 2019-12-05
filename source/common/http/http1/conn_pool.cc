@@ -17,6 +17,8 @@
 #include "common/runtime/runtime_impl.h"
 #include "common/upstream/upstream_impl.h"
 
+#include "common/perf/perf.h"
+
 #include "absl/strings/match.h"
 
 namespace Envoy {
@@ -94,6 +96,8 @@ void ConnPoolImpl::createNewConnection() {
 ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_decoder,
                                                      ConnectionPool::Callbacks& callbacks) {
   if (!ready_clients_.empty()) {
+    Envoy::incUsingExistConnCount();
+
     ready_clients_.front()->moveBetweenLists(ready_clients_, busy_clients_);
     ENVOY_CONN_LOG(debug, "using existing connection", *busy_clients_.front()->codec_client_);
     attachRequestToClient(*busy_clients_.front(), response_decoder, callbacks);
@@ -111,6 +115,8 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_dec
     if ((ready_clients_.empty() && busy_clients_.empty()) || can_create_connection) {
       createNewConnection();
     }
+
+    Envoy::incPendingReqCount();
 
     return newPendingRequest(response_decoder, callbacks);
   } else {
