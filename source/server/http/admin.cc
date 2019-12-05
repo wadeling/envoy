@@ -1436,6 +1436,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/perf_dump_client_msg_time", "dump client msg complete process time", MAKE_ADMIN_HANDLER(handlerClientMsgCompleteTime), false, false},
           {"/perf_dump_stream_decode_header_time", "dump stream decode header time", MAKE_ADMIN_HANDLER(handlerStreamDecodeHeaderTime), false, false},
           {"/perf_dump_pending_req_count", "dump pending req count", MAKE_ADMIN_HANDLER(handlerPendingReqCount), false, false},
+          {"/perf_dump_using_exist_conn_count", "dump using exist conn count", MAKE_ADMIN_HANDLER(handlerUsingExistConnCount), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}
