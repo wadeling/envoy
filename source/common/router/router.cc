@@ -516,7 +516,8 @@ Http::ConnectionPool::Instance* Filter::getConnPool() {
     protocol = (features & Upstream::ClusterInfo::Features::HTTP2) ? Http::Protocol::Http2
                                                                    : Http::Protocol::Http11;
   }
-  ENVOY_STREAM_LOG(debug, "get conn pool,protocol:{}", *callbacks_, int(protocol));
+  ENVOY_STREAM_LOG(debug, "get conn pool,protocol:{},filter config pointer {}", *callbacks_, int(protocol),
+                   static_cast<void*>(&config_));
   return config_.cm_.httpConnPoolForCluster(route_entry_->clusterName(), route_entry_->priority(),
                                             protocol, this);
 }

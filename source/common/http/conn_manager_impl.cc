@@ -308,7 +308,7 @@ StreamDecoder& ConnectionManagerImpl::newStream(StreamEncoder& response_encoder,
 }
 
 Network::FilterStatus ConnectionManagerImpl::onData(Buffer::Instance& data, bool end_stream) {
-  ENVOY_LOG(debug,"ConnectionManagerImpl::onData");
+  ENVOY_LOG(debug,"ConnectionManagerImpl::onData,{}",this);
 
   // decode private proto data
   decodePrivateProtoData(data,end_stream);
