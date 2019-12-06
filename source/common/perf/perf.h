@@ -22,6 +22,7 @@ namespace Envoy {
         First = 0,
         PoolReady,
         CreateUpstreamReq,
+        UpstreamEncodeHeader,
         Max = 100,
     };
 
