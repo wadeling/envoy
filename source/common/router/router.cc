@@ -543,9 +543,9 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
   }
 
 //  6.8 - 7.17 us
-//  uint64_t end = Envoy::getCurrentTime();
-//  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
-//  Envoy::recordTime(Envoy::TimePoint_Type::UpstreamEncodeHeader,t);
+  uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordTime(Envoy::TimePoint_Type::UpstreamEncodeHeader,t);
 
   return Http::FilterHeadersStatus::StopIteration;
 }
