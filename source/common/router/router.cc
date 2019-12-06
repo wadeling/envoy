@@ -542,10 +542,10 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
     onRequestComplete();
   }
 
-//  8.04 us
-  uint64_t end = Envoy::getCurrentTime();
-  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
-  Envoy::recordTime(Envoy::TimePoint_Type::UpstreamEncodeHeader,t);
+//  6.8 - 7.17 us
+//  uint64_t end = Envoy::getCurrentTime();
+//  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+//  Envoy::recordTime(Envoy::TimePoint_Type::UpstreamEncodeHeader,t);
 
   return Http::FilterHeadersStatus::StopIteration;
 }
@@ -685,17 +685,21 @@ void Filter::onRequestComplete() {
 
   // Possible that we got an immediate reset.
   if (!upstream_requests_.empty()) {
+      ENVOY_LOG(error,"upstream req not empty");
+
     // Even if we got an immediate reset, we could still shadow, but that is a riskier change and
     // seems unnecessary right now.
     maybeDoShadowing();
 
     if (timeout_.global_timeout_.count() > 0) {
+        ENVOY_LOG(error,"time out count >0");
       response_timeout_ = dispatcher.createTimer([this]() -> void { onResponseTimeout(); });
       response_timeout_->enableTimer(timeout_.global_timeout_);
     }
 
     for (auto& upstream_request : upstream_requests_) {
       if (upstream_request->create_per_try_timeout_on_request_complete_) {
+          ENVOY_LOG(error,"create time out on req com");
         upstream_request->setupPerTryTimeout();
       }
     }
