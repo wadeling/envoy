@@ -532,7 +532,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
 //  Envoy::recordTime(Envoy::TimePoint_Type::CreateUpstreamReq,t);
 
   upstream_requests_.front()->encodeHeaders(end_stream);
-      uint64_t end = Envoy::getCurrentTime();
+  uint64_t end = Envoy::getCurrentTime();
   std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
   Envoy::recordTime(Envoy::TimePoint_Type::UpstreamEncodeHeader,t);
 
