@@ -1333,6 +1333,32 @@ Http::Code AdminImpl::handlerUsingExistConnCount(absl::string_view ,
     return Http::Code::OK;
 }
 
+Http::Code AdminImpl::handlerPerfTimeConsume(absl::string_view url,
+                                                    Http::HeaderMap& , Buffer::Instance& response,
+                                                    AdminStream&) {
+    Http::Utility::QueryParams params = Http::Utility::parseQueryString(url);
+
+    std::string type;
+    if (params.find("type") != params.end()) {
+        type = params["type"];
+    }
+
+    std::string file = "perf_time_consume_" + type +"_.log";
+    if (params.find("file") != params.end()) {
+        file = params["file"];
+    }
+    std::string path;
+    if (params.find("path") != params.end()) {
+        path = params["path"];
+    }
+
+    Envoy::dumpTime(type,file,path);
+
+    response.add("dump end\n");
+
+    return Http::Code::OK;
+}
+
 ConfigTracker& AdminImpl::getConfigTracker() { return config_tracker_; }
 
 void AdminFilter::onComplete() {
@@ -1437,6 +1463,7 @@ AdminImpl::AdminImpl(const std::string& profile_path, Server::Instance& server)
           {"/perf_dump_stream_decode_header_time", "dump stream decode header time", MAKE_ADMIN_HANDLER(handlerStreamDecodeHeaderTime), false, false},
           {"/perf_dump_pending_req_count", "dump pending req count", MAKE_ADMIN_HANDLER(handlerPendingReqCount), false, false},
           {"/perf_dump_using_exist_conn_count", "dump using exist conn count", MAKE_ADMIN_HANDLER(handlerUsingExistConnCount), false, false},
+          {"/perf_dump_time", "dump time consume", MAKE_ADMIN_HANDLER(handlerPerfTimeConsume), false, false},
       },
       date_provider_(server.dispatcher().timeSource()),
       admin_filter_chain_(std::make_shared<AdminFilterChain>()) {}

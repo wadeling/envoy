@@ -1,6 +1,8 @@
 #include "common/perf/perf.h"
 
 namespace Envoy {
+    std::vector<std::list<std::pair<uint64_t,uint64_t> > > TimeArray(TimePoint_Type::Max);
+
     std::list<std::pair<uint64_t,uint64_t> > HeaderCompleteTimeList;
     std::list<std::pair<uint64_t,uint64_t> > ServerMsgCompleteTimeList;
     std::list<std::pair<uint64_t,uint64_t> > ClientMsgCompleteTimeList;
@@ -23,6 +25,19 @@ namespace Envoy {
 
     void perfOff() {
         PerfSwitch = 0;
+    }
+
+    void recordTime(TimePoint_Type t,std::pair<uint64_t,uint64_t>& p) {
+        TimeArray[t].push_back(p);
+    }
+    void dumpTime(std::string type,std::string file,std::string path) {
+        int t = atoi(type.c_str());
+        if (t >= static_cast<int>(TimeArray.size()) ) {
+            printf("error:param 'type' error \n");
+            return;
+        }
+        dumpTimeList(file,path,TimeArray[t]);
+        printf("dump time eclapsed end.type %d\r\n",t);
     }
 
     void recordHeaderCompleteTime(std::pair<uint64_t,uint64_t>& t) {

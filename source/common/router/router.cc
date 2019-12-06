@@ -521,7 +521,7 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
   // Hang onto the modify_headers function for later use in handling upstream responses.
   modify_headers_ = modify_headers;
 
-  uint64_t start = Envoy::getCurrentTime();
+//  uint64_t start = Envoy::getCurrentTime();
 
   UpstreamRequestPtr upstream_request = std::make_unique<UpstreamRequest>(*this, *conn_pool);
   upstream_request->moveIntoList(std::move(upstream_request), upstream_requests_);
@@ -530,9 +530,9 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
     onRequestComplete();
   }
 
-  uint64_t end = Envoy::getCurrentTime();
-  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
-  Envoy::recordStreamDecodeHeaderTime(t);
+//  uint64_t end = Envoy::getCurrentTime();
+//  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+//  Envoy::recordStreamDecodeHeaderTime(t);
 
   return Http::FilterHeadersStatus::StopIteration;
 }

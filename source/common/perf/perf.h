@@ -18,6 +18,11 @@ const std::string XID_ALTER= "X-Id";
 const std::string XID_END= "\r\n";
 
 namespace Envoy {
+    enum TimePoint_Type {
+        First = 0,
+        PoolReady,
+        Max = 100,
+    };
 
     enum Record_Type_Enum {
         Server_Rcv_Time = 0,
@@ -90,4 +95,7 @@ namespace Envoy {
 
     extern int BufferToSmallCount;
 
+    extern void dumpTimeList(std::string file,std::string path,std::list<std::pair<uint64_t,uint64_t> >& list);
+    extern void recordTime(TimePoint_Type ,std::pair<uint64_t,uint64_t>& );
+    extern void dumpTime(std::string type,std::string file,std::string path);
 }

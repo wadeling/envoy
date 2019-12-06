@@ -72,7 +72,15 @@ void ConnPoolImpl::attachRequestToClient(ActiveClient& client, StreamDecoder& re
   host_->cluster().stats().upstream_rq_total_.inc();
   host_->stats().rq_total_.inc();
   client.stream_wrapper_ = std::make_unique<StreamWrapper>(response_decoder, client);
+
+  uint64_t start = Envoy::getCurrentTime();
+
   callbacks.onPoolReady(*client.stream_wrapper_, client.real_host_description_);
+
+  uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordTime(Envoy::TimePoint_Type::PoolReady,t);
+
 }
 
 void ConnPoolImpl::checkForDrained() {
@@ -96,7 +104,8 @@ void ConnPoolImpl::createNewConnection() {
 ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_decoder,
                                                      ConnectionPool::Callbacks& callbacks) {
   if (!ready_clients_.empty()) {
-    Envoy::incUsingExistConnCount();
+      //when one connection,most pkg will use existing conn
+//    Envoy::incUsingExistConnCount();
 
     ready_clients_.front()->moveBetweenLists(ready_clients_, busy_clients_);
     ENVOY_CONN_LOG(debug, "using existing connection", *busy_clients_.front()->codec_client_);
@@ -116,7 +125,7 @@ ConnectionPool::Cancellable* ConnPoolImpl::newStream(StreamDecoder& response_dec
       createNewConnection();
     }
 
-    Envoy::incPendingReqCount();
+//    Envoy::incPendingReqCount();
 
     return newPendingRequest(response_decoder, callbacks);
   } else {
