@@ -685,21 +685,21 @@ void Filter::onRequestComplete() {
 
   // Possible that we got an immediate reset.
   if (!upstream_requests_.empty()) {
-      ENVOY_LOG(error,"upstream req not empty");
+    ENVOY_LOG(debug,"upstream req not empty: {}",upstream_requests_.size());
 
     // Even if we got an immediate reset, we could still shadow, but that is a riskier change and
     // seems unnecessary right now.
     maybeDoShadowing();
 
     if (timeout_.global_timeout_.count() > 0) {
-        ENVOY_LOG(error,"time out count >0");
+      ENVOY_LOG(debug,"time out count {}",timeout_.global_timeout_.count() );
       response_timeout_ = dispatcher.createTimer([this]() -> void { onResponseTimeout(); });
       response_timeout_->enableTimer(timeout_.global_timeout_);
     }
 
     for (auto& upstream_request : upstream_requests_) {
       if (upstream_request->create_per_try_timeout_on_request_complete_) {
-          ENVOY_LOG(error,"create time out on req com");
+        ENVOY_LOG(debug,"create time out on req com");
         upstream_request->setupPerTryTimeout();
       }
     }
