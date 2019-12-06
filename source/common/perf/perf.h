@@ -21,6 +21,7 @@ namespace Envoy {
     enum TimePoint_Type {
         First = 0,
         PoolReady,
+        CreateUpstreamReq,
         Max = 100,
     };
 
