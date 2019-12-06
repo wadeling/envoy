@@ -532,13 +532,18 @@ Http::FilterHeadersStatus Filter::decodeHeaders(Http::HeaderMap& headers, bool e
 //  Envoy::recordTime(Envoy::TimePoint_Type::CreateUpstreamReq,t);
 
   upstream_requests_.front()->encodeHeaders(end_stream);
-  if (end_stream) {
+      uint64_t end = Envoy::getCurrentTime();
+  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+  Envoy::recordTime(Envoy::TimePoint_Type::UpstreamEncodeHeader,t);
+
+    if (end_stream) {
     onRequestComplete();
   }
 
-  uint64_t end = Envoy::getCurrentTime();
-  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
-  Envoy::recordTime(Envoy::TimePoint_Type::UpstreamEncodeHeader,t);
+//  8.04 us
+//  uint64_t end = Envoy::getCurrentTime();
+//  std::pair<uint64_t,uint64_t> t = std::make_pair(start,end);
+//  Envoy::recordTime(Envoy::TimePoint_Type::UpstreamEncodeHeader,t);
 
   return Http::FilterHeadersStatus::StopIteration;
 }
