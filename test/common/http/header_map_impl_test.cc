@@ -1083,19 +1083,29 @@ TEST(HeaderMapImplTest, TestCopyTime) {
     start = clock();
     uint64_t num = 1LL << 20;
     for (uint64_t i = 0; i < num; ++i) {
-        Http::TestHeaderMapImpl headersDst;
+        Buffer::OwnedImpl buffer;
         headers.iterate(
                 [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
-                    HeaderString key_string;
-                    key_string.setCopy(header.key().getStringView());
-                    HeaderString value_string;
-                    value_string.setCopy(header.value().getStringView());
-
-                    static_cast<HeaderMapImpl*>(context)->addViaMove(std::move(key_string),
-                                                                     std::move(value_string));
+                    static_cast<Buffer::OwnedImpl*>(context)->add(header.key().getStringView());
+                    static_cast<Buffer::OwnedImpl*>(context)->add(header.value().getStringView());
                     return HeaderMap::Iterate::Continue;
                 },
-                &headersDst);
+                &buffer);
+
+//        8 us
+//        Http::TestHeaderMapImpl headersDst;
+//        headers.iterate(
+//                [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+//                    HeaderString key_string;
+//                    key_string.setCopy(header.key().getStringView());
+//                    HeaderString value_string;
+//                    value_string.setCopy(header.value().getStringView());
+//
+//                    static_cast<HeaderMapImpl*>(context)->addViaMove(std::move(key_string),
+//                                                                     std::move(value_string));
+//                    return HeaderMap::Iterate::Continue;
+//                },
+//                &headersDst);
     }
 
     end = clock();
