@@ -168,6 +168,7 @@ envoy_cc_library(
         "//source/common/common:linked_object",
         "//source/common/event:dispatcher_includes",
         "//source/common/event:libevent_lib",
+        "//source/common/common:minimal_logger_lib",
     ],
 )
 

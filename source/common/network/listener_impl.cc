@@ -14,11 +14,14 @@
 
 #include "event2/listener.h"
 
+#include "common/common/logger.h"
+
 namespace Envoy {
 namespace Network {
 
 void ListenerImpl::listenCallback(evconnlistener*, evutil_socket_t fd, sockaddr* remote_addr,
                                   int remote_addr_len, void* arg) {
+  ENVOY_LOG(trace,"listen call back,fd {},thread id {}",fd);
   ListenerImpl* listener = static_cast<ListenerImpl*>(arg);
 
   // Create the IoSocketHandleImpl for the fd here.
@@ -48,8 +51,13 @@ void ListenerImpl::listenCallback(evconnlistener*, evutil_socket_t fd, sockaddr*
 }
 
 void ListenerImpl::setupServerSocket(Event::DispatcherImpl& dispatcher, Socket& socket) {
+  // 多个线程会listen 相同地址，但内核只会唤醒一个线程。没有加reuse_port的时候，内核没有对这些线程做负载均衡，很有可能只会选中其中一两个线程。
+  // 具体逻辑要看内核代码
   listener_.reset(
       evconnlistener_new(&dispatcher.base(), listenCallback, this, 0, -1, socket.ioHandle().fd()));
+
+  ENVOY_LOG(trace,"setup server socket,dispatcher {},socket {},listener {}",
+          static_cast<void*>(&dispatcher),socket.ioHandle().fd(), static_cast<void*>(listener_.get()));
 
   if (!listener_) {
     throw CreateListenerException(
@@ -70,6 +78,7 @@ ListenerImpl::ListenerImpl(Event::DispatcherImpl& dispatcher, Socket& socket, Li
     : BaseListenerImpl(dispatcher, socket), cb_(cb),
       hand_off_restored_destination_connections_(hand_off_restored_destination_connections),
       listener_(nullptr) {
+  ENVOY_LOG(trace,"listener construct: bind_to_port {}", static_cast<int>(bind_to_port));
   if (bind_to_port) {
     setupServerSocket(dispatcher, socket);
   }

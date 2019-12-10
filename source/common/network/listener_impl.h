@@ -9,7 +9,7 @@ namespace Network {
  * libevent implementation of Network::Listener for TCP.
  * TODO(conqerAtapple): Consider renaming the class to `TcpListenerImpl`.
  */
-class ListenerImpl : public BaseListenerImpl {
+class ListenerImpl : public Logger::Loggable<Logger::Id::connection> ,public BaseListenerImpl {
 public:
   ListenerImpl(Event::DispatcherImpl& dispatcher, Socket& socket, ListenerCallbacks& cb,
                bool bind_to_port, bool hand_off_restored_destination_connections);

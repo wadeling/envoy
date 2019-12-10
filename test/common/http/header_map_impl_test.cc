@@ -1,6 +1,6 @@
 #include <memory>
 #include <string>
-
+#include <time.h>
 #include "common/http/header_map_impl.h"
 
 #include "test/test_common/printers.h"
@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 
 using ::testing::InSequence;
+
 
 namespace Envoy {
 namespace Http {
@@ -1039,6 +1040,70 @@ TEST(HeaderMapImplTest, TestHeaderMapImplyCopy) {
   const TestHeaderMapImpl& baz2 = baz;
   baz = baz2;
   EXPECT_EQ("bar", baz.get(LowerCaseString("foo"))->value().getStringView());
+}
+
+TEST(HeaderMapImplTest, TestCopyTime) {
+    Http::TestHeaderMapImpl headers{{":path", "/"},
+                                    {"content-type", "text/plain"},
+                                    {":method", "GET"},
+                                    {"hello", "world"},
+                                    {"hello1", "world"},
+                                    {"hello2", "world"},
+                                    {"hello3", "world"},
+                                    {"hello4", "world"},
+                                    {"hello5", "world"},
+                                    {"hello6", "world"},
+                                    {"hello7", "world"},
+                                    {"hello8", "world"},
+                                    {"hello9", "world"},
+                                    {"hello10", "world"},
+                                    {"hello11", "world"},
+                                    {"hello12", "world"},
+                                    {"hello13", "world"},
+                                    {"hello14", "world"},
+                                    {"hello15", "world"},
+                                    {"hello16", "world"},
+                                    {"hello17", "world"},
+                                    {"hello18", "world"},
+                                    {"hello19", "world"},
+                                    {"hello20", "world"},
+                                    {"hello21", "world"},
+                                    {"hello22", "world"},
+                                    {"hello23", "world"},
+                                    {"hello24", "world"},
+                                    {"hello25", "world"},
+                                    {"hello26", "world"},
+                                    {"hello27", "world"},
+                                    {"hello28", "world"},
+                                    {":authority", "host"}};
+
+    printf("start copy time test\r\n");
+
+    time_t start,end;
+    start = clock();
+    uint64_t num = 1LL << 20;
+    for (uint64_t i = 0; i < num; ++i) {
+        Http::TestHeaderMapImpl headersDst;
+        headers.iterate(
+                [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+                    HeaderString key_string;
+                    key_string.setCopy(header.key().getStringView());
+                    HeaderString value_string;
+                    value_string.setCopy(header.value().getStringView());
+
+                    static_cast<HeaderMapImpl*>(context)->addViaMove(std::move(key_string),
+                                                                     std::move(value_string));
+                    return HeaderMap::Iterate::Continue;
+                },
+                &headersDst);
+    }
+
+    end = clock();
+    double total_time = difftime(end,start)/CLOCKS_PER_SEC;
+    double parsed_time = total_time/ static_cast<double>(num);
+    printf("take time %f s, every header copy take time %f us\r\n",total_time,parsed_time*1000*1000);
+
+    EXPECT_EQ(1,1);
 }
 
 } // namespace Http

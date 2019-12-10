@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 include_directories(include)
 include_directories(source)
+include_directories(.)
+
 add_executable(envoy
     api/envoy/api/v2/auth/cert.proto
     api/envoy/api/v2/cluster/circuit_breaker.proto
@@ -1297,4 +1299,7 @@ add_executable(envoy
     source/server/filter_chain_manager_impl.cc
     support/hooks/prepare-commit-msg
     support/bootstrap
+    test/common/http/header_map_impl_speed_test.cc
+    test/common/http/header_map_impl_test.cc
+    test/test_common/utility.cc
     )
