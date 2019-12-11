@@ -1084,17 +1084,33 @@ TEST(HeaderMapImplTest, TestCopyTime) {
     uint64_t num = 1LL << 20;
     std::string result;
     for (uint64_t i = 0; i < num; ++i) {
-        Buffer::OwnedImpl buffer;
+//        2.37 us
+//        Buffer::OwnedImpl buffer;
+//        headers.iterate(
+//                [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+//                    static_cast<Buffer::OwnedImpl*>(context)->add(header.key().getStringView());
+//                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
+//                    static_cast<Buffer::OwnedImpl*>(context)->add(header.value().getStringView());
+//                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
+//                    return HeaderMap::Iterate::Continue;
+//                },
+//                &buffer);
+//        result = buffer.toString();
+
+        char buffer[64*1000] = {0};
         headers.iterate(
-                [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
-                    static_cast<Buffer::OwnedImpl*>(context)->add(header.key().getStringView());
-                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
-                    static_cast<Buffer::OwnedImpl*>(context)->add(header.value().getStringView());
-                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
-                    return HeaderMap::Iterate::Continue;
-                },
-                &buffer);
-        result = buffer.toString();
+        [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+            std::string key(header.key().getStringView() );
+            std::string value(header.value().getStringView());
+            char *p= static_cast<char*>(context);
+            std::string lf("\r\n");
+            memcpy(p + strlen(p),key.c_str(),key.length());
+            memcpy(p + strlen(p),lf.c_str(),lf.length());
+            memcpy(p + strlen(p),value.c_str(),value.length());
+            memcpy(p + strlen(p),lf.c_str(),lf.length());
+            return HeaderMap::Iterate::Continue;
+        },
+        buffer);
 
 //        8 us
 //        Http::TestHeaderMapImpl headersDst;
