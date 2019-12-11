@@ -1100,13 +1100,15 @@ TEST(HeaderMapImplTest, TestCopyTime) {
         char buffer[64*1000] = {0};
         headers.iterate(
         [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
-            std::string key(header.key().getStringView() );
-            std::string value(header.value().getStringView());
-            char *p= static_cast<char*>(context);
+//            std::string key(header.key().getStringView() );
+//            std::string value(header.value().getStringView());
             std::string lf("\r\n");
-            memcpy(p + strlen(p),key.c_str(),key.length());
+            char *p= static_cast<char*>(context);
+            HeaderString* k = const_cast<HeaderString*>(&header.key());
+            HeaderString* v = const_cast<HeaderString*>(&header.value());
+            memcpy(p + strlen(p), k->buffer(),k->size());
             memcpy(p + strlen(p),lf.c_str(),lf.length());
-            memcpy(p + strlen(p),value.c_str(),value.length());
+            memcpy(p + strlen(p),v->buffer(),v->size());
             memcpy(p + strlen(p),lf.c_str(),lf.length());
             return HeaderMap::Iterate::Continue;
         },
