@@ -1085,34 +1085,33 @@ TEST(HeaderMapImplTest, TestCopyTime) {
     std::string result;
     for (uint64_t i = 0; i < num; ++i) {
 //        2.37 us
-//        Buffer::OwnedImpl buffer;
-//        headers.iterate(
-//                [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
-//                    static_cast<Buffer::OwnedImpl*>(context)->add(header.key().getStringView());
-//                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
-//                    static_cast<Buffer::OwnedImpl*>(context)->add(header.value().getStringView());
-//                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
-//                    return HeaderMap::Iterate::Continue;
-//                },
-//                &buffer);
-//        result = buffer.toString();
-
-        char buffer[64*1000] = {0};
+        Buffer::OwnedImpl buffer;
         headers.iterate(
-        [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
-//            std::string key(header.key().getStringView() );
-//            std::string value(header.value().getStringView());
-            std::string lf("\r\n");
-            char *p= static_cast<char*>(context);
-            HeaderString* k = const_cast<HeaderString*>(&header.key());
-            HeaderString* v = const_cast<HeaderString*>(&header.value());
-            memcpy(p + strlen(p), k->buffer(),k->size());
-            memcpy(p + strlen(p),lf.c_str(),lf.length());
-            memcpy(p + strlen(p),v->buffer(),v->size());
-            memcpy(p + strlen(p),lf.c_str(),lf.length());
-            return HeaderMap::Iterate::Continue;
-        },
-        buffer);
+                [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+                    static_cast<Buffer::OwnedImpl*>(context)->add(header.key().getStringView());
+                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
+                    static_cast<Buffer::OwnedImpl*>(context)->add(header.value().getStringView());
+                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
+                    return HeaderMap::Iterate::Continue;
+                },
+                &buffer);
+        result = buffer.toString();
+
+//          4.2us
+//        char buffer[64*1000] = {0};
+//        headers.iterate(
+//        [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+//           std::string lf("\r\n");
+//            char *p= static_cast<char*>(context);
+//            HeaderString* k = const_cast<HeaderString*>(&header.key());
+//            HeaderString* v = const_cast<HeaderString*>(&header.value());
+//            memcpy(p + strlen(p), k->buffer(),k->size());
+//            memcpy(p + strlen(p),lf.c_str(),lf.length());
+//            memcpy(p + strlen(p),v->buffer(),v->size());
+//            memcpy(p + strlen(p),lf.c_str(),lf.length());
+//            return HeaderMap::Iterate::Continue;
+//        },
+//        buffer);
 
 //        8 us
 //        Http::TestHeaderMapImpl headersDst;
