@@ -1097,12 +1097,15 @@ TEST(HeaderMapImplTest, TestCopyTime) {
                 &buffer);
         result = buffer.toString();
 
-//          4.2us
+//          4.2us, buffer 大小影响性能
 //        char buffer[64*1000] = {0};
+//        buffer[0] = 0;
+//        printf("buffer addr %p \r\n",buffer);
 //        headers.iterate(
 //        [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
 //           std::string lf("\r\n");
 //            char *p= static_cast<char*>(context);
+//            printf("contest addr %p \r\n",p);
 //            HeaderString* k = const_cast<HeaderString*>(&header.key());
 //            HeaderString* v = const_cast<HeaderString*>(&header.value());
 //            memcpy(p + strlen(p), k->buffer(),k->size());
@@ -1132,7 +1135,7 @@ TEST(HeaderMapImplTest, TestCopyTime) {
     end = clock();
     double total_time = difftime(end,start)/CLOCKS_PER_SEC;
     double parsed_time = total_time/ static_cast<double>(num);
-    printf("take time %f s, every header copy take time %f us\r\n",total_time,parsed_time*1000*1000);
+    printf("take time %f s, num %llu, every header copy take time %f us\r\n",total_time,num,parsed_time*1000*1000);
 
     EXPECT_EQ(1,1);
 }
