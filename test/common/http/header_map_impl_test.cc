@@ -1082,15 +1082,19 @@ TEST(HeaderMapImplTest, TestCopyTime) {
     time_t start,end;
     start = clock();
     uint64_t num = 1LL << 20;
+    std::string result;
     for (uint64_t i = 0; i < num; ++i) {
         Buffer::OwnedImpl buffer;
         headers.iterate(
                 [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
                     static_cast<Buffer::OwnedImpl*>(context)->add(header.key().getStringView());
+                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
                     static_cast<Buffer::OwnedImpl*>(context)->add(header.value().getStringView());
+                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
                     return HeaderMap::Iterate::Continue;
                 },
                 &buffer);
+        result = buffer.toString();
 
 //        8 us
 //        Http::TestHeaderMapImpl headersDst;
