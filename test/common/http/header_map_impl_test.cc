@@ -1042,7 +1042,12 @@ TEST(HeaderMapImplTest, TestHeaderMapImplyCopy) {
   EXPECT_EQ("bar", baz.get(LowerCaseString("foo"))->value().getStringView());
 }
 
-TEST(HeaderMapImplTest, TestCopyTime) {
+class CopyHeaderMap{
+public:
+    Buffer::OwnedImpl buffer_;
+};
+
+        TEST(HeaderMapImplTest, TestCopyTime) {
     Http::TestHeaderMapImpl headers{{":path", "/"},
                                     {"content-type", "text/plain"},
                                     {":method", "GET"},
@@ -1082,20 +1087,33 @@ TEST(HeaderMapImplTest, TestCopyTime) {
     time_t start,end;
     start = clock();
     uint64_t num = 1LL << 20;
-    std::string result;
+//    std::string result;
     for (uint64_t i = 0; i < num; ++i) {
-//        2.37 us
-        Buffer::OwnedImpl buffer;
+//        2.37 us, if not toString,reduce to 1.4us
+//        Buffer::OwnedImpl buffer;
+//        headers.iterate(
+//                [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
+//                    static_cast<Buffer::OwnedImpl*>(context)->add(header.key().getStringView());
+//                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
+//                    static_cast<Buffer::OwnedImpl*>(context)->add(header.value().getStringView());
+//                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
+//                    return HeaderMap::Iterate::Continue;
+//                },
+//                &buffer);
+//        result = buffer.toString();
+
+//      1.455us
+        std::shared_ptr<CopyHeaderMap> buffer = std::make_shared<CopyHeaderMap>();
         headers.iterate(
                 [](const HeaderEntry& header, void* context) -> HeaderMap::Iterate {
-                    static_cast<Buffer::OwnedImpl*>(context)->add(header.key().getStringView());
-                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
-                    static_cast<Buffer::OwnedImpl*>(context)->add(header.value().getStringView());
-                    static_cast<Buffer::OwnedImpl*>(context)->add("\r\n");
+                    static_cast<CopyHeaderMap*>(context)->buffer_.add(header.key().getStringView());
+                    static_cast<CopyHeaderMap*>(context)->buffer_.add("\r\n");
+                    static_cast<CopyHeaderMap*>(context)->buffer_.add(header.value().getStringView());
+                    static_cast<CopyHeaderMap*>(context)->buffer_.add("\r\n");
                     return HeaderMap::Iterate::Continue;
                 },
-                &buffer);
-        result = buffer.toString();
+                buffer.get());
+
 
 //          4.2us, buffer 大小影响性能
 //        char buffer[64*1000] = {0};
